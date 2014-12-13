@@ -1,0 +1,13 @@
+Fetch logic:  catch not found exceptions in the lib code!
+
+
+Should fetch be in ds or dsqry?  e.g.
+
+    (ds/fetch ...)
+    (dsqry/fetch ...)
+
+In other words, does the client really need to now about query
+objects?  All the client really needs to do is provide the parameters
+for a query and then say "gimme this".  All the machinery of
+constructing a query object, then prepping it, then casting the result
+to an interator, etc. can be hidden.
