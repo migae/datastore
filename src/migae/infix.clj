@@ -30,7 +30,7 @@
 (ns ^{:doc
       "Library for converting infix mathematical formula to prefix expressions"
       :author "J. Bester"}
-  org.mobileink.migae.infix
+  migae.infix
   (:refer-clojure :exclude [filter]))
 
 

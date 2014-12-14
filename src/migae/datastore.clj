@@ -27,7 +27,7 @@
             [migae.datastore.entity :as dse]
             [migae.datastore.key :as dskey]
             [migae.datastore.query :as dsqry]
-            [org.mobileink.migae.infix :as infix]
+            [migae.infix :as infix]
             [clojure.tools.logging :as log :only [trace debug info]]))
   ;; (:use org.mobileink.migae.core.utils))
 
