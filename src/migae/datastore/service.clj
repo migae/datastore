@@ -17,7 +17,7 @@
 
 (defn datastore []
   (when (nil? @*datastore-service*)
-    (do (prn "datastore ****************")
+    (do ;; (prn "datastore ****************")
         (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService))))
   @*datastore-service*)
 

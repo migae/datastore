@@ -25,6 +25,22 @@
 
 (defmethod key :bug [ent] (log/trace "method :bug, " ent))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmulti name
+  (fn [entity]
+    (do
+        (cond
+         (= (type entity) com.google.appengine.api.datastore.Entity) :entity
+         (map? entity) :map
+         :else :bug))))
+
+(defmethod name :entity
+  [ent] (.getName (.getKey ent)))
+
+(defmethod name :map [entity]
+  (do
+    (:_name (meta entity))))
+
 
 ;; (defmethod key :kindname
 ;;   [ent] (.getKey ent))

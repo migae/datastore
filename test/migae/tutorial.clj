@@ -1,4 +1,4 @@
-(ns migae.datastore-test
+(ns migae.tutorial
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -122,6 +122,164 @@
                         ^{:kind :Employee, :name "asalieri"}
                         {:fname "Antonio", :lname "Salieri"})]
       (is (not (nil? (:keystring (meta theEntity))))))))
+
+;; ################################################################
+(deftest ^:emap emap1
+  (testing "emap key vector must not be empty"
+    (try (ds/emap [] {})
+         (catch IllegalArgumentException e
+           (log/trace (.getMessage e))))))
+
+(deftest ^:emap emap?
+  (testing "entitymap deftype"
+    (binding [*print-meta* true]
+      (let [em1 (ds/emap [:Species/Felis_catus] {:name "Chibi"})
+            em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
+        (log/trace (pr-str em1))
+        (is (ds/emap? em1))
+        (log/trace (pr-str em2))
+        (is (ds/emap? em2))
+        (log/trace (pr-str em3))
+        (is (ds/emap? em3))
+        (log/trace (pr-str em4))
+        (is (ds/emap? em4))
+        ))))
+
+(deftest ^:emap emap!
+  (testing "entitymap deftype"
+    (binding [*print-meta* true]
+      (let [em1 (ds/emap! [:Species/Felis_catus] {})
+            em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
+            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
+            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
+        (is (ds/emap? em1))
+        (is (ds/emap? em2))
+        (is (ds/emap? em3))
+        (is (ds/emap? em4))
+        ))))
+
+(deftest ^:emap emap-props!
+  (testing "emap! with properties"
+    ;; (binding [*print-meta* true]
+      (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})
+            em2 (ds/emap! [:Genus/Felis :Species/Felis_catus]
+                          {:name "Chibi" :size "small" :eyes 1})
+            ]
+        (log/trace em1)
+        (is (ds/emap? em1))
+        (log/trace em2)
+        (is (ds/emap? em2))
+        ;; (is (ds/emap? em3))
+        ;; (is (ds/emap? em4))
+        )))
+
+(deftest ^:emap emap-fetch
+  (testing "emap! new, update, replace"
+    ;; ignore new if exists
+    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})
+          em2 (ds/emap! [:Species/Felis_catus] {})]
+        ;; (log/trace em1)
+        (is (ds/emap= em1 em2))
+        (is (= (ds/get em1 :name) "Chibi"))
+        (is (= (ds/get em2 :name) "Chibi")))
+    (let [em2 (ds/emap! [:Species/Felis_catus] {:name "Booger"})]
+      (is (= (ds/get em2 :name) "Chibi")))
+
+    ;; update existing
+    (let [em3 (ds/emap!! [:Species/Felis_catus] {:name "Booger"})]
+      (is (= (ds/get em3 :name) ["Chibi" "Booger"])))
+
+    ;; replace existing
+    (let [em4 (ds/emap!!! [:Species/Felis_catus] {:name "Max"})]
+      (is (= (ds/get em4 :name) "Max")))
+
+    (let [em (ds/emap! [:Species/Felis_catus :Name/Chibi]
+                       {:size "small" :eyes 1})
+          em4 (ds/emap!!!  [:Species/Felis_catus :Name/Booger]
+                       {:size "lg" :eyes 2})]
+      (log/trace em)
+      (log/trace em4))
+    ))
+
+(deftest ^:emap emap-fn
+  (testing "emap fn"
+    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})]
+      (log/trace em1))
+      ))
+
+(deftest ^:emap emap-assoc
+  (testing "emap assoc"
+    (let [em1 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
+                        (fn [e]
+                          (ds/assoc e :sex "F")))
+          em2 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
+                        (fn [e]
+                          (ds/assoc e :age 5)))
+          ]
+      (log/trace em1)
+      (log/trace (ds/assoc!! em1 :weight 7))
+      (log/trace (ds/assoc! (ds/emap! [:Species/Felis_catus :Cat/Booger])
+                           :name "Niki" :weight 7))
+      (log/trace  (ds/emap! [:Species/Felis_catus :Cat/Booger]))
+      ;; (log/trace em2)
+      )))
+
+          ;; em3 (ds/emap!! [:Species/Felis_catus]
+          ;;                (fn [e]
+          ;;                  ;; an emap is conceptually just a map
+          ;;                  (ds/into e {:name "Booger" :weight 5})))
+          ;;                ]
+;; ################################################################
+(deftest ^:query entity-map-1
+  (testing "query 1"
+    ))
+
+
+(deftest ^:query query-entities-1
+  (testing "query 1"
+    (let [q (dsqry/entities)]
+      (log/trace "query entities 1" q)
+      )))
+
+(deftest ^:query query-entities-2
+  (testing "query 2"
+    (let [q (dsqry/entities :kind :Employee)]
+      (log/trace "query entities 2" q)
+      )))
+
+
+;; (deftest ^:query query-ancestors-1
+;;   (testing "query ancestors-1"
+;;     (let [k (dskey/make "foo" "bar")
+;;           q (dsqry/ancestors :key k)]
+;;       (log/trace "query ancestors-1:" q)
+;;       )))
+
+(deftest ^:query query-ancestors-2
+  (testing "query ancestors-2"
+    (let [q (dsqry/ancestors :kind "foo" :name "bar")]
+      (log/trace "query ancestors-2:" q)
+      )))
+
+(deftest ^:query query-ancestors-3
+  (testing "query ancestors-3"
+    (let [q (dsqry/ancestors :kind "foo" :id 99)]
+      (log/trace "query ancestors-3:" q)
+      )))
+
+(deftest ^:query query-ancestors-3
+  (testing "query ancestors-3"
+    (let [q (dsqry/ancestors :kind "foo" :id 99)]
+      (log/trace "query ancestors-3:" q)
+      )))
+
+(deftest ^:query query-ancestors-4
+  (testing "query ancestors-4"
+    (let [q (dsqry/ancestors :kind :Person :id 99)]
+      (log/trace "query ancestors-3:" q)
+      )))
 
 ;; ################################################################
 (deftest ^:emap entity-map-1
@@ -409,8 +567,15 @@
 ;; ################################################################
 (deftest ^:keysym keysym1
   (testing "keyword - key literals: name"
+    (log/trace (ds/key :Employee/asalieri))
     (is (ds/key? (ds/key :Employee/asalieri)) true)
-    (is (ds/key? (ds/key :Employee/d15)) true)))
+    (log/trace (ds/key :Employee/d15))
+    (is (ds/key? (ds/key :Employee/d15)) true)
+    (log/trace (ds/key :Employee/x0A))
+    (is (ds/key? (ds/key :Employee/x0A)) true))
+    (is (= (ds/key :Employee/d15)
+           (ds/key :Employee/x0F)))
+    )
 
 (deftest ^:keysym keysym2
   (testing "keymap literals: name"
@@ -418,34 +583,6 @@
     (is (ds/key? (ds/key "Employee" "asalieri")) true)))
 
     ;; (is (= (type (dskey/make 'Employee/x0F)) com.google.appengine.api.datastore.Key)))))
-;    (is (= (type (dskey/make 'Employee/asalieri)) com.google.appengine.api.datastore.Key))))
-
-(deftest ^:keysym keysym1-id
-  (testing "keymap literals: id"
-    (let [k (dskey/make 'Employee/_99)]
-      (log/trace k)
-      (is (= (type k) com.google.appengine.api.datastore.Key)))))
-
-;; (deftest ^:keys keymap1-name
-;;   (testing "keymap literals: name"
-;;     (is (= (type (dskey/make :_kind :Employee :_name "asalieri"))
-;;            com.google.appengine.api.datastore.Key))))
-
-;; (deftest ^:keys keymap1-id
-;;   (testing "keymap literals: id"
-;;     (is (= (type (dskey/make :_kind :Employee :_id 99))
-;;            com.google.appengine.api.datastore.Key))
-;;     ))
-
-(deftest ^:keys keymap2a
-  (testing "keymap literals 2a"
-    (is (= (type (dskey/make {:_kind :Employee :_name "asalieri"}))
-           com.google.appengine.api.datastore.Key))))
-
-(deftest ^:keys keymap2b
-  (testing "keymap literals 2b"
-    (is (= (type (dskey/make {:_kind :Employee :_id 99}))
-           com.google.appengine.api.datastore.Key))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:keychain keychain1a
@@ -550,51 +687,6 @@
              parent))
       (is (= (dskey/name child)
              "felis catus"))
-      )))
-
-;; ################################################################
-(deftest ^:query query-entities-1
-  (testing "query 1"
-    (let [q (dsqry/entities)]
-      (log/trace "query entities 1" q)
-      )))
-
-(deftest ^:query query-entities-2
-  (testing "query 2"
-    (let [q (dsqry/entities :kind :Employee)]
-      (log/trace "query entities 2" q)
-      )))
-
-
-;; (deftest ^:query query-ancestors-1
-;;   (testing "query ancestors-1"
-;;     (let [k (dskey/make "foo" "bar")
-;;           q (dsqry/ancestors :key k)]
-;;       (log/trace "query ancestors-1:" q)
-;;       )))
-
-(deftest ^:query query-ancestors-2
-  (testing "query ancestors-2"
-    (let [q (dsqry/ancestors :kind "foo" :name "bar")]
-      (log/trace "query ancestors-2:" q)
-      )))
-
-(deftest ^:query query-ancestors-3
-  (testing "query ancestors-3"
-    (let [q (dsqry/ancestors :kind "foo" :id 99)]
-      (log/trace "query ancestors-3:" q)
-      )))
-
-(deftest ^:query query-ancestors-3
-  (testing "query ancestors-3"
-    (let [q (dsqry/ancestors :kind "foo" :id 99)]
-      (log/trace "query ancestors-3:" q)
-      )))
-
-(deftest ^:query query-ancestors-4
-  (testing "query ancestors-4"
-    (let [q (dsqry/ancestors :kind :Person :id 99)]
-      (log/trace "query ancestors-3:" q)
       )))
 
 ;; ################################################################

@@ -61,6 +61,7 @@
   (Query. (clojure.core/name kind))
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti ancestors
   (fn [& {kind :kind key :key name :name id :id}]
     (cond
@@ -79,13 +80,13 @@
 
 (defmethod ancestors :kindname
   [& {kind :kind key :key name :name id :id}]
-  (let [k (dskey/make kind name)]
+  (let [k (dskey/make {:_kind kind :_name name})]
         (Query. k))
   )
 
 (defmethod ancestors :kindid
-  [& {kind :kind key :key name :name id :id}]
-  (let [k (dskey/make kind id)]
+  [& {kind :kind id :id}]
+  (let [k (dskey/make {:_kind kind :_id id})]
         (Query. k))
   )
 

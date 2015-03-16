@@ -1,35 +1,54 @@
 (ns migae.datastore
-  (:import [com.google.appengine.api.datastore
-            KeyFactory
-            Key
+  (:refer-clojure :exclude [assoc assoc! get into key])
+  (:import [java.lang IllegalArgumentException]
+           [java.util ArrayList]
+           [com.google.appengine.api.datastore
+            Blob
+            DatastoreFailureException
             DatastoreService
             DatastoreServiceFactory
             DatastoreServiceConfig
             DatastoreServiceConfig$Builder
+            Entity
+            EntityNotFoundException
+            FetchOptions$Builder
+            ImplicitTransactionManagementPolicy
+            KeyFactory
+            KeyFactory$Builder
+            Key
+            Link
             ReadPolicy
             ReadPolicy$Consistency
-            ImplicitTransactionManagementPolicy
-            Entity
-            FetchOptions$Builder
             Query
             Query$FilterOperator
             Query$SortDirection
-            ;; Exceptions
-            DatastoreFailureException
-            EntityNotFoundException
-           ;; types
-            Blob
             ShortBlob
             Text
-            Link]
+            Transaction]
            [com.google.appengine.api.blobstore BlobKey])
-  (:require [migae.datastore.service :as dss]
+  (:require [clojure.core :as clj]
+            [clojure.tools.reader.edn :as edn]
+            ;; [migae.datastore.service :as dss]
             [migae.datastore.entity :as dse]
             [migae.datastore.key :as dskey]
             [migae.datastore.query :as dsqry]
             [migae.infix :as infix]
             [clojure.tools.logging :as log :only [trace debug info]]))
   ;; (:use org.mobileink.migae.core.utils))
+
+(defonce ^{:dynamic true} *datastore-service* (atom nil))
+
+;; (defn get-datastore-service []
+;;   (when (nil? @*datastore-service*)
+;;         (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService)))
+;;   @*datastore-service*)
+
+(defn datastore []
+  (when (nil? @*datastore-service*)
+    (do ;; (prn "datastore ****************")
+        (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService))))
+  @*datastore-service*)
+
 
 ;; (defonce ^{:dynamic true} *datastore-service* (atom nil))
 ;; (defn get-datastore-service []
@@ -192,10 +211,10 @@
         (do
           (doseq [[k v] theMap]
             (.setProperty theEntity (clojure.core/name k) v))
-          (let [key (.put (dss/get-datastore-service) theEntity)
+          (let [key (.put (datastore) theEntity)
                 kw (if (and (not id) (not name)) :_id)
                 v  (if (and (not id) (not name)) (dskey/id key))
-                m (assoc (meta theMap)
+                m (clj/assoc (meta theMap)
                     kw v
                     :_key key
                     :_entity theEntity)]
@@ -214,7 +233,7 @@
                       (cond
                        (= (type v) clojure.lang.Keyword) (clojure.core/name v)
                        :else v)))
-      (.put (dss/get-datastore-service) theEntity)))
+      (.put (datastore) theEntity)))
   true)
 
       ;;       kw (if (and (not id) (not name)) :_id)
@@ -250,25 +269,25 @@
 (defmethod fetch :key
   [key]
   {:pre [(= (type key) com.google.appengine.api.datastore.Key)]}
-  (let [ent (.get (dss/get-datastore-service) key)
+  (let [ent (.get (datastore) key)
         kind (dskey/kind key)
         name (dskey/name key)
         id (dskey/id   key)
-        props  (into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
+        props  (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
     (with-meta
-      (into {} (for [[k v] props] [(keyword k) v]))
+      (clj/into {} (for [[k v] props] [(keyword k) v]))
       {:_kind kind :_name name :_key key :_entity ent})))
 
 (defmethod fetch :keymap
   [{key :_key}]
   {:pre [(= (type key) com.google.appengine.api.datastore.Key)]}
-  (let [ent (.get (dss/get-datastore-service) key)
+  (let [ent (.get (datastore) key)
         kind (dskey/kind key)
         name (dskey/name key)
         id (dskey/id   key)
-        props  (into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
+        props  (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
     (with-meta
-      (into {} (for [[k v] props] [(keyword k) v]))
+      (clj/into {} (for [[k v] props] [(keyword k) v]))
       {:_kind kind :_name name :_key key :_entity ent})))
 
 (defmethod fetch :parent
@@ -276,13 +295,13 @@
   (let [parentKey (dskey/make {:_kind (:_kind parent) :_name (:_name parent)})
         childKey (dskey/make {:_kind kind :_name name :_parent parent})
         ;; childKey (dskey/make parentKey kind name)
-        ent (.get (dss/get-datastore-service) childKey)
+        ent (.get (datastore) childKey)
         kind (dskey/kind childKey)
         name (dskey/name childKey)
         id (dskey/id   childKey)
-        props  (into {} (.getProperties ent))]
+        props  (clj/into {} (.getProperties ent))]
     (with-meta
-      (into {} (for [[k v] props] [(keyword k) v]))
+      (clj/into {} (for [[k v] props] [(keyword k) v]))
       {:_kind kind :_name name :_key childKey :_entity ent})))
 
 (defmethod fetch :kindname
@@ -293,11 +312,11 @@
         key (try (dskey/make {:_kind kind :_name name})
                  (catch Exception e nil))]
     (if key
-      (let [ent (.get (dss/get-datastore-service) key)
-            props  (into {} (.getProperties ent))]
+      (let [ent (.get (datastore) key)
+            props  (clj/into {} (.getProperties ent))]
         ;; TODO: if not found, return nil
         (with-meta
-          (into {} (for [[k v] props] [(keyword k) v]))
+          (clj/into {} (for [[k v] props] [(keyword k) v]))
           {:_kind kind :_name name :_key key :_entity ent}))
       nil)))
 
@@ -305,10 +324,10 @@
   ;; {:pre [ ]}
   [{kind :_kind id :_id}]
   (let [key (dskey/make {:_kind kind :_id id})
-        ent (.get (dss/get-datastore-service) key)
-        props (into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
+        ent (.get (datastore) key)
+        props (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
     (with-meta
-      (into {} (for [[k v] props] [(keyword k) v]))
+      (clj/into {} (for [[k v] props] [(keyword k) v]))
       {:_kind kind :_id id :_key key :_entity ent})))
 
 ;; see also dsqry/fetch
@@ -463,7 +482,7 @@
                           (if (number? v) v
                               (clojure.core/name v))))
           ;; TODO: wrap-entity s/b resonsible for putting if needed
-          (.put (dss/get-datastore-service) theEntity)
+          (.put (datastore) theEntity)
           (wrap-entity theEntity)))
 
 
@@ -497,8 +516,8 @@
         (fn [& kw]
           ;; the main job of the function is to lookup properties
           ;; TODO: accomodate iteration, seq-ing, etc
-          ;; e.g.  (into myEnt {:foo "bar"})
-          ;; also conj, into, etc.
+          ;; e.g.  (clj/into myEnt {:foo "bar"})
+          ;; also conj, clj/into, etc.
           ;; e.g.  (conj myEnt {:foo "bar"})
           ;; etc.
           ;; only way I see to do this as of now is local replacement
@@ -508,7 +527,7 @@
             (let [props (.getProperties theEntity)]
               ;; efficiency?  this constructs map of all props
               ;; every time
-              (into {} (map (fn [item]
+              (clj/into {} (map (fn [item]
                               {(keyword (.getKey item))
                                (.getValue item)}) props)))
             (.getProperty theEntity (name kw)))))))
@@ -527,7 +546,7 @@
   com.google.appengine.api.datastore.Key
   (ds [theKey]
     (do ;; (prn "ds applied to Key" theKey)
-        (let [theEntity (.get (dss/get-datastore-service) theKey)]
+        (let [theEntity (.get (datastore) theKey)]
           ;; (prn "ds applied to map")
           ;; (prn (str "made key: " theKey))
           ;; (prn (str "fetched entity: " theEntity))
@@ -535,7 +554,7 @@
   (Entities [theKey]
     ;; if entity already exists return it as ds/Entity else create it
     (let [theEntity
-          (try (.get (dss/get-datastore-service) theKey)
+          (try (.get (datastore) theKey)
                (catch EntityNotFoundException e1 ) ;; (prn "NOT FOUND"))
                (catch IllegalArgumentException e2 (prn "ILLEGAL ARG TO GET"))
                (catch DatastoreFailureException e3
@@ -549,7 +568,7 @@
             ;; (but what if user wants to create empty entity?)
             ;; answer: use a metadatum to indicate what to do
             (let [theEntity (Entity. theKey)]
-              (do (.put (dss/get-datastore-service) theEntity)
+              (do (.put (datastore) theEntity)
                   (wrap-entity theEntity)))))))
 
 
@@ -569,12 +588,12 @@
         (let [theKey (KeyFactory/createKey
                       (clojure.core/name kind)
                       (if id id name))
-              theEntity (.get (dss/get-datastore-service) theKey)
+              theEntity (.get (datastore) theKey)
               props (.getProperties theEntity)]
           ;; props = java.util.Collections$UnmodifiableMap
           ;; prop = java.util.Collections
           ;;		$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry
-          (into {} (map (fn [item]
+          (clj/into {} (map (fn [item]
                           {(keyword (.getKey item))
                            (.getValue item)}) props)))))
     (Keys [{:keys [kind name id] :as keymap}]
@@ -590,7 +609,7 @@
         (let [theKey (KeyFactory/createKey
                       (clojure.core/name kind)
                       (if id id name))
-              theEntity (.get (dss/get-datastore-service) theKey)]
+              theEntity (.get (datastore) theKey)]
           (wrap-entity theEntity))))
     (Entities
       [theEntityMap]
@@ -635,7 +654,7 @@
            ]}
     (do (prn "Entities applied to fn" (meta theEntity))
         (let [{:keys [key kind id name parent]} (meta theEntity)
-;;              arg1 (if (nil? kind) key 
+;;              arg1 (if (nil? kind) key
               arg2 (if id id (if name name nil))
               arg3 (if (nil? parent) nil
                        (cond
@@ -663,8 +682,422 @@
                           (clojure.core/name k)
                           (clojure.core/name v)))
           ;; TODO: wrap-entity s/b resonsible for putting if needed
-          (.put (dss/get-datastore-service) theEntity)
+          (.put (datastore) theEntity)
           (wrap-entity theEntity))))
-          ;; {:theKey (.put (dss/get-datastore-service) theEntity)
+          ;; {:theKey (.put (datastore) theEntity)
           ;;  :theEntity theEntity})))
   ) ;; extend-protocol
+
+
+(defn key? [^com.google.appengine.api.datastore.Key k]
+  (= (type k) com.google.appengine.api.datastore.Key))
+
+(defmulti key
+  "Make a datastore Key from a Clojure symbol or a pair of args.  For
+  numeric IDs with keywords use e.g. :Foo/d123 (decimal) or :Foo/x0F (hex)"
+  (fn [arg & args]
+    [(type arg) (type args)]))
+;    (type arg)))
+
+(defmethod key [clojure.lang.Keyword nil]
+  ([^clojure.lang.Keyword k]
+   {:pre [(= (type k) clojure.lang.Keyword)]}
+   ;;(log/trace "KEYWORD")
+   (let [kind (clojure.core/namespace k)
+         ident (clojure.core/name k)]
+     (if (= (first ident) \d)
+       (do
+         (let [id (edn/read-string (apply str (rest ident)))]
+           (if (= (type id) java.lang.Long)
+             (KeyFactory/createKey kind id)
+             (KeyFactory/createKey kind ident))))
+       (if (= (first ident) \x)
+         (let [id (edn/read-string (str "0" ident))]
+           (if (= (type id) java.lang.Long)
+             (KeyFactory/createKey kind id)
+             (KeyFactory/createKey kind ident)))
+         (KeyFactory/createKey kind ident))))))
+
+(defn add-children [parent chain]
+  (doseq [sym chain]
+                                        ; (log/trace "sym " sym)
+    (.addChild parent (clj/namespace sym) (clj/name sym))))
+
+(defmethod key [clojure.lang.Keyword clojure.lang.ArraySeq]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   ;; (log/trace "kw arrayseq" head chain)
+   (let [root (KeyFactory$Builder. (clj/namespace head)
+                                   ;; FIXME: check for IDs too, e.g. :Foo/d99, :Foo/x0F
+                                   (clj/name head))]
+     (.getKey (doto root (add-children chain))))))
+
+
+   ;; (if (empty? (first (seq chain)))
+   ;;   head
+   ;;   (key (first chain) (rest chain)))))
+
+(defmethod key [java.lang.String clojure.lang.ArraySeq]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   (log/trace "str str")))
+
+(defmethod key [clojure.lang.ArraySeq nil]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   (log/trace "seq nil" head chain)))
+
+(defmethod key [clojure.lang.PersistentList$EmptyList clojure.lang.ArraySeq]
+  ([head & chain]
+   (log/trace "emptylist arrayseq: " head chain)))
+
+
+   ;; (let [kind (edn/read-string fst)
+   ;;       name (edn/read-string )]
+   ;;   (KeyFactory/createKey (str kind) ident))))
+
+  ;; ([^String k ^Long ident]
+  ;;  (let [kind (edn/read-string k)
+  ;;        name (edn/read-string ident)]
+  ;;    (KeyFactory/createKey (str kind) ident))))
+
+     ;; (if (= (type name) java.lang.Long)
+     ;;       (KeyFactory/createKey ns n)))
+     ;;   (KeyFactory/createKey ns n)))))
+
+    ;; (log/trace "ns " ns " n: " n ", first n: " (first n))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  emap stuff
+
+(defn emap?
+  [em]
+  (if (contains? (meta em) :gae)
+    true ; this is a clojure emap
+    (= (type em) Entity)))
+
+(defn emap
+  [keychain em]
+  (if (empty? keychain)
+    (throw (IllegalArgumentException. "key vector must not be empty"))
+    (let [k (apply key keychain)]
+      (with-meta em {:gae k}))))
+
+(defn emap!
+  ([keychain]
+   (if (empty? keychain)
+     (throw (IllegalArgumentException. "key vector must not be empty"))
+     (let [k (apply key keychain)
+           em (try (.get (datastore) k)
+                  (catch EntityNotFoundException e
+                    ;;(log/trace (.getMessage e))
+                    e)
+                  (catch DatastoreFailureException e
+                    ;;(log/trace (.getMessage e))
+                    nil)
+                  (catch java.lang.IllegalArgumentException e
+                    ;;(log/trace (.getMessage e))
+                    nil))
+           ]
+       (if (emap? em)
+         em
+         (let [e (Entity. k)]
+           (.put (datastore) e)
+           e)))))
+  ([keychain em]
+   (if (empty? keychain)
+     (throw (IllegalArgumentException. "key vector must not be empty"))
+     (let [k (apply key keychain)
+           e (try (.get (datastore) k)
+                  (catch EntityNotFoundException e
+                    ;;(log/trace (.getMessage e))
+                    e)
+                  (catch DatastoreFailureException e
+                    ;;(log/trace (.getMessage e))
+                    nil)
+                  (catch java.lang.IllegalArgumentException e
+                    ;;(log/trace (.getMessage e))
+                    nil))
+           ]
+       (if (emap? e)
+         (do
+           ;;(log/trace "found entity " e)
+           ;; if em content not null throw exception
+           e)
+         (let [e (Entity. k)]
+           (doseq [[k v] em]
+             (.setProperty e (subs (str k) 1) (str v)))
+           (.put (datastore) e)
+           ;; (log/trace "created and put entity " e)
+           e))))))
+
+(defn- emap-update
+  [keychain content]
+  (let [k (apply key keychain)
+        e (try (.get (datastore) k)
+               (catch EntityNotFoundException e
+                 ;;(log/trace (.getMessage e))
+                 e)
+               (catch DatastoreFailureException e
+                 ;;(log/trace (.getMessage e))
+                 nil)
+               (catch java.lang.IllegalArgumentException e
+                 ;;(log/trace (.getMessage e))
+                 nil))
+        result
+        (if (emap? e)
+          (do
+            ;;(log/trace "found entity " e)
+            (if (empty? content)
+              e
+              (doseq [[k v] content]
+                (let [prop (subs (str k) 1)]
+                  (if (.hasProperty e prop)
+                    (let [propval (.getProperty e prop)]
+                      (if (instance? java.util.Collection propval)
+                        ;; if its already a collection, add the new val
+                        (do
+                          (.add propval v)
+                          (.setProperty e prop propval)
+                          ;;(log/trace "added val to collection prop")
+                          )
+                        ;; if its not a collection, make a collection and add both vals
+                        (let [newval (ArrayList.)]
+                          (.add newval propval)
+                          (.add newval v)
+                          (.setProperty e prop newval)
+                          ;;(log/trace "created new collection prop")
+                          ))
+                      ;;(log/trace "modified entity " e)
+                      e)
+                    (do
+                      ;;(log/trace "added new prop")
+                      (.setProperty e prop v)))
+                  (.put (datastore) e)
+                  ;;(log/trace "saved entity " e)
+                  )))
+            e)
+          ;; emap not found
+          (let [e (Entity. k)]
+            (doseq [[k v] content]
+              (.setProperty e (subs (str k) 1) (str v)))
+            (.put (datastore) e)
+            ;;(log/trace "created and put entity " e)
+            e)
+          )]
+    ;;(log/trace "RESULT: " result)
+    result))
+
+(defn- emap-update-txn
+  "Second arg is a function to be applied to the Entity whose key is first arg"
+  [keychain f]
+  (let [k (apply key keychain)
+        e (try (.get (datastore) k)
+               (catch EntityNotFoundException e
+                 ;;(log/trace (.getMessage e))
+                 e)
+               (catch DatastoreFailureException e
+                 ;;(log/trace (.getMessage e))
+                 nil)
+               (catch java.lang.IllegalArgumentException e
+                 ;;(log/trace (.getMessage e))
+                 nil))]
+        (if (emap? e) ;; existing entity
+          (let [txn (.beginTransaction (datastore))]
+            (try
+              (f e)
+              (.commit txn)
+              (finally
+                (if (.isActive txn)
+                  (.rollback txn))))
+            e)
+          (let [txn (.beginTransaction (datastore)) ;; else new entity
+                e (Entity. k)]
+            (try
+              (f e)
+              (.put (datastore) e)
+              (.commit txn)
+              (finally
+                (if (.isActive txn)
+                  (.rollback txn))))
+            e))))
+
+(defn emap!!
+  "Syntax:  (emap!! [<keychain>] content)
+
+  Modify existing entity, or create a new one.  If the existing emap
+  contains a property that is specified in <content>, make it a
+  collection and add the new value.
+
+  If the second arg is a map, it will be treated as an entity map, and
+  the entity identified by the first (keychain) arg will be updated to
+  match the emap.  This will be done in a transaction.
+
+  If the second arg is a function, it must take one arg, which will be
+  the entity.  The function's job is to update the entity.  The
+  machinery ensures that this will be done in a transaction."
+  [keychain content]
+  ;; content may be a map or a function taking one arg, which is the entitye whose key is ^keychain
+  ;; map: update absolutely; current state of entity irrelevant
+  ;; function: use if updating depends on current state
+  (if (empty? keychain)
+    (throw (IllegalArgumentException. "key vector must not be empty"))
+    (if (fn? content)
+      (emap-update-txn keychain content)
+      (if (map? content)
+        (emap-update keychain content)
+        (throw (IllegalArgumentException. "content must be map or function"))))))
+
+
+(defn emap!!!
+  "Replace existing entity, or create a new one."
+  [keychain content]
+  ;; if second arg is a map, treat it ...
+  ;; if second arg is a function, ...
+  (if (empty? keychain)
+    (throw (IllegalArgumentException. "key vector must not be empty"))
+    (let [k (apply key keychain)
+          e (try (.get (datastore) k)
+                 (catch EntityNotFoundException e
+                   ;; (log/trace (.getMessage e))
+                   e)
+                 (catch DatastoreFailureException e
+                   ;; (log/trace (.getMessage e))
+                   nil)
+                 (catch java.lang.IllegalArgumentException e
+                   ;; (log/trace (.getMessage e))
+                   nil))
+                 ]
+      ;; (if (emap? e)
+      ;;   (do
+      ;;     (log/trace "found entity " e)
+      ;;     (doseq [[k v] content]
+      ;;       (.setProperty e (subs (str k) 1) (str v)))
+      ;;     (log/trace "modified entity " e)
+      ;;     (.put (datastore) e)
+      ;;     (log/trace "get name " (.getProperty e "name"))
+      ;;     e)
+        (let [e (Entity. k)]
+          (doseq [[k v] content]
+            (.setProperty e (subs (str k) 1) (str v)))
+          (.put (datastore) e)
+          ;; (log/trace "created and put entity " e)
+          e))))
+
+
+(defn emap=
+  [em1 em2]
+  (.equals em1 em2))
+
+(defn get
+  [em prop]
+  ;; (log/trace "getting prop " prop " for ent " em)
+  (let [p (.getProperty em (subs (str prop) 1))]
+    ;;(log/trace "got " p)
+    p))
+
+;; (defmacro :
+;;   [prop em]
+;;   ;; (log/trace "getting prop " prop " for ent " em)
+;;   (let [p (.getProperty em (subs (str prop) 1))]
+;;     ;;(log/trace "got " p)
+;;     p))
+
+;;;; TODO embedded entities
+
+
+;; (def
+;;  ^{:arglists '([map key val] [map key val & kvs])
+;;    :doc "assoc[iate]. When applied to a map, returns a new map of the
+;;     same (hashed/sorted) type, that contains the mapping of key(s) to
+;;     val(s). When applied to a vector, returns a new vector that
+;;     contains val at index. Note - index must be <= (count vector)."
+;;    :added "1.0"
+;;    :static true}
+;;  assoc
+;;  (fn ^:static assoc
+;;    ([map key val] (. clojure.lang.RT (assoc map key val)))
+;;    ([map key val & kvs]
+;;     (let [ret (assoc map key val)]
+;;       (if kvs
+;;         (if (next kvs)
+;;           (recur ret (first kvs) (second kvs) (nnext kvs))
+;;           (throw (IllegalArgumentException.
+;;                   "assoc expects even number of arguments after map/vector, found odd number")))
+;;         ret)))))
+
+(defn assoc
+  "assoc for DS Entities"
+  ;; ([^clojure.lang.IPersistentVector ekey propname val]
+  ;;  (let [e (emap! ekey)]
+  ;;    (.setProperty ekey (subs (str propname) 1) val)
+  ;;    e))
+  ([^com.google.appengine.api.datastore.Entity coll propname val]
+   (.setProperty coll (subs (str propname) 1) val)
+   coll)
+  ([^com.google.appengine.api.datastore.Entity coll propname val & kvs]
+   (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
+   (if kvs
+     (recur coll (first kvs) (second kvs) (nnext kvs))
+     coll)))
+
+(defn assoc!
+  "unsafe assoc with save but no txn for DS Entities"
+  ;; ([^clojure.lang.IPersistentVector coll propname val]
+  ;;  )
+  ([^com.google.appengine.api.datastore.Entity coll propname val]
+   (.setProperty coll (subs (str propname) 1) val)
+   (.put (datastore) coll)
+   coll)
+  ([^com.google.appengine.api.datastore.Entity coll propname val & kvs]
+   (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
+   (if kvs
+     (recur coll (first kvs) (second kvs) (nnext kvs))
+     (do
+       (.put (datastore) coll)
+       coll))))
+
+(defn assoc!!
+  "safe assoc with save and txn for DS Entities"
+  ;; ([^clojure.lang.IPersistentVector coll propname val]
+  ;;  )
+  ([^com.google.appengine.api.datastore.Entity coll propname val]
+   (let [txn (.beginTransaction (datastore))]
+     ;; e (Entity. k)]
+     (try
+       (.setProperty coll (subs (str propname) 1) val)
+       (.put (datastore) coll)
+       (.commit txn)
+       (finally
+         (if (.isActive txn)
+           (.rollback txn))))
+     coll))
+  ([^com.google.appengine.api.datastore.Entity coll propname val & kvs]
+   (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
+   (if kvs
+     (recur coll (first kvs) (second kvs) (nnext kvs))
+     coll)))
+
+;; (def
+;;  ^{:arglists '([coll x] [coll x & xs])
+;;    :doc "conj[oin]. Returns a new collection with the xs
+;;     'added'. (conj nil item) returns (item).  The 'addition' may
+;;     happen at different 'places' depending on the concrete type."
+;;    :added "1.0"
+;;    :static true}
+;;  conj (fn ^:static conj
+;;         ([coll x] (. clojure.lang.RT (conj coll x)))
+;;         ([coll x & xs]
+;;          (if xs
+;;            (recur (conj coll x) (first xs) (next xs))
+;;            (conj coll x)))))
+
+;; (defn into
+;;   "Returns a new coll consisting of to-coll with all of the items of
+;;   from-coll conjoined."
+;;   {:added "1.0"
+;;    :static true}
+;;   [to from]
+;;   (if (instance? clojure.lang.IEditableCollection to)
+;;     (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
+;;     (reduce conj to from)))
