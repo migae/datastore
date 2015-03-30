@@ -85,7 +85,7 @@ the Entity, and `[:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis
 the "namespace" or ancestor path.  If you print this key from the ds
 you get something like:
 
-    [Family("Felidae")/Subfamily("Felinae")/Genus("Felis")/Species("Felis_catus")]
+    [Family("Felidae")/Subfamily("Felinae")/Genus("Felis")/Species("Felis_catus")/Cat("Chibi")]
 
 Migae wraps the gory details.  If you ask for the key of an Entity,
 you get the entire keychain vector.(? - SUBJECT TO CHANGE) If you just
