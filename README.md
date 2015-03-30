@@ -22,11 +22,13 @@ like plain Clojure data structures.  For example:
 		  ...etc...
 ```
 
-This approach involves a certain amount of overhead - keywords in the
-data must be stored as Key properties, everything must be
-converted/deconverted to/from appropriate types, etc.  But the payoff
-is GAE datastore data that are largely indistinguishable from Clojure
-data.
+This approach involves a certain amount of overhead; everything must
+be converted/deconverted to/from appropriate types; for example,
+keywords in the data must be converted to Key objects and stored as
+property vals, map vals must be converted to EmbeddedEntity objects,
+and so forth.  But the payoff is a GAE datastore interface that makes
+working with GAE data largely indistinguishable from working with
+plain Clojure data.
 
 Very much a work in progress - expect some breakage - but works well
 enough to have some fun playing around.  Not much documentation at the
