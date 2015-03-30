@@ -31,9 +31,11 @@ working with GAE data largely indistinguishable from working with
 plain Clojure data.
 
 Very much a work in progress - expect some breakage - but works well
-enough to have some fun playing around.  Not much documentation at the
-moment, but lots of simple tests (see esp. test/migae.tutorial.clj)
-that demonstrate the semantics.
+enough to have some fun playing around.  Not packaged on clojars, to
+experiment, clone the repo and run the tests.  Not much documentation
+at the moment, but lots of simple tests (see
+esp. test/migae.tutorial.clj) that demonstrate the semantics.
+
 
 # Ancestry - i.e. Keys, Names, and Namespaces
 
