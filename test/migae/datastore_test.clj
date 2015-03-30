@@ -407,12 +407,12 @@
 
 
 ;; ################################################################
-(deftest ^:keysym keysym1
+(deftest ^:xkeysym keysym1
   (testing "keyword - key literals: name"
     (is (ds/key? (ds/key :Employee/asalieri)) true)
     (is (ds/key? (ds/key :Employee/d15)) true)))
 
-(deftest ^:keysym keysym2
+(deftest ^:xkeysym keysym2
   (testing "keymap literals: name"
     (is (ds/key? (ds/key :Employee :asalieri)) true)
     (is (ds/key? (ds/key "Employee" "asalieri")) true)))
@@ -420,61 +420,61 @@
     ;; (is (= (type (dskey/make 'Employee/x0F)) com.google.appengine.api.datastore.Key)))))
 ;    (is (= (type (dskey/make 'Employee/asalieri)) com.google.appengine.api.datastore.Key))))
 
-(deftest ^:keysym keysym1-id
+(deftest ^:xkeysym keysym1-id
   (testing "keymap literals: id"
     (let [k (dskey/make 'Employee/_99)]
       (log/trace k)
       (is (= (type k) com.google.appengine.api.datastore.Key)))))
 
-;; (deftest ^:keys keymap1-name
+;; (deftest ^:xkeys keymap1-name
 ;;   (testing "keymap literals: name"
 ;;     (is (= (type (dskey/make :_kind :Employee :_name "asalieri"))
 ;;            com.google.appengine.api.datastore.Key))))
 
-;; (deftest ^:keys keymap1-id
+;; (deftest ^:xkeys keymap1-id
 ;;   (testing "keymap literals: id"
 ;;     (is (= (type (dskey/make :_kind :Employee :_id 99))
 ;;            com.google.appengine.api.datastore.Key))
 ;;     ))
 
-(deftest ^:keys keymap2a
+(deftest ^:xkeys keymap2a
   (testing "keymap literals 2a"
     (is (= (type (dskey/make {:_kind :Employee :_name "asalieri"}))
            com.google.appengine.api.datastore.Key))))
 
-(deftest ^:keys keymap2b
+(deftest ^:xkeys keymap2b
   (testing "keymap literals 2b"
     (is (= (type (dskey/make {:_kind :Employee :_id 99}))
            com.google.appengine.api.datastore.Key))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest ^:keychain keychain1a
+(deftest ^:xkeychain keychain1a
   (testing "keychain sym key literals 1a"
     (log/trace (ds/key :Genus/Felis :Species/Felis_catus))
     (ds/key? (ds/key :Genus/Felis :Species/Felis_catus))))
 
-(deftest ^:keychain keychain1b
+(deftest ^:xkeychain keychain1b
   (testing "keychain sym key literals 1b"
     (log/trace (ds/key :Subfamily/Felinae :Genus/Felis :Species/Felis_catus))
     (ds/key? (ds/key :Subfamily/Felinae :Genus/Felis :Species/Felis_catus))))
 
-(deftest ^:keychain keychain1c
+(deftest ^:xkeychain keychain1c
   (testing "keychain sym key literals 1c"
     (log/trace (ds/key :Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus))
     (ds/key? (ds/key :Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus))))
 
 
-(deftest ^:keychain keychain20
+(deftest ^:xkeychain keychain20
   (testing "keychain string key literals 2"
     (ds/key? (ds/key :Subfamily :Felinae :Genus :Felis))
     (ds/key? (ds/key "Subfamily" "Felinae" "Genus" "Felis"))))
 
-(deftest ^:keychain keychain30
+(deftest ^:xkeychain keychain30
   (testing "keychain - mixed key literals 30"
     (ds/key? (ds/key :Subfamily/Felinae :Genus :Felis)
     (ds/key? (ds/key "Subfamily" "Felinae" :Genus/Felis)))))
 
-(deftest ^:keychain keychain3
+(deftest ^:xkeychain keychain3
   (testing "keychain literals 3"
     (let [chain (dskey/make :Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus)]
       (log/trace chain))))
@@ -485,7 +485,7 @@
     ;;        com.google.appengine.api.datastore.Key))
     ;; ))
 
-(deftest ^:keys keymap3
+(deftest ^:xkeys keymap3
   (testing "keymap literals 1"
     (is (= (type (dskey/make {:_kind :Employee :_name "asalieri"}))
            com.google.appengine.api.datastore.Key))
@@ -493,7 +493,7 @@
            com.google.appengine.api.datastore.Key))
     ))
 
-(deftest ^:keys ekeymap1
+(deftest ^:xkeys ekeymap1
   (testing "entity with keymap literal 2"
     (let [em ^{:_kind :Employee, :_name "asalieri"}
           {:fname "Antonio", :lname "Salieri"}]
@@ -505,7 +505,7 @@
         (is (= (dse/name ent)) "asalieri"))
       )))
 
-(deftest ^:keys keys3
+(deftest ^:xkeys keys3
   (testing "entitymap deftype keys child"
     (let [key (dskey/make {:_kind :Genus :_name "Felis"})
           child (dskey/child key {:_kind :Genus :_name "Felis"})]
@@ -524,7 +524,7 @@
 ;;       (log/trace (dskey/kind parent))
 ;;       (is (= ((dskey/kind parent) :Genus))))))
 
-(deftest ^:keys keys4
+(deftest ^:xkeys keys4
   (testing "entitymap deftype keys parent"
     (let [parent (dskey/make {:_kind :Genus :_name "Felis"})
           foo (log/trace "parent " parent)
@@ -539,7 +539,7 @@
              "felis catus"))
       )))
 
-(deftest ^:keys keys5
+(deftest ^:xkeys keys5
   (testing "entitymap deftype keys parent"
     (let [parent (dskey/make {:_kind :Genus :_name "Felis"})
           child  (dskey/make {:_parent {:_kind :Genus :_name "Felis"}

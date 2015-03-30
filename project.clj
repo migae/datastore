@@ -1,11 +1,12 @@
-(defproject org.mobileink/migae.datastore "0.1.0-SNAPSHOT"
+(defproject org.mobileink/migae.datastore "0.2.0-SNAPSHOT"
   :description "migae - MobileInk Google App Engine sdk for Clojure."
   :url "https://github.com/migae/datastore"
   :min-lein-version "2.0.0"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :aot [#".*"]
-  :test-selectors {:fields :fields
+  :aot [migae.datastore]
+  :test-selectors {:api :api
+                   :fields :fields
                    :meta :meta
                    :infix :infix
                    :map :map
