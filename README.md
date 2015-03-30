@@ -11,14 +11,22 @@ like plain Clojure data structures.  For example:
 ;; emap!! - retrieve if exists, overriding props, otherwise create and save
     (let [em1 (ds/emap!! [:Foo/Bar] {:a 1, :b 2}) ;; kind: "Foo", name: "Bar"
           em2 (ds/emap!! [:Foo] {:a 1}) ;; kind: Foo, id auto-generated
-          em3 (ds/emap!! [:A/B :C/D] {c: [1 2] :d #{'sym1 'sym2} })
+          em3 (ds/emap!! [:A/B :C/D] {:c [1 2] :d #{'sym1 'sym2} })
           em4 (into em1 em2) ;; =>  [:Foo/Bar] {:a 1 :b 2 :c [1 2] :d #{'sym1 'sym2}}
           em5 (assoc em3 {:z "foo"})
 		  em6 (merge e2 {:fld1 :val1} {:fld2 "val2"})
+		  ;; nested vals automatically converted to Java types acceptable to datastore:
+          em7 (ds/emap!! [:Foo/d99] {:a {:a1 'a2} :b #{:b1 :b2} :c [1 2]}) ; id: 99 (long)
 		  a (:a em1)
 		  b (em1 :b)
 		  ...etc...
 ```
+
+This approach involves a certain amount of overhead - keywords in the
+data must be stored as Key properties, everything must be
+converted/deconverted to/from appropriate types, etc.  But the payoff
+is GAE datastore data that are largely indistinguishable from Clojure
+data.
 
 Very much a work in progress - expect some breakage - but works well
 enough to have some fun playing around.  Not much documentation at the
