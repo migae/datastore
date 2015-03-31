@@ -37,7 +37,7 @@ at the moment, but lots of simple tests (see
 esp. test/migae.tutorial.clj) that demonstrate the semantics.
 
 
-# Ancestry - i.e. Keys, Names, and Namespaces
+# Ancestry - i.e. Keys, Keychains, and Keylinks
 
 The identity of a datastore entity is determined by its key; two
 entities are equal if they have equal keys.  In other words, the
@@ -46,7 +46,7 @@ Entity method "equals" tests for key equality.
 The language of Keys is a little confusing and obscure.  Migae tries
 to make things a little more explicit and clear.
 
-Keys are composed of a pair of a Kind and an Identifier (either a
+A "Key" is composed of a pair of a Kind and an Identifier (either a
 string name or a long id), plus a parent key.  This recursive
 structure establishes an "ancestor path" for each key.  The native API
 does not provide a "getAncestors" method; to construct the entire path
@@ -61,9 +61,21 @@ link in a chain of keys.  If you call getKey on an Entity, you don't
 get the entire chain of key objects.  For that, you have to recur using
 getParent.
 
-In other words, when the DS doco says "Key", it often means something
-like last node or link in a path or chain of Key objects.
+In other words, when the DS doco says "Key", it might mean the entire
+Key (chain) of an entity, or it might mean jus the last link in the
+chain (a Key object).
 
+Migae replaces "Key" talk with talk of Keychains and Keylinks.
+
+When you call getKey on an Entity, you get a Key object, which
+represents the last link in the chain.  The preceding links in the
+chain are represented by the getParent method of the Key class.  In
+migae, we refer to keylinks rather than Keys, and keychains rather
+than ancestor paths.  So e.g. `(ds/keylink e)` wraps a call to getKey,
+which returns a Key, and `(ds/keychain e)` recurs over the ancestor
+path to produce a vector of keylinks (represented as Clojure
+keywords).  To get the ancestory path (as a vector of keywords), call
+`(ds/keychain (ds/parent e))`.
 
 The Kind of an entity is determined by the kind of its key, which is
 to say by the kind of the last element in its keychain.  Ditto for its
