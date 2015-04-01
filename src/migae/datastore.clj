@@ -46,24 +46,11 @@
 
 (defonce ^{:dynamic true} *datastore-service* (atom nil))
 
-;; (defn get-datastore-service []
-;;   (when (nil? @*datastore-service*)
-;;         (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService)))
-;;   @*datastore-service*)
-
 (defn datastore []
   (when (nil? @*datastore-service*)
     (do ;; (prn "datastore ****************")
         (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService))))
   @*datastore-service*)
-
-
-;; (defonce ^{:dynamic true} *datastore-service* (atom nil))
-;; (defn get-datastore-service []
-;;   (when (nil? @*datastore-service*)
-;;     ;; (do (prn "getting ds service ****************")
-;;     (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService)))
-;;   @*datastore-service*)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -157,13 +144,7 @@
 (declare get-val-ds get-val-clj)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftype EntityMap [entity]
-  ;; migae.datastore.EntityMap
-  ;; (EntityMap [this content])
-
-  ;; com.google.appengine.api.datastore.Entity
-  ;; (getKey [this] (.getKey this))
 
   java.lang.Iterable
   (iterator [this]
@@ -426,70 +407,6 @@
   [^EntityMap e]
   (.getId (.getKey (.entity e))))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; public class IteratorSeq extends ASeq
-;; ;; public abstract class ASeq extends Obj implements ISeq, Sequential, List, Serializable, IHashEq
-;; (deftype EntityMapSeq [em-iter
-;;                        ^:volatile-mutable _val
-;;                        ^:volatile-mutable _rest]
-
-;;   clojure.lang.ISeq                     ;extends IPersistentCollection
-;;   (first [this]                            ; car?  returns obj
-;;     (log/trace "FIRST hash " (.hashCode this))
-;;     (log/trace "FIRST val " _val)
-;;     (log/trace "FIRST em-iter " em-iter)
-;;     (log/trace "FIRST em-iter hasNext " (.hasNext em-iter))
-;;     (EntityMap. _val))
-;;   (next [this]                             ; = cdr?  returns ISeq, not Obj
-;;     (log/trace "next: this " (.hashCode this))
-;;     (log/trace "em-iter 1 type " (type em-iter))
-;;     (log/trace "em-iter 1 " em-iter)
-;;     ;; (log/trace "em-iter 1 hasNext " (.hasNext em-iter))
-;;     (set! _val (.next em-iter))
-;;     (set! _rest (if (.hasNext em-iter)
-;;                   (let [ems (EntityMapSeq. em-iter nil nil)]
-;;                     (log/trace "ems hash: " (.hashCode ems))
-;;                     ems)
-;;                   nil))
-;;       _rest)
-;;   (more [this]
-;;     (log/trace "more " (.hashCode this))
-;;     (let [s (next this)]
-;;       (if (nil? s)
-;;         nil ;; PersistentList/EMPTY
-;;         s)))
-
-;;     ;; (log/trace "EMSeq em-iter: " em-iter)
-;;     ;; (if (.hasNext em-iter)
-;;     ;;   (let [nxt (.next em-iter)]
-;;     ;;     (log/trace "EMSeq.next " nxt)
-;;     ;;     ;; (EntityMap. nxt))))
-;;     ;;     )))
-
-;;   ;; (more [_])
-;;   ;; (cons [_])
-
-;;   ;; clojure.lang.IPersistentCollection  ;; extends Seqable
-;;   ;; (count [this])
-;;   ;; (cons  [this o])
-;;   ;; (empty [this])
-;;   ;; (equiv [this o])
-
-;;   clojure.lang.Seqable
-;;   (seq [this]
-;;     this)
-
-;;   ;; clojure.lang.Sequential
-;;   ;; ;; empty!
-
-;;   ;; clojure.lang.IHashEq
-;;   ;; (hasheq [_]
-;;   ;;   (log/trace "IHashEq.hasheq"))
-
-;;   ;; java.util.List
-;;   ;; java.io.Serializable
-;;   ) ;; deftype EntityMapSeq
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- keyword-to-ds
   [kw]
@@ -616,370 +533,6 @@
                           v))]
     ;; (log/trace "get-val-ds result:" v " -> " val "\n")
     val))
-
-;; (defn new-entitymap
-;;   [raw-contents]
-;;   {:pre [(let [m (apply hash-map raw-contents)]
-;;            (:_kind m))]}
-;;   ;; ;; :_kind required
-;;   (let [m (apply hash-map raw-contents)
-;;         {k :_kind n :_name i :_id} m]
-;;     (if (not k)
-;;       (throw (Throwable. "missing :_kind"))
-;;       (if (and (not= (type k) java.lang.String)
-;;                (not= (type k) clojure.lang.Keyword))
-;;         (throw (Throwable. ":_kind must be String or Keyword"))
-;;         (if (and n i) (throw (Throwable. "only one of:_name and :_id allowed"))
-;;       ;; ;; :_name and :id optional; only one allowed
-;;       ;; (if (:_name m) ...)
-;;       ;; (if (:_id m) ...)
-;;       ;; create entity now?
-;;       (EntityMap. m))))))
-
-(defn persist
-  [theMap]
-  {:pre [ ]} ;; TODO: validate entitymap
-  (let [{kind :_kind name :_name id :_id parent :_parent} (meta theMap)
-        parentEntity (if parent
-                       (let [k (:_kind parent)
-                             n (:_name parent)
-                             i (:_id parent)]
-                         (cond name (Entity. (clojure.core/name k) n)
-                               id (Entity. (clojure.core/name k) i)
-                               :else (Entity. (clojure.core/name k))))
-                       nil)
-        parentKey (if parent (dse/key parentEntity)
-                      nil)
-        theEntity (if parentKey
-                    (cond name (Entity. (clojure.core/name kind) name parentKey)
-                          id (Entity. (clojure.core/name kind) id parentKey)
-                          :else (Entity. (clojure.core/name kind) parentKey))
-                    (cond name (Entity. (clojure.core/name kind) name)
-                          id (Entity. (clojure.core/name kind) id)
-                          :else (Entity. (clojure.core/name kind))))]
-        (do
-          (doseq [[k v] theMap]
-            (.setProperty theEntity (clojure.core/name k) v))
-          (let [key (.put (datastore) theEntity)
-                kw (if (and (not id) (not name)) :_id)
-                v  (if (and (not id) (not name)) (dskey/id key))
-                m (clj/assoc (meta theMap)
-                    kw v
-                    :_key key
-                    :_entity theEntity)]
-            (with-meta theMap m)))))
-
-;; TODO:  support tabular input, each row one entity
-(defn persist-list
-  [kind theList]
-  ;; (log/trace "persist kind" kind)
-  ;; (log/trace "persist list:" theList)
-  (doseq [item theList]
-    (let [theEntity (Entity. (clojure.core/name kind))]
-      (doseq [[k v] item]
-        ;; (log/trace "item" k (type v))
-        (.setProperty theEntity (clojure.core/name k)
-                      (cond
-                       (= (type v) clojure.lang.Keyword) (clojure.core/name v)
-                       :else v)))
-      (.put (datastore) theEntity)))
-  true)
-
-      ;;       kw (if (and (not id) (not name)) :_id)
-      ;;       v  (if (and (not id) (not name)) (dskey/id key))
-      ;;       m (assoc (meta theMap)
-      ;;           kw v
-      ;;           :_key key
-      ;;           :_ent theEntity)]
-      ;; (with-meta theMap m)))))
-
-;; ################
-;; (defn fetch
-;;   ([^String kind] )
-;;   ([^Key key] (dss/get key))
-;;   ([^String kind ^String name] (let [key ...] (ds/get key)))
-;;   ([^String kind ^Long id] (let [key ...] (ds/get key)))
-
-(defmulti fetch
-  (fn [{key :_key kind :_kind name :_name id :_id parent :_parent :as args}]
-    (cond
-     (= (type args) com.google.appengine.api.datastore.Key) :key
-     parent :parent
-     key  :keymap
-     (and kind name) :kindname
-     (and kind id)   :kindid
-     kind :keysonly
-     :else :bug)))
-
-(defmethod fetch :bug
- [{key :_key kind :_kind name :_name id :_id :as args}]
-  (log/trace "fetch method :bug, " args))
-
-(defmethod fetch :key
-  [key]
-  {:pre [(= (type key) com.google.appengine.api.datastore.Key)]}
-  (let [ent (.get (datastore) key)
-        kind (dskey/kind key)
-        name (dskey/name key)
-        id (dskey/id   key)
-        props  (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
-    (with-meta
-      (clj/into {} (for [[k v] props] [(keyword k) v]))
-      {:_kind kind :_name name :_key key :_entity ent})))
-
-(defmethod fetch :keymap
-  [{key :_key}]
-  {:pre [(= (type key) com.google.appengine.api.datastore.Key)]}
-  (let [ent (.get (datastore) key)
-        kind (dskey/kind key)
-        name (dskey/name key)
-        id (dskey/id   key)
-        props  (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
-    (with-meta
-      (clj/into {} (for [[k v] props] [(keyword k) v]))
-      {:_kind kind :_name name :_key key :_entity ent})))
-
-(defmethod fetch :parent
-  [{key :_key kind :_kind name :_name id :_id parent :_parent :as args}]
-  (let [parentKey (dskey/make {:_kind (:_kind parent) :_name (:_name parent)})
-        childKey (dskey/make {:_kind kind :_name name :_parent parent})
-        ;; childKey (dskey/make parentKey kind name)
-        ent (.get (datastore) childKey)
-        kind (dskey/kind childKey)
-        name (dskey/name childKey)
-        id (dskey/id   childKey)
-        props  (clj/into {} (.getProperties ent))]
-    (with-meta
-      (clj/into {} (for [[k v] props] [(keyword k) v]))
-      {:_kind kind :_name name :_key childKey :_entity ent})))
-
-(defmethod fetch :kindname
-  ;; validate kind, name
-  ;; {:pre [ ]}
-  [{kind :_kind name :_name}]
-  (let [foo (log/debug (format "fetching kind %s name %s" kind name))
-        key (try (dskey/make {:_kind kind :_name name})
-                 (catch Exception e nil))]
-    (if key
-      (let [ent (.get (datastore) key)
-            props  (clj/into {} (.getProperties ent))]
-        ;; TODO: if not found, return nil
-        (with-meta
-          (clj/into {} (for [[k v] props] [(keyword k) v]))
-          {:_kind kind :_name name :_key key :_entity ent}))
-      nil)))
-
-(defmethod fetch :kindid
-  ;; {:pre [ ]}
-  [{kind :_kind id :_id}]
-  (let [key (dskey/make {:_kind kind :_id id})
-        ent (.get (datastore) key)
-        props (clj/into {} (.getProperties ent))] ;; java.util.Collections$UnmodifiableMap???
-    (with-meta
-      (clj/into {} (for [[k v] props] [(keyword k) v]))
-      {:_kind kind :_id id :_key key :_entity ent})))
-
-;; see also dsqry/fetch
-(defmethod fetch :keysonly
-  ;; {:pre [ ]}
-  [{kind :_kind :as args}]
-  (let [q (dsqry/keys-only kind)
-        foo (log/debug "isKeysOnly? " (.isKeysOnly q))
-        pq (dsqry/prepare q)
-        bar (log/debug "resulting prepq: " pq)
-        c (log/debug "count " (dsqry/count pq))]
-    (dsqry/run pq)))
-
-(defmulti ptest
-  (fn
-    ([arg1 arg2]
-       (cond
-        ;; :_kind :Person
-        (= arg1 :_kind) (do (log/trace "dispatching on kw " arg2) :kind)
-        ;; :Person '(:sex = :M)
-        (list? arg2) (do (log/trace "dispatching on kind filter "
-                                    (infix/infix-to-prefix arg2)) :kindfilter)
-        :else :bug)
-        )
-    ([kw kind filter]
-       (let [f (infix/infix-to-prefix filter)]
-         (do (println "ptest kw " kind)
-             (println "ptest kw" (type kind))
-             (log/trace "kw filter: " f)
-             (cond
-              ;; :_kind :Person '(:age >= 18)
-              (list? filter) (do (log/trace "dispatching on kw filter "
-                                    (infix/infix-to-prefix filter)) :kwfilter)
-              (map? kw) (do (log/trace "map " kw) :map)
-              (vector? kw) (do (let [a (apply hash-map kw)]
-                                  (log/trace kw) :v))
-              :else :bug
-              ))))
-    ;; ([kw kind & args]
-    ;;    (let [a (apply hash-map kw kind args)
-    ;;          f (:filter a)]
-    ;;      (do (println "ptest a " a)
-    ;;          (println "ptest a" (type a))
-    ;;          (log/trace "filter: " (infix/infix-to-prefix f))
-    ;;          (cond
-    ;;           (map? a) (do (log/trace "map " a) :map)
-    ;;           (vector? a) (do (let [a (apply hash-map a)]
-    ;;                               (log/trace a) :v))
-    ;;           :else :bug
-    ;;           ))))
-    ([{kind :_kind :as args}]
-       (do (println "ptest b" args)
-           (println "ptest b" (type args))
-           (cond
-            ;; check for null kind
-            (keyword? args) (do (log/trace "dispatching on kind " args) :kind)
-            (map? args) (do (log/trace "map " args) :map)
-            (vector? args) (do (let [a (apply hash-map args)]
-                                 (log/trace a) :v))
-            :else :bug
-            )))))
-
-(defmethod ptest :bug
-  [arg & args]
-  (log/trace "ptest bug: " args)
-  (log/trace "ptest bug: " (type args))
-  )
-
-(defmethod ptest :map
-  [arg & args]
-  )
-
-(defmethod ptest :kw
-  [arg1 arg2]
-  )
-
-(defmethod ptest :kind
-  [arg & args]
-  )
-
-(defmethod ptest :kindfilter
-  [kind filter]
-  )
-
-(defmethod ptest :kwfilter
-  [kw kind filter]
-  )
-
-(defmethod ptest :v
-  [arg & args]
-  )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; An alternative: use defProtocol
-
-(defn dump-entity [theEntity]
-  (do
-    (prn "****************")
-    (prn "Dumping entity: " theEntity)
-    (prn "entity: " ((meta theEntity) :entity))
-    (prn "keymap: "(meta theEntity))
-    (prn "entitymap: " (theEntity))
-    (prn "****************")
-    ))
-
-
-(declare Entities)
-(declare wrap-entity)
-
-(defn entity-from-entitymap
-  [theEntityMap]
-  {:pre [;; (do (prn "e map meta: " (meta theEntityMap))
-         ;;     (prn "e map id: "   (:id (meta theEntityMap))) true),
-         ;; :key not allowed in EntityMap initializers
-         (not (nil? (:kind (meta theEntityMap)))),
-         ;; one of :id or :name or neither
-         (or (nil? (:id (meta theEntityMap)))
-             (nil? (:name (meta theEntityMap)))),
-         (if (not (nil? (:id (meta theEntityMap))))
-           (number? (:id (meta theEntityMap)))
-           true),
-         (if (not (nil? (:name (meta theEntityMap))))
-           (or (string?  (:name (meta theEntityMap)))
-               (keyword? (:name (meta theEntityMap))))
-           true)
-         ;; TODO: validate :parent
-         ]}
-  (let [{:keys [kind id name parent]} (meta theEntityMap)
-        arg2 (if id id (if name name nil))
-        arg3 (if (nil? parent) nil
-                 (cond
-                  (= (type parent)
-                     :migae.datastore/Key)
-                  ;;no yet
-                  nil
-                  (= (type parent)
-                     :migae.datastore/Entity)
-                  (:key (meta parent))
-                  :else  ;; type parent = EntityMap
-                  (:key (meta (Entities parent)))))
-        ;; OR: (ds/keys ds parent)))))
-        theEntity (if (nil? parent)
-                    (Entity. (clojure.core/name kind)
-                             (if id id (if name name)))
-                    (Entity. (clojure.core/name kind)
-                             (if id id (if name name))
-                             arg3))]    ; arg3 = parent Key
-          (doseq [[k v] theEntityMap]
-            ;; TODO: handle val types
-            (.setProperty theEntity
-                          (clojure.core/name k)
-                          (if (number? v) v
-                              (clojure.core/name v))))
-          ;; TODO: wrap-entity s/b resonsible for putting if needed
-          (.put (datastore) theEntity)
-          (wrap-entity theEntity)))
-
-
-;; QUESTION: do we want to implement a
-;; :migae.datastore/Key clojo to go with our
-;; :migae.datastore/Entity clojo?
-
-(defn- wrap-entity
-  ;; wrap-entity wraps an Entity in a function.  It memoizes metadata
-  ;; (key, kind, id, name, etc.)  as a 'keymap' for use as clojure
-  ;; metadata.  We could implement access to e.g. :kind as logic in
-  ;; the function, but since this data is immutable, there is no
-  ;; reason not to memoize it.  (TODO: see about using deftype for
-  ;; Entities; problem is metadata)
-  ;; BUT: implementing this in the closure amounts to the same thing?
-  [theEntity]
-  (do ;;(prn "making entity " theEntity)
-      (let [theKey (.getKey theEntity)
-            kind (keyword (.getKind theEntity))]
-        ;; then construct function
-        ^{:entity theEntity
-          :parent (.getParent theEntity)
-          :type ::Entity ;; :migae.datastore/Entity
-          :key (.getKey theEntity)
-          :kind kind ; (keyword (.getKind theEntity))
-          :namespace (.getNamespace theEntity)
-          :name (.getName theKey)
-          :id (.getId theKey)
-          :keystring (.toString theKey)
-          :keystringrep (KeyFactory/keyToString theKey)}
-        (fn [& kw]
-          ;; the main job of the function is to lookup properties
-          ;; TODO: accomodate iteration, seq-ing, etc
-          ;; e.g.  (clj/into myEnt {:foo "bar"})
-          ;; also conj, clj/into, etc.
-          ;; e.g.  (conj myEnt {:foo "bar"})
-          ;; etc.
-          ;; only way I see to do this as of now is local replacement
-          ;; funcs in our namespace
-          ;; (cond (= kw :kind kind) ...
-          (if (nil? kw)
-            (let [props (.getProperties theEntity)]
-              ;; efficiency?  this constructs map of all props
-              ;; every time
-              (clj/into {} (map (fn [item]
-                              {(keyword (.getKey item))
-                               (.getValue item)}) props)))
-            (.getProperty theEntity (name kw)))))))
 
 (declare keychainer)
 
@@ -1415,91 +968,9 @@
       ;; (log/trace "created and put entity " e)
       (EntityMap. e))))
 
-          ;; e (try (.get (datastore) k)
-          ;;        (catch EntityNotFoundException e
-          ;;          ;; (log/trace (.getMessage e))
-          ;;          e)
-          ;;        (catch DatastoreFailureException e
-          ;;          ;; (log/trace (.getMessage e))
-          ;;          nil)
-          ;;        (catch java.lang.IllegalArgumentException e
-          ;;          ;; (log/trace (.getMessage e))
-          ;;          nil))
-                 ;; ]
-      ;; (if (emap? e)
-      ;;   (do
-      ;;     (log/trace "found entity " e)
-      ;;     (doseq [[k v] content]
-      ;;       (.setProperty e (subs (str k) 1) (str v)))
-      ;;     (log/trace "modified entity " e)
-      ;;     (.put (datastore) e)
-      ;;     (log/trace "get name " (.getProperty e "name"))
-      ;;     e)
-
-
 (defn key=
   [em1 em2]
   (.equals (.entity em1) (.entity em2)))
-
-;; (defn get
-;;   [^EntityMap em prop]
-;;   ;; (log/trace "getting prop " prop " for ent " em)
-;;   (let [p (.getProperty (.entity em) (subs (str prop) 1))]
-;;     ;;(log/trace "got " p)
-;;     p))
-
-;; (defmacro :
-;;   [prop em]
-;;   ;; (log/trace "getting prop " prop " for ent " em)
-;;   (let [p (.getProperty em (subs (str prop) 1))]
-;;     ;;(log/trace "got " p)
-;;     p))
-
-;;;; TODO embedded entities
-
-
-;; (def
-;;  ^{:arglists '([map key val] [map key val & kvs])
-;;    :doc "assoc[iate]. When applied to a map, returns a new map of the
-;;     same (hashed/sorted) type, that contains the mapping of key(s) to
-;;     val(s). When applied to a vector, returns a new vector that
-;;     contains val at index. Note - index must be <= (count vector)."
-;;    :added "1.0"
-;;    :static true}
-;;  assoc
-;;  (fn ^:static assoc
-;;    ([map key val] (. clojure.lang.RT (assoc map key val)))
-;;    ([map key val & kvs]
-;;     (let [ret (assoc map key val)]
-;;       (if kvs
-;;         (if (next kvs)
-;;           (recur ret (first kvs) (second kvs) (nnext kvs))
-;;           (throw (IllegalArgumentException.
-;;                   "assoc expects even number of arguments after map/vector, found odd number")))
-;;         ret)))))
-
-;; (defn assoc
-;;   "assoc for DS Entities"
-;;   ;; ([^clojure.lang.IPersistentVector ekey propname val]
-;;   ;;  (let [e (emap! ekey)]
-;;   ;;    (.setProperty ekey (subs (str propname) 1) val)
-;;   ;;    e))
-;;   ([^com.google.appengine.api.datastore.Entity coll propname val]
-;;    (.setProperty coll (subs (str propname) 1) val)
-;;    coll)
-;;   ([^com.google.appengine.api.datastore.Entity coll propname val & kvs]
-;;    (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
-;;    (if kvs
-;;      (recur coll (first kvs) (second kvs) (nnext kvs))
-;;      coll)))
-
-  ;; ;; ([^clojure.lang.IPersistentVector coll propname val]
-  ;; ;;  )
-  ;; ([^com.google.appengine.api.datastore.Entity coll propname val]
-  ;;  (.setProperty coll (subs (str propname) 1) val)
-  ;;  (.put (datastore) coll)
-  ;;  coll)
-
 
 (defn assoc!
   "unsafe assoc with save but no txn for DS Entities"
@@ -1555,61 +1026,6 @@
        (if (= (class coll) Entity)
          (EntityMap. coll)
          (log/trace "EXCEPTION assoc!!")))))
-
-;;   ;; ([^clojure.lang.IPersistentVector coll propname val]
-;;   ;;  )
-
-;; (defmethod assoc!! Entity
-;;   ([^com.google.appengine.api.datastore.Entity coll ^Keyword propname val]
-;;      ;; e (Entity. k)]
-;;   ([^com.google.appengine.api.datastore.Entity coll ^Keyword propname val & kvs]
-;;    (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
-;;    (if kvs
-;;      (recur coll (first kvs) (second kvs) (nnext kvs))
-;;      coll)))
-
-;; (defmethod assoc!! EntityMap
-;;   ([^EntityMap coll ^Keyword propname val]
-;;    {:pre {[(nil? (clj/namespace propname))]}
-;;    (let [txn (.beginTransaction (datastore))]
-;;      ;; e (Entity. k)]
-;;      (try
-;;        (.setProperty coll (clj/name propname) val)
-;;        (.put (datastore) coll)
-;;        (.commit txn)
-;;        (finally
-;;          (if (.isActive txn)
-;;            (.rollback txn))))
-;;      coll))
-;;   ([^com.google.appengine.api.datastore.Entity coll propname val & kvs]
-;;    (.setProperty coll (subs (str propname) 1) val) ; setProperty returns void
-;;    (if kvs
-;;      (recur coll (first kvs) (second kvs) (nnext kvs))
-;;      coll)))
-
-;; (def
-;;  ^{:arglists '([coll x] [coll x & xs])
-;;    :doc "conj[oin]. Returns a new collection with the xs
-;;     'added'. (conj nil item) returns (item).  The 'addition' may
-;;     happen at different 'places' depending on the concrete type."
-;;    :added "1.0"
-;;    :static true}
-;;  conj (fn ^:static conj
-;;         ([coll x] (. clojure.lang.RT (conj coll x)))
-;;         ([coll x & xs]
-;;          (if xs
-;;            (recur (conj coll x) (first xs) (next xs))
-;;            (conj coll x)))))
-
-;; (defn into
-;;   "Returns a new coll consisting of to-coll with all of the items of
-;;   from-coll conjoined."
-;;   {:added "1.0"
-;;    :static true}
-;;   [to from]
-;;   (if (instance? clojure.lang.IEditableCollection to)
-;;     (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
-;;     (reduce conj to from)))
 
 (defmacro emaps!
   [kind pred]
@@ -1678,11 +1094,6 @@
       (throw (IllegalArgumentException. "arg must be key, keyword, or a vector of keywords")))))
 
 
-;; (defmethod keychainer [clojure.lang.ArraySeq nil]
-;;   ;; vector of keywords, string pairs, or both
-;;   ([head & chain]
-;;    (log/trace "seq nil" head chain)))
-
 ;; Key query (i.e. plain get)
 (defmethod emaps?? 'Key
   [^clojure.lang.Keyword k]             ; e.g. :Foo/Bar
@@ -1708,16 +1119,6 @@
          (catch EntityNotFoundException e (throw e))
          (catch Exception e (throw e)))]
     (EntityMap. e)))
-
-;; core.clj:
-;; (defn iterator-seq
-;;   "Returns a seq on a java.util.Iterator. Note that most collections
-;;   providing iterators implement Iterable and thus support seq directly."
-;;   {:added "1.0"
-;;    :static true}
-;;   [iter]
-;;   (clojure.lang.IteratorSeq/create iter))
-
 
 ;; Kind query
 (defmethod emaps?? 'Kind               ; e.g. :Foo
@@ -1783,12 +1184,6 @@
 (defmethod to-edn [EntityMap nil]
   [^EntityMap e]
   e)
-  ;; (let [k (.getKey e)
-  ;;       kch (get-keychain k)
-  ;;       props (clj/into {} (.getProperties e))
-  ;;       em (clj/into {} {:kind_ (.getKind k) :ident_ (identifier k)})]
-  ;;       ;; em (clj/into {} {:key kch})]
-  ;;   (clj/into em (for [[k v] props] [(keyword k) v]))))
 
 (defmethod to-edn [Entity nil]
   ;;[com.google.appengine.api.datastore.Entity nil]
