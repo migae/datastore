@@ -4,24 +4,30 @@
   :min-lein-version "2.0.0"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :aot [migae.datastore]
-  :test-selectors {:api :api
-                   :fields :fields
-                   :meta :meta
-                   :infix :infix
-                   :map :map
+  :aot [:all]
+  :test-selectors {:ancestor :ancestor
+                   :api :api
+                   :assoc :assoc
+                   :coll :coll
                    :emap :emap
                    :elist :elist
                    :entity :entity
                    :entities :entities
-                   :keys :keys
-                   :keysym :keysym
-                   :keychain :keychain
-                   :ancestor :ancestor
-                   :query :query
-                   :pred :pred
                    :fetch :fetch
-                   :one :one}
+                   :fields :fields
+                   :infix :infix
+                   :into :into
+                   :keys :keys
+                   :keylink :keylink
+                   :keychain :keychain
+                   :map :map
+                   :merge :merge
+                   :meta :meta
+                   :one :one
+                   :pred :pred
+                   :props :props
+                   :query :query
+                   }
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/tools.reader "0.8.16"]
                  [org.clojure/tools.logging "0.2.3"]

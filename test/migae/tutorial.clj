@@ -149,182 +149,43 @@
       (is (= (seq e) '([:b 2] [:c 3] [:a 1])))
       )))
 
-(deftest ^:api map-change
-  (testing "clojure map change api: assoc, dissoc, etc"
-    ;; our assoc, unlike clojure's assoc, updates in place.  clojure's
-    ;; assoc returns a new datum (immutability)
-    ;; we could follow clojure and spawn a new entity instead of
-    ;; updating the original, but I'm not sure what the benefit would
-    ;; be; we make Entity look like a map to get conceptual
-    ;; integration, not in order to actually use it just like a
-    ;; clojure map.
-    (log/trace "test: clojure map api: assoc")
-    (let [e1 (ds/emap!! [:Foo/bar] {:a 1 :b 2})]
-      (log/trace "(seq e1) " (seq e1))
-      (let [e2 (assoc e1 :c "Hi!")]
-        (log/trace "(seq e1) " (seq e1))
-        (log/trace "(seq e2) " (seq e2))
-        (is (ds/key= e1 e1))
-        (let [e3 (dissoc! e2 :a)]
-          (log/trace "(seq e1) " (seq e1))
-          (log/trace "(seq e2) " (seq e2))
-          (log/trace "(seq e3) " (seq e3))))
-      ;; now (keys e1) = :a, :c
-      (let [e4 (conj! e1 {:x 9})]
-        (log/trace "(conj! e1 {:x 9}) " (seq e4)))
-      ;; (let [e5 (merge e1 {:foo "bar"})]
-      ;;   (log/trace "(merge e1 {:foo 'bar'}) " (seq e5)))
-      (let [e4 (merge e1 {:y 1})]
-        (log/trace "(merge e1 {:x 9}) " (seq e4)))
-      (let [e5 (ds/emap!! [:Foo/baz] {:a 1})
-            e6 (ds/emap!! [:Foo/bux] {:b 2})]
-        (log/trace "(merge e5 e6) " (merge e5 e6)))
-      ;; (let [e5 (merge e1 {:foo "bar"})]
-      ;;   (log/trace "(merge e1 {:foo 'bar'}) " (seq e5)))
-    )))
-
-(deftest ^:api emap-into
-  (testing "clojure map api: into"
-    (log/trace "test: clojure map api: into")
-    (let [em1 (ds/emap!! [:A/B] {:a 1})
-          em2 (ds/emap!! [:X/Y] {:b 2})
-          foo (do
-                (log/trace "em1" em1)
-                (log/trace "em2" em2))
-          em3 (into em1 em2)
-          ]
-      (log/trace "em3" em3)
-      (is (= em1 em3))
-      (is (ds/key= em1 em3))
-
-      (let [em4 (into em3 {:c 3})]
-        (log/trace "em4" em4)
-        ;; emap into mutates in place
-        (is (= em3 em4)))
-
-      ;; what if we want into to generate a new Entity?
-      ;; (let [em4a (into! em3 {:c 3})]
-      ;;   (log/trace "em4a" em4a)
-      ;;   ;; emap into mutates in place
-      ;;   (is (= em3 em4a)))
-
-      ;; convert emap to clj persistent map
-      (let [em5 (into {:x 9} em3)]
-        (log/trace "em5" em5 (type em5))
-        (is (map? em5))
-        (should-fail (is (ds/emap? em5))))
-
-      )))
-
-(deftest ^:api emap-seq-into
-  (testing "clojure map api: put an emap-seq into a map"
-    (do ;; construct elements of kind :A
-      (ds/emap!! [:A] {:a 1})
-      (ds/emap!! [:A] {:b 2})
-      (ds/emap!! [:A] {:c 3})
-      (ds/emap!! [:A] {:d 4})
-      (ds/emap!! [:A] {:d 4})           ; a dup
-      ;; now do a Kind query, yielding an emap-seq
-      (let [ems (ds/emaps?? [:A])
-            foo (do (log/trace "ems" ems)
-                    (log/trace "(type ems)" (type ems))
-                    (log/trace "(class ems)" (class ems))
-                    (is (seq? ems))
-                    (is (= (count ems) 5))
-                    )
-            em (into {} ems)]
-        (log/trace "em" em))
-
-      (let [ems (ds/emaps?? [:A])
-            foo (do ;; (log/trace "ems" ems)
-                    (is (= (count ems) 5))
-                    )
-            em1 {:as (into {} ems)}
-            em2 {:bs ems}
-            em3 {:cs (into #{} ems)}
-            ]
-        (log/trace "em1" em1 (type em1))
-        (log/trace "em2" em2 (type em2))
-        (log/trace "em3" em3 (type em3))
-        (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
-        )))
-
-(deftest ^:api emap-seq-merge
-  (testing "clojure map api: merge map with an emap-seq"
-    (do ;; construct elements of kind :A
-      (ds/emap!! [:A] {:a 1})
-      (ds/emap!! [:A] {:b 2})
-      (ds/emap!! [:A] {:c 3})
-      (ds/emap!! [:A] {:d 4})
-      (ds/emap!! [:A] {:d 4})           ; a dup
-      ;; now do a Kind query, yielding an emap-seq
-      (let [ems (ds/emaps?? [:A])
-            foo (do (log/trace "ems" ems)
-                    (log/trace "(type ems)" (type ems))
-                    (log/trace "(class ems)" (class ems))
-                    (is (seq? ems))
-                    (is (= (count ems) 5))
-                    )
-            ;; em (merge {} ems)]
-            em (into {} ems)]
-        (log/trace "em" em))
-
-      (let [ems (ds/emaps?? [:A])
-            foo (do ;; (log/trace "ems" ems)
-                    (is (= (count ems) 5))
-                    )
-            ;;em1 {:as (merge {} ems)}
-            em2 {:bs ems}
-            em3 {:cs (merge (into #{} ems) {:x 9})}
-            ]
-        ;;(log/trace "em1" em1 (type em1))
-        (log/trace "em2" em2 (type em2))
-        (log/trace "em3" em3 (type em3))
-        (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
-        )))
-
-(deftest ^:api emap-merge
-  (testing "clojure map api: mergge"
-    (log/trace "test: clojure map api: merge")
-    (let [em1 (ds/emap!! [:A/B] {:a 1})
-          em2 (ds/emap!! [:X/Y] {:b 2})
-          foo (do
-                (log/trace "em1" em1)
-                (log/trace "em2" em2))
-          em3 (merge em1 {:foo "bar"} em2)
-          ]
-      (log/trace "em1" em1)
-      (log/trace "em3" em3)
-      (is (= em1 em3))
-      (is (ds/key= em1 em3))
-
-      (let [em4 (merge em3 {:c 3})]
-        (log/trace "em4" em4)
-        ;; emap into mutates in place
-        (is (= em3 em4)))
-
-      (let [em4 (merge em3 {:c #{{:d 3}}})]
-        (log/trace "em4" em4)
-        ;; emap into mutates in place
-        (is (= em3 em4)))
-
-      ;; what if we want into to generate a new Entity?
-      ;; (let [em4a (into! em3 {:c 3})]
-      ;;   (log/trace "em4a" em4a)
-      ;;   ;; emap into mutates in place
-      ;;   (is (= em3 em4a)))
-
-      ;; convert emap to clj persistent map
-      (let [em5 (merge {:x 9} em3)]
-        (log/trace "em5" em5 (type em5))
-        (is (map? em5))
-        (should-fail (is (ds/emap? em5))))
-      )))
-
 (deftest ^:query kind-query
   (testing "kind query"
     (let [e1 (ds/emaps?? :Foo)]
       (log/trace e1))))
+
+(def test-study-members
+  [["Libbie" "Greenlee" "Greenlee@example.org"]
+   ["Mohammad" "Hoffert" "Hoffert@example.org"],
+   ["Drucilla" "Sebastian" "Sebastian@example.org"],
+   ["Marni" "Alsup" "Alsup@example.org"]])
+;; ,
+;;    ["Sue" "Moxley" "Moxley@example.org"],
+;;    ["Clarissa" "Immel" "Immel@example.org"],
+;;    ["Keeley" "Melville" "Melville@example.org"],
+;;    ["Vernie" "Denner" "Denner@example.org"],
+;;    ["Nena" "Seeger" "Seeger@example.org"],
+;;    ["Lien" "Dedrick" "Dedrick@example.org"],
+;;    ["Kurtis" "Kliebert" "Kliebert@example.org"],
+;;    ["Siu" "Buch" "Buch@example.org"],
+;;    ["Wm" "Hudnall" "Hudnall@example.org"],
+;;    ["Hubert" "Tabb" "Tabb@example.org"],
+;;    ["Garland" "Gifford" "Gifford@example.org"],
+;;    ["Nakisha" "Frase" "Frase@example.org"],
+;;    ["Thalia" "Drago" "Drago@example.org"],
+;;    ["Eun" "Marlar" "Marlar@example.org"],
+;;    ["Kortney" "Estep" "Estep@example.org"],
+;;    ["Allene" "Albin" "Albin@example.org"]])
+
+(deftest ^:api emap-add-children
+  (testing "clojure map api: adding children by kind"
+    (log/trace "test: clojure map api: add children by kind")
+    (let [k (ds/key (ds/emap!! [:Study] {:name "Test"}))]
+      (doseq [mbr test-study-members]
+        (let [mmap {:fname (first mbr), :lname (second mbr), :email (last mbr)}
+              m (ds/emap!! [k :Participant] mmap)]
+          (log/trace "added: " (ds/key m) m)))
+          )))
 
 (deftest ^:api emap-ancestors
   (testing "clojure map api: ancestors"
@@ -380,11 +241,11 @@
       (is (= (vals e) '(2 1)))
       )))
 
-(deftest ^:api emap-props
+(deftest ^:props emap-props
   (testing "Entity property types"
     (let [e1 (ds/emap!! [:Foo/bar]
                         {:int 1 ;; BigInt and BigDecimal not supported
-                         :float 1.1
+                         :float 1.1     ; FIXME: this is getting stringified
                          :bool true :string "I'm a string"
                          :today (java.util.Date.)
                          :email (Email. "foo@example.org")
@@ -405,7 +266,7 @@
       (is (= (type (:today e1)) java.util.Date))
       )))
 
-(deftest ^:api emap-embedded-map-1
+(deftest ^:props emap-embedded-map-1
   (testing "using a map as a property value"
     (let [e (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})]
       (log/trace "test: emap-embedded 1")
@@ -415,7 +276,7 @@
 
 
 ;; FIXME:  recursive embedding doesn't work yet
-(deftest ^:api emap-embedded-map-2
+(deftest ^:props emap-embedded-map-2
   (testing "using a map as a property value - dbl embed"
     (let [e (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d {:e 4}}})]
       (log/trace "test: emap-embedded 2")
@@ -424,7 +285,7 @@
       (log/trace "(:c (:b e)): " (:c (:b e)))
       (log/trace "(seq e): " (seq e)))))
 
-(deftest ^:api emap-embedded-vec
+(deftest ^:props emap-embedded-vec
   (testing "using a vector as a property value"
     (let [e (ds/emap!! [:Foo/bar] {:a 1, :b [1 2 3]})]
       (log/trace "test: emap-embedded-vec")
@@ -434,7 +295,7 @@
       (log/trace "(e :b): " (e :b))
       (log/trace "(seq e): " (seq e)))))
 
-(deftest ^:api emap-embedded-set
+(deftest ^:props emap-embedded-set
   (testing "using a set as a property value"
     (let [e (ds/emap!! [:Foo/bar] {:a 1, :b #{1 2 3}})]
       (log/trace "test: emap-embedded-set")
@@ -648,30 +509,7 @@
       (log/trace em1))
       ))
 
-(deftest ^:emap emap-assoc
-  (testing "emap assoc"
-    (let [em1 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
-                        (fn [e]
-                          (assoc e :sex "F")))
-          em2 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
-                        (fn [e]
-                          (assoc e :age 5)))
-          ]
-      (log/trace em1)
-      (log/trace (ds/assoc!! em1 :weight 7))
-      (log/trace (ds/assoc! (ds/emap! [:Species/Felis_catus :Cat/Booger])
-                           :name "Niki" :weight 7))
-      (log/trace  (ds/emap! [:Species/Felis_catus :Cat/Booger]))
-      ;; (log/trace em2)
-      )))
-
-          ;; em3 (ds/emap!! [:Species/Felis_catus]
-          ;;                (fn [e]
-          ;;                  ;; an emap is conceptually just a map
-          ;;                  (ds/into e {:name "Booger" :weight 5})))
-          ;;                ]
-
-
+;; ################################################################
 ;; NB:  the emaps! family does not (yet) create entities
 ;; (deftest ^:emap emaps
 ;;   (testing "emaps"
@@ -1122,7 +960,7 @@
 
 
 ;; ################################################################
-(deftest ^:keysym keysym1
+(deftest ^:keys keys1
   (testing "keyword - key literals: name"
     (log/trace (ds/key :Employee/asalieri))
     (is (ds/key? (ds/key :Employee/asalieri)) true)
@@ -1133,6 +971,33 @@
     (is (= (ds/key :Employee/d15)
            (ds/key :Employee/x0F)))
     )
+
+(deftest ^:keys keys2
+  (testing "keyword - key literals: name"
+    (let [e1 (ds/emap!! [:A]{})
+          e2 (ds/emap!! [:A/B]{})
+          e3 (ds/emap!! [:A/d99]{})
+          e4 (ds/emap!! [(keyword "A" "123")]{})]
+    (log/trace "keys2 e1 key: " (ds/key e1))
+    (is (ds/key? (ds/key e1)))
+    (is (= (ds/key e1)) (ds/key :A))
+    (is (= (ds/key e2)) (ds/key :A/B))
+    )))
+
+(deftest ^:keys identifiers
+  (testing "identifiers from EntityMaps"
+    (let [e1 (ds/emap!! [:A]{})
+          e2 (ds/emap!! [:A/B]{})
+          e3 (ds/emap!! [:A/d99]{})
+          e4 (ds/emap!! [(keyword "A" "123")]{})]
+    (log/trace "e1 identifier: " (ds/identifier e1))
+    (log/trace "e2 identifier: " (ds/identifier e2))
+    (is (= (ds/identifier e2) "B"))
+    (log/trace "e3 identifier: " (ds/identifier e3))
+    (is (= (ds/identifier e3) 99))
+    (log/trace "e4 identifier: " (ds/identifier e4))
+    (is (= (ds/identifier e4) 123))
+    )))
 
 ;; (deftest ^:keysym keysym2
 ;;   (testing "keymap literals: name"
@@ -1216,74 +1081,6 @@
     ;; (is (= (type (dskey/make {:_kind :Employee :_id 99}))
     ;;        com.google.appengine.api.datastore.Key))
     ;; ))
-
-;; ################################################################
-(deftest ^:keys keymap3
-  (testing "keymap literals 1"
-    (is (= (type (dskey/make {:_kind :Employee :_name "asalieri"}))
-           com.google.appengine.api.datastore.Key))
-    (is (= (type (dskey/make {:_kind :Employee :_id 99}))
-           com.google.appengine.api.datastore.Key))
-    ))
-
-(deftest ^:keys ekeymap1
-  (testing "entity with keymap literal 2"
-    (let [em ^{:_kind :Employee, :_name "asalieri"}
-          {:fname "Antonio", :lname "Salieri"}]
-      (let [ent (ds/persist em)]
-        (is (= (dskey/id (:_key (meta ent))) 0))
-        (is (= (dskey/name (:_key (meta ent))) "asalieri"))
-        (is (= (dskey/name (dse/key ent)) "asalieri"))
-        (is (= (dse/name em)) "asalieri")
-        (is (= (dse/name ent)) "asalieri"))
-      )))
-
-(deftest ^:keys keys3
-  (testing "entitymap deftype keys child"
-    (let [key (dskey/make {:_kind :Genus :_name "Felis"})
-          child (dskey/child key {:_kind :Genus :_name "Felis"})]
-      (is (= (type child)
-             com.google.appengine.api.datastore.Key))
-      (is (= (dskey/parent child)
-             key))
-      (should-fail (is (= (dskey/name child)
-             "felis catus")))
-      (println child)
-      )))
-
-;; (deftest ^:one one-off
-;;   (testing "entitymap deftype keys parent"
-;;     (let [parent (dskey/make {:_kind :Genus :_name "Felis"})]
-;;       (log/trace (dskey/kind parent))
-;;       (is (= ((dskey/kind parent) :Genus))))))
-
-(deftest ^:keys keys4
-  (testing "entitymap deftype keys parent"
-    (let [parent (dskey/make {:_kind :Genus :_name "Felis"})
-          foo (log/trace "parent " parent)
-          child  (dskey/make {:_parent parent :_kind :Species :_name "felis catus"})
-          bar (log/trace "child " child)
-          ]
-      (is (= (type child)
-             com.google.appengine.api.datastore.Key))
-      (is (= (dskey/parent child)
-             parent))
-      (is (= (dskey/name child)
-             "felis catus"))
-      )))
-
-(deftest ^:keys keys5
-  (testing "entitymap deftype keys parent"
-    (let [parent (dskey/make {:_kind :Genus :_name "Felis"})
-          child  (dskey/make {:_parent {:_kind :Genus :_name "Felis"}
-                              :_kind :Species :_name "felis catus"})]
-      (is (= (type child)
-             com.google.appengine.api.datastore.Key))
-      (is (= (dskey/parent child)
-             parent))
-      (is (= (dskey/name child)
-             "felis catus"))
-      )))
 
 ;; ################################################################
 ;;  entity lists
