@@ -127,6 +127,26 @@
 (deftest ^:into emap-into-cljmap
   (testing "clojure map api: into"
     (log/trace "test: clojure map api: into")
+    (let [em1 (ds/emap!! [:A/B] {:a/b 1})
+          em2 (ds/emap!! [:A/B :C/D] {:c/d 1})
+          em3 (ds/emap!! [:A/B :C/D :E/F] {:e/f 1})]
+      (log/trace "em1" em1 (type em1))
+      (log/trace "em2" em2 (type em2))
+      (log/trace "em3" em3 (type em3))
+      (let [em11 (ds/into {} em1)
+            em22 (ds/into {} em2)
+            em33 (ds/into {} em3)
+          ]
+      (log/trace "em11" em11 (meta em11) (type em11))
+      (log/trace "em22" em22 (meta em22) (type em22))
+      (log/trace "em33" (meta em33) em33 (type em33))
+      (should-fail (is (= em1 em2)))
+      (is (ds/key= em1 em2))
+      ))))
+
+(deftest ^:into emap-into-emap
+  (testing "clojure map api: into"
+    (log/trace "test: clojure map api: into")
     (let [em1 (ds/emap!! [:A/B] {:a 1})
           em2 (ds/emap!! [:X/Y] {:b 2})
           foo (do
@@ -134,9 +154,9 @@
                 (log/trace "em2" em2))
           em3 (into em1 em2)
           ]
-      ;; (log/trace "em3" em3)
-      ;; (is (= em1 em3))
-      ;; (is (ds/key= em1 em3))
+      (log/trace "em3" em3 (type em3))
+      (is (= em1 em3))
+      (is (ds/key= em1 em3))
       )))
 
 (deftest ^:coll emap-into

@@ -556,10 +556,70 @@
   [kchain]
   (keychainer kchain))
 
+(declare emap?)
+
+(declare keychain=)
+
+(defn key=
+  [em1 em2]
+  (if (emap? em1)
+    (if (emap? em2)
+      (.equals (.entity em1) (.entity em2))
+      (keychain= em1 em2))
+    (if (map? em1)
+      (keychain= em1 em2)
+      (log/trace "EXCEPTION: key= applies only to maps and emaps"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn keychain? [k]
   ;; k is vector of DS Keys and clojure keywords
   (every? #(or (keyword? %) (= (type %) Key)) k))
 
+(defn keychain=
+  [k1 k2]
+  (let [kch1 (if (emap? k1)
+               ;; recur with .getParent
+               (if (map? k1)
+                 (:migae/key (meta k1))))
+        kch2 (if (emap? k2)
+               ;; recur with .getParent
+               (if (map? k2)
+                 (:migae/key (meta k2))))]
+    ))
+
+(defmulti keychain class)
+(defmethod keychain nil
+  [x]
+  nil)
+
+(defmethod keychain Key
+  [^Key k]
+  (log/trace "keychain Key: " k)
+  (if (nil? k)
+    nil
+    (let [kind (.getKind k)
+          nm (.getName k)
+          id (.getId k)
+          this (keyword kind (if nm nm id))
+          res (if (.getParent k)
+                  (conj (list this) (keychain (.getParent k)))
+                  (list this))]
+      (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
+      (log/trace "res: " res)
+      (log/trace "res2: " (vec (flatten res)))
+      (vec (flatten res)))))
+
+(defmethod keychain Entity
+  [^Entity e]
+  (log/trace "keychain Entity: " e)
+  (keychain (.getKey e)))
+
+(defmethod keychain EntityMap
+  [^EntityMap em]
+  (log/trace "keychain EntityMap: " em)
+  (keychain (.getKey (.entity em))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti keychainer
   "Make a datastore Key from a Clojure symbol or a pair of args.  For
   numeric IDs with keywords use e.g. :Foo/d123 (decimal) or :Foo/x0F (hex)"
@@ -623,14 +683,14 @@
 
 (defmethod identifier Key
   [^Key k]
-  (log/trace "identifier" k)
+  (log/trace "Key identifier" k)
   (let [nm (.getName k)
         id (.getId k)]
     (if (nil? nm) id nm)))
 
 (defmethod identifier EntityMap
   [^EntityMap em]
-  (log/trace "identifier" em)
+  (log/trace "EM identifier" (.entity em))
   (let [k (.getKey (.entity em))
         nm (.getName k)
         id (.getId k)]
@@ -968,10 +1028,6 @@
       ;; (log/trace "created and put entity " e)
       (EntityMap. e))))
 
-(defn key=
-  [em1 em2]
-  (.equals (.entity em1) (.entity em2)))
-
 (defn assoc!
   "unsafe assoc with save but no txn for DS Entities"
   [m k v & kvs]
@@ -1194,3 +1250,15 @@
         em (clj/into {} {:kind_ (.getKind k) :ident_ (identifier k)})]
         ;; em (clj/into {} {:key kch})]
     (clj/into em (for [[k v] props] [(keyword k) v]))))
+
+(defn into
+  [to-coll from-coll]
+  {:pre [(emap? from-coll)]}
+  (log/trace "ds into" to-coll from-coll (type from-coll))
+  (let [result (clj/into to-coll from-coll)]
+    (log/trace "result " result (type result))
+    (if (emap? to-coll)
+      to-coll
+      (with-meta to-coll
+        {:migae/key
+         (keychain (key from-coll))}))))
