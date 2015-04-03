@@ -17,10 +17,10 @@
   (:require [clojure.test :refer :all]
             [migae.infix :as infix]
             [migae.datastore :as ds]
-            [migae.datastore.service :as dss]
-            [migae.datastore.entity :as dse]
-            [migae.datastore.query  :as dsqry]
-            [migae.datastore.key    :as dskey]
+            ;; [migae.datastore.service :as dss]
+            ;; [migae.datastore.entity :as dse]
+            ;; [migae.datastore.query  :as dsqry]
+            ;; [migae.datastore.key    :as dskey]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -30,6 +30,11 @@
        ~body)
      (testing "should fail"
        (is (= @report-type# :fail )))))
+
+(defn dump
+  [msg datum & data]
+  (binding [*print-meta* true]
+    (log/trace msg (pr-str datum) (pr-str data))))
 
 ;  (:require [migae.migae-datastore.EntityMap])
   ;; (:use clojure.test
@@ -65,7 +70,7 @@
                             [(LocalDatastoreServiceTestConfig.)]))]
     (do
         (.setUp helper)
-        (dss/get-datastore-service)
+        (ds/datastore)
         (test-fn)
         (.tearDown helper))))
         ;; (ApiProxy/setEnvironmentForCurrentThread environment)
@@ -77,9 +82,9 @@
 (deftest ^:init ds-init
   (testing "DS init"
     (is (= com.google.appengine.api.datastore.DatastoreServiceImpl
-           (class (dss/get-datastore-service))))
+           (class (ds/datastore))))
     (is (= com.google.appengine.api.datastore.DatastoreServiceImpl
-           (class @dss/*datastore-service*)))))
+           (class @ds/*datastore-service*)))))
 
 
 (deftest ^:coll emap-dissoc
@@ -124,27 +129,56 @@
       ;;   (log/trace "(merge e1 {:foo 'bar'}) " (seq e5)))
     )))
 
+(deftest ^:into emap-into-emap
+  (testing "clojure map api: into"
+    (log/trace "test: clojure map api: into")
+    (let [em1 (ds/emap!! [:A/B] {:a/b 1})
+          em2 (ds/emap!! [:C/D] {:c/d 2 :e/f 3})]
+      (let [em3 (into em1 em2)]
+        (dump "em1" em1)
+        (dump "em1 t/c:" (type em1) (class em1))
+        (is (map? em1))
+        (is (ds/emap? em1))
+        (is (= (type em1) migae.datastore.EntityMap))
+        (is (= (class em1) migae.datastore.EntityMap))
+
+        (dump "em3" em3)
+        (dump "em3 t/c:" (type em3) (class em3))
+        (is (map? em3))
+        (is (ds/emap? em3))
+        (is (= (type em3) migae.datastore.EntityMap))
+        (is (= (class em3) clojure.lang.PersistentArrayMap))
+      ))))
+
 (deftest ^:into emap-into-cljmap
   (testing "clojure map api: into"
     (log/trace "test: clojure map api: into")
     (let [em1 (ds/emap!! [:A/B] {:a/b 1})
           em2 (ds/emap!! [:A/B :C/D] {:c/d 1})
           em3 (ds/emap!! [:A/B :C/D :E/F] {:e/f 1})]
-      (log/trace "em1" em1 (type em1))
-      (log/trace "em2" em2 (type em2))
-      (log/trace "em3" em3 (type em3))
-      (let [em11 (ds/into {} em1)
-            em22 (ds/into {} em2)
-            em33 (ds/into {} em3)
-          ]
-      (log/trace "em11" em11 (meta em11) (type em11))
-      (log/trace "em22" em22 (meta em22) (type em22))
-      (log/trace "em33" (meta em33) em33 (type em33))
-      (should-fail (is (= em1 em2)))
-      (is (ds/key= em1 em2))
-      ))))
+      (dump "em1:" em1 (type em1))
+      (dump "em2:" em2 (type em2))
+      (dump "em3:" em3 (type em3))
+      (let [em11 (with-meta (into {:x :y} em1) (meta em1))
+            ;; em22 (ds/into {} em2)
+            ;; em33 (ds/into {} em3)
+            ]
+        (log/trace "em11:" (meta em11) em11 (type em11))
+      ;;   (dump "em22:" em22 (type em22))
+      ;;   (dump "em33:" em33 (type em33))
+      ;;   (is (= em33 em3))
+      ;;   (should-fail (is (= em1 em2))))
+      ;; (let [em11 (ds/into {:em1/a 1} em1)
+      ;;       em22 (ds/into {:em2/a 1} em2)
+      ;;       em33 (ds/into {:em3/a 1} em3)
+      ;;       ]
+      ;;   (dump "em11:" em11 (type em11))
+      ;;   (dump "em22:" em22 (type em22))
+      ;;   (dump "em33:" em33 (type em33))
+      ;;   (should-fail (is (= em1 em2)))
+        ))))
 
-(deftest ^:into emap-into-emap
+(deftest ^:into emap-into-emap2
   (testing "clojure map api: into"
     (log/trace "test: clojure map api: into")
     (let [em1 (ds/emap!! [:A/B] {:a 1})
@@ -338,16 +372,15 @@
 
 (deftest ^:assoc emap-assoc
   (testing "emap assoc"
-    (let [em1 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
-                        (fn [e]
-                          (assoc e :sex "F")))
-          em2 (ds/emap!! [:Species/Felis_catus :Cat/Booger]
-                        (fn [e]
-                          (assoc e :age 5)))
-          ]
-      (log/trace "em1 " em1)
-      (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
-      (log/trace "assoc! literal " (ds/assoc! (ds/emap! [:Species/Felis_catus :Cat/Booger]{})
-                                              :name "Niki" :weight 7))
-      (log/trace "emap!" (ds/emap! [:Species/Felis_catus :Cat/Booger]))
+    (let [em1 (ds/emap!! [:Species/Felis_catus :Cat/Booger] {:sex "F"})
+          em2 (assoc em1 :weight 5)]
+      (binding [*print-meta* true]
+        (log/trace "em1" (pr-str em1))
+        (log/trace "em1 type/class:" (type em1) (class em1))
+        (log/trace "em2" (pr-str em2)))
+        (log/trace "em2 type/class:" (type em2) (class em2))
+      ;; (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
+      ;; (log/trace "assoc! literal " (ds/assoc! (ds/emap! [:Species/Felis_catus :Cat/Booger]{})
+      ;;                                         :name "Niki" :weight 7))
+      ;; (log/trace "emap!" (ds/emap! [:Species/Felis_catus :Cat/Booger]))
       )))

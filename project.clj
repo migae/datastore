@@ -9,6 +9,7 @@
                    :api :api
                    :assoc :assoc
                    :coll :coll
+                   :ds :ds
                    :emap :emap
                    :elist :elist
                    :entity :entity
@@ -28,7 +29,7 @@
                    :props :props
                    :query :query
                    }
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0-alpha6"]
                  [org.clojure/tools.reader "0.8.16"]
                  [org.clojure/tools.logging "0.2.3"]
                  [com.google.appengine/appengine-api-1.0-sdk "1.9.17"]

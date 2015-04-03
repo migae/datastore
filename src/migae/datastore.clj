@@ -1,5 +1,5 @@
 (ns migae.datastore
-  (:refer-clojure :exclude [assoc! empty? get into key name])
+  (:refer-clojure :exclude [empty? get into key name reduce])
   (:import [java.lang IllegalArgumentException]
            [java.util
             Collection
@@ -34,7 +34,7 @@
            [com.google.appengine.api.blobstore BlobKey])
   (:require [clojure.core :as clj]
             [clojure.walk :as walk]
-            [clojure.stacktrace]
+            [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
             ;; [migae.datastore.service :as dss]
             [migae.datastore.entity :as dse]
@@ -42,15 +42,119 @@
             [migae.datastore.query :as dsqry]
             [migae.infix :as infix]
             [clojure.tools.logging :as log :only [trace debug info]]))
-  ;; (:use org.mobileink.migae.core.utils))
 
+(declare emap?? epr)
+
+(defn ds-filter
+  [pred]
+  (emap?? pred))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftype DatastoreMap [ds]
+
+  clojure.lang.Associative
+  (containsKey [_ k]
+    (log/trace "DatastoreMap containsKey " k)
+    )
+  (entryAt [this k]
+    (log/trace "DatastoreMap entryAt " k)
+    )
+
+  clojure.lang.IFn
+  (invoke [_ k]
+    {:pre [(keyword? k)]}
+    (log/trace "IFn invoke" k)
+    (emap?? k))
+
+  clojure.lang.ILookup
+  (valAt [_ k]
+    ;; (log/trace "valAt " k)
+    (emap?? k))
+  (valAt [_ k not-found]
+    (log/trace "valAt w/notfound: " k)
+    )
+
+  clojure.lang.Seqable
+  (seq [this]
+    ;; seq is called by: into, merge, "print", e.g. (log/trace em)
+    (log/trace "DatastoreMap seq")
+
+    ;; (let [props (.getProperties entity)
+    ;;       kprops (clj/into {}
+    ;;                        (for [[k v] props]
+    ;;                          (do
+    ;;                            ;; (log/trace "v: " v)
+    ;;                            (let [prop (keyword k)
+    ;;                                  val (get-val-clj v)]
+    ;;                              ;; (log/trace "prop " prop " val " val)
+    ;;                              {prop val}))))
+    ;;       res (clj/seq kprops)]
+    ;;   ;; (log/trace "seq result:" entity " -> " res)
+    ;;   (flush)
+    ;;   res))
+    )
+  ) ;; deftype DatastoreMap
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defonce ^{:dynamic true} *datastore-service* (atom nil))
+(defonce ^{:dynamic true} DSMap (atom nil))
 
 (defn datastore []
   (when (nil? @*datastore-service*)
     (do ;; (prn "datastore ****************")
-        (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService))))
+        (reset! *datastore-service* (DatastoreServiceFactory/getDatastoreService))
+        ))
   @*datastore-service*)
+
+(defn init []
+  (when (nil? @DSMap)
+    (do
+        (reset! DSMap (DatastoreMap. *datastore-service*))
+        ))
+  @DSMap)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (def default-contents {:_kind :DSEntity
+;;                        :_key nil})
+;; whatever contents are provided at construction time will be
+;; augmented with the default values
+;; (defn augment-contents [contents]
+;;   contents)
+;  (merge default-contents contents))
+
+;; (defprotocol IDSEntity
+;;   (getKey [e]))
+
+(declare get-next-emap-prop)
+
+(deftype EntityMapIterator [ds-iter]
+  java.util.Iterator
+  (hasNext [this]
+    (do
+      (log/trace "emap-iter hasNext")
+      (.hasNext ds-iter)))
+  (next    [this]                       ;
+    (let [r (get-next-emap-prop this)
+          k (.getKey r)
+          v (.getValue r)
+          res {(keyword k) v}]
+      (log/trace "emap-iter next" res)
+      res))
+;      {(keyword k) v}))
+
+  ;; (remove  [this])
+)
+
+
+(declare get-val-ds get-val-clj keychain)
+
+(defn- props-to-map
+  [props]
+  (clj/into {} (for [[k v] props]
+                 (let [prop (keyword k)
+                       val (get-val-clj v)]
+                   {prop val}))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -109,46 +213,10 @@
 ;;  NB: defrecord won't work - no way to override clojure interfaces
 ;;  NB: gen-class won't work - Entity is final
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (def default-contents {:_kind :DSEntity
-;;                        :_key nil})
-;; whatever contents are provided at construction time will be
-;; augmented with the default values
-;; (defn augment-contents [contents]
-;;   contents)
-;  (merge default-contents contents))
-
-;; (defprotocol IDSEntity
-;;   (getKey [e]))
-
-(declare get-next-emap-prop)
-
-(deftype EntityMapIterator [ds-iter]
-  java.util.Iterator
-  (hasNext [this]
-    (do
-      ;; (log/trace "emap-iter hasNext")
-      (.hasNext ds-iter)))
-  (next    [this]                       ;
-    ;; (log/trace "emap-iter next")
-    (let [r (get-next-emap-prop this)
-          k (.getKey r)
-          v (.getValue r)
-          res {(keyword k) v}]
-      res))
-;      {(keyword k) v}))
-
-  ;; (remove  [this])
-)
-
-
-(declare get-val-ds get-val-clj)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftype EntityMap [entity]
-
   java.lang.Iterable
   (iterator [this]
-    (log/trace "Iterable iterator")
+    (log/trace "Iterable iterator" (.entity this))
     (let [props (.getProperties entity) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
@@ -158,9 +226,15 @@
 
   ;; FIXME: put :^EntityMap in every EntityMap
   clojure.lang.IMeta
-  (meta [_] {:key (.getKey entity)})
-  ;; clojure.lang.IObj
-  ;; (withMeta [this md] (EntityMap. (with-meta m md)))
+  (meta [_]
+    ;; (log/trace "IMeta meta")
+    {:migae/key (keychain entity)
+     :type EntityMap})
+
+  clojure.lang.IObj
+  (withMeta [this md]
+    (log/trace "IObj withMeta" md))
+ ;; (EntityMap. (with-meta m md)))
 
   clojure.lang.IFn
   (invoke [_ k]
@@ -171,22 +245,36 @@
   ;; (applyTo [_ arglist])
   ;; (invokePrim [_ ??] )
 
-  ;; clojure.lang.IMapEntry
-  ;; (key [_])
-  ;; (val [_])
+  java.util.Map$Entry
+  (getKey [this]
+    ;; (log/trace "java.util.Map$Entry getKey")
+    (let [k (.getKey entity)]
+      (keychain k)))
+      ;;     kind (.getKind k)
+      ;;     nm (.getName k)]
+      ;; [(keyword kind (if nm nm (.getId k)))]))
+  (getValue [_]
+    ;; (log/trace "java.util.Map$Entry getVal")
+    (props-to-map (.getProperties entity)))
+  ;; (equals [_]
+  ;;   )
+  ;; (hashCode [_]
+  ;;   )
+  ;; (setValue [_]
+  ;;   )
 
-  clojure.lang.ITransientCollection
-  (conj [this args]
-    ;; (log/trace "ITransientMap conj")
-    (let [item (first args)
-          k (clj/name (clj/key item))
-          v (clj/val item)
-          val (if (number? v) v
-                  (if (string? v) v
-                      (edn/read-string v)))]
-      ;; (log/trace "ITransientMap conj: " args item k v)
-      (.setProperty entity k v)
-      this))
+  ;; FIXME: make result of (into {} em) support Map$Entry so it behaves like an em
+  ;; this doesn't work since clojure.lang.PersistentArrayMap cannot be cast to java.util.Map$Entry
+  ;; NB:  IMapEntry extends java.util.Map$Entry
+  ;; can we use defprotocol and extend to do this?
+
+  clojure.lang.IMapEntry
+  (key [this]
+    (log/trace "IMapEntry key")
+    )
+  (val [_]
+    (log/trace "IMapEntry val")
+    )
 
   ;; clojure.lang.Counted
   ;; (count [_]
@@ -205,25 +293,26 @@
       (= (type o) clojure.lang.MapEntry)
       (do
         ;; (log/trace "cons clj map entry to emap")
-        (.setProperty entity (clj/name (first o)) (get-val-ds (second o)))
+        (.setProperty entity (subs (str (first o)) 1) (get-val-ds (second o)))
         ;; (.put (datastore) entity)
         this)
       (= (type o) clojure.lang.PersistentArrayMap)
-      (do
-        ;; (log/trace "cons clj map to emap")
-        (doseq [[k v] o]
-          (let [nm (clj/name k)
-                val (get-val-ds v)]
-            ;; (log/trace "cons key: " nm (type nm))
-            ;; (log/trace "cons val: " val (type val))
-            (.setProperty entity nm val)))
-        ;; (.put (datastore) entity)
-        this)
+      o
+      ;; (do
+      ;;   ;; (log/trace "cons clj map to emap")
+      ;;   (doseq [[k v] o]
+      ;;     (let [nm (subs (str k) 1)
+      ;;           val (get-val-ds v)]
+      ;;       ;; (log/trace "cons key: " nm (type nm))
+      ;;       ;; (log/trace "cons val: " val (type val))
+      ;;       (.setProperty entity nm val)))
+      ;;   ;; (.put (datastore) entity)
+      ;;   this)
       (= (type o) EntityMap)
       (let [props (.getProperties (.entity o))]
         ;; (log/trace "cons emap to emap")
         (doseq [[k v] props]
-          (.setProperty entity (clj/name k) (get-val-ds v)))
+          (.setProperty entity (subs (str k) 1) (get-val-ds v)))
         ;; (.put (datastore) entity)
         this)
       ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
@@ -251,11 +340,92 @@
     ;; (and (isa? (class o) EntityMap)
     ;;      (.equiv (augment-contents entity) (.(augment-contents entity) o))))
 
-  ;; clojure.lang.IReduce
-  ;; (reduce [this f]
-  ;;   (log/trace "reduce"))
-  ;; (reduce [this f seed]
-  ;;   (log/trace "reduce w/seed"))
+  clojure.lang.IReduce
+  (reduce [this f]
+    (log/trace "HELP! reduce") (flush)
+    this)
+  (reduce [this f to-map]
+    (log/trace "reduce f to-map " to-map " from-coll " (.entity this))
+    (cond
+      (= (class to-map) EntityMap)
+      ;; f = cons, so we can just use the native clj/into
+      (let [from-props (.getProperties entity)
+            from-coll (clj/into {} (for [[k v] from-props]
+                                     (let [prop (keyword k)
+                                           val (get-val-clj v)]
+                                       {prop val})))
+            to-props (.getProperties (.entity to-map))
+            to-coll (clj/into {} (for [[k v] to-props]
+                                   (let [prop (keyword k)
+                                         val (get-val-clj v)]
+                                     {prop val})))
+            to-keychain (keychain to-map)
+            res (with-meta (clj/into to-coll from-coll)
+                  {:migae/keychain to-keychain
+                   :type EntityMap})]
+        (log/trace "to-coll: " res (type res))
+        res)
+      (= (class to-map) clojure.lang.PersistentArrayMap$TransientArrayMap)
+      ;; we use a ghastly hack in order to retain metadata
+      ;; FIXME: handle case where to-map is a clj-emap (map with ^:EntityMap metadata)
+      (let [from-props (.getProperties entity)
+            from-coll (clj/into {} (for [[k v] from-props]
+                                     (let [prop (keyword k)
+                                           val (get-val-clj v)]
+                                       {prop val})))
+            to-ent (Entity. (.getKey entity))
+            ;; to-coll (clj/into {} (for [[k v] to-props]
+            ;;                        (let [prop (keyword k)
+            ;;                              val (get-val-clj v)]
+            ;;                          {prop val})))
+            to-keychain (if (nil? (:migae/keychain (meta to-map)))
+                          (keychain entity)
+                          (:migae/keychain (meta to-map)))]
+        (doseq [[k v] from-coll]
+          (assoc! to-map k v))
+        (let [p (persistent! to-map)]
+          (doseq [[k v] p]
+            (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
+        ;; (let [m1 (persistent! to-map)
+        ;;       m2 (with-meta m1 {:migae/keychain to-keychain
+        ;;                         :type EntityMap})
+        ;;       to-coll (transient m2)]
+        ;;   (log/trace "m2: " (meta m2) m2 (class m2))
+        ;;   (log/trace "to-coll: " (meta to-coll) to-coll (class to-coll))
+        (EntityMap. to-ent))
+
+      (= (class to-map) clojure.lang.PersistentArrayMap)
+      to-map
+      :else (log/trace "HELP! reduce!" (class to-map)))
+      )
+
+
+  clojure.lang.ITransientCollection
+  (conj [this args]
+    (log/trace "ITransientCollection conj")
+    (let [item (first args)
+          k (clj/name (clj/key item))
+          v (clj/val item)
+          val (if (number? v) v
+                  (if (string? v) v
+                      (edn/read-string v)))]
+      ;; (log/trace "ITransientCollection conj: " args item k v)
+      (.setProperty entity k v)
+      this))
+  (persistent [this]
+    (log/trace "ITransientCollection persistent")
+    ;; (try (/ 1 0) (catch Exception e (print-stack-trace e)))
+    (let [props (.getProperties entity)
+          kch (keychain this)
+          coll (clj/into {} (for [[k v] props]
+                              (let [prop (keyword k)
+                                    val (get-val-clj v)]
+                                {prop val})))
+          res (with-meta coll {:migae/keychain kch
+                               :type EntityMap})]
+      (log/trace "persistent result: " (meta res) res (class res))
+      res))
+
 
   ;; clojure.lang.ITransientMap
   ;; (assoc [this k v]                     ; both assoc! and assoc (?)
@@ -274,10 +444,19 @@
 
   clojure.lang.IPersistentMap
   (assoc [this k v]
-    (let [prop (clj/name k)]
-      (log/trace "IPersistentCollection assoc: " k v "(" prop v ")")
-      (.setProperty entity prop v)
-      this))
+    (let [prop (subs (str k) 1)]
+      (log/trace "IPersistentMap assoc: " k v "(" prop v ")")
+      ;; (.setProperty entity prop v)
+      ;; this))
+      (let [to-props (.getProperties entity)
+            to-coll (clj/into {} (for [[k v] to-props]
+                                     (let [prop (keyword k)
+                                           val (get-val-clj v)]
+                                       {prop val})))
+            key-chain (keychain this)
+            res (clj/assoc to-coll k v)]
+      (log/trace "IPersistentMap assoc res: " res)
+      (with-meta res {:migae/keychain key-chain}))))
   (assocEx [_ k v]
     (log/trace "assocEx")
     (EntityMap. (.assocEx entity k v)))
@@ -303,13 +482,10 @@
   ;; (withMeta [_ m])
   ;; (meta [_])
 
-  ;; clojure.lang.Seqable
-  ;; (seq [this] (EntityMap/seq this))
-
   clojure.lang.Seqable
   (seq [this]
     ;; seq is called by: into, merge, "print", e.g. (log/trace em)
-    (log/trace "seq" (.hashCode this) (.getKey entity))
+    ;; (log/trace "seq" (.hashCode this) (.getKey entity))
     (let [props (.getProperties entity)
           kprops (clj/into {}
                            (for [[k v] props]
@@ -424,7 +600,7 @@
   (let [embed (EmbeddedEntity.)]
     (doseq [[k v] m]
       ;; FIXME:  (if (map? v) then recur
-      (.setProperty embed (clj/name k) (get-val-ds v)))
+      (.setProperty embed (subs (str k) 1) (get-val-ds v)))
     embed))
 
 (defn- get-val-clj-coll
@@ -438,6 +614,7 @@
                                                        (get-val-clj item)))
     (= (type coll) java.util.Vector)  (clj/into [] (for [item coll]
                                                        (get-val-clj item)))
+    :else (log/trace "EXCEPTION: unhandled coll " coll)
     ))
 
 (defn- get-val-ds-coll
@@ -510,7 +687,7 @@
     ;; (log/trace "get-val-clj result:" v val)
     val))
 
-;; this is for values to be stored (i.e. from clojure to ds)
+;; this is for values to be stored (i.e. from clojure to ds java types)
 (defn- get-val-ds
   [v]
   ;; (log/trace "get-val-ds" v (type v))
@@ -534,7 +711,7 @@
     ;; (log/trace "get-val-ds result:" v " -> " val "\n")
     val))
 
-(declare keychainer)
+(declare keychainer emap? keychain=)
 
 (defn key? [^com.google.appengine.api.datastore.Key k]
   (= (type k) com.google.appengine.api.datastore.Key))
@@ -556,10 +733,6 @@
   [kchain]
   (keychainer kchain))
 
-(declare emap?)
-
-(declare keychain=)
-
 (defn key=
   [em1 em2]
   (if (emap? em1)
@@ -570,7 +743,13 @@
       (keychain= em1 em2)
       (log/trace "EXCEPTION: key= applies only to maps and emaps"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn keylink?
+  [k]
+  (log/trace "keylink?" k (and (keyword k)
+                               (not (nil? (clj/namespace k)))))
+  (and (keyword k)
+       (not (nil? (clj/namespace k)))))
+
 (defn keychain? [k]
   ;; k is vector of DS Keys and clojure keywords
   (every? #(or (keyword? %) (= (type %) Key)) k))
@@ -587,41 +766,83 @@
                  (:migae/key (meta k2))))]
     ))
 
-(defmulti keychain class)
+(defmulti keychain
+  "keychain converts a DS Key to a vector of Clojure keywords"
+   class)
+
 (defmethod keychain nil
   [x]
   nil)
 
 (defmethod keychain Key
   [^Key k]
-  (log/trace "keychain Key: " k)
+  ;; (log/trace "keychain Key: " k)
   (if (nil? k)
     nil
     (let [kind (.getKind k)
           nm (.getName k)
-          id (.getId k)
+          id (str (.getId k))
           this (keyword kind (if nm nm id))
           res (if (.getParent k)
                   (conj (list this) (keychain (.getParent k)))
                   (list this))]
-      (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
-      (log/trace "res: " res)
-      (log/trace "res2: " (vec (flatten res)))
+      ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
+      ;; (log/trace "res: " res)
+      ;; (log/trace "res2: " (vec (flatten res)))
       (vec (flatten res)))))
 
 (defmethod keychain Entity
   [^Entity e]
-  (log/trace "keychain Entity: " e)
+  ;; (log/trace "keychain Entity: " e)
   (keychain (.getKey e)))
 
 (defmethod keychain EntityMap
   [^EntityMap em]
-  (log/trace "keychain EntityMap: " em)
+  ;; (log/trace "keychain EntityMap: " em)
   (keychain (.getKey (.entity em))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmulti identifier class)
+
+(defmethod identifier Key
+  [^Key k]
+  ;; (log/trace "Key identifier" k)
+  (let [nm (.getName k)
+        id (.getId k)]
+    (if (nil? nm) id nm)))
+
+(defmethod identifier EntityMap
+  [^EntityMap em]
+  (log/trace "EM identifier" (.entity em))
+  (let [k (.getKey (.entity em))
+        nm (.getName k)
+        id (.getId k)]
+    (if (nil? nm) id nm)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn add-child-keylink
+  [^KeyFactory$Builder builder chain]
+  (log/trace "add-child-keylink builder:" builder)
+  (log/trace "add-child-keylink chain:" chain)
+  (doseq [sym chain]
+    (if (nil? sym)
+      nil
+      (let [k (keychainer sym)]
+        ;; (log/trace "Keychainer: " sym " -> " k)
+        (if (keyword? k)
+          (let [parent (.getKey builder)
+                e (Entity. (clj/name k) parent) ; k of form :Foo
+                v (.put (datastore) e)
+                k (.getKey e)]
+            ;; (log/trace "created entity " e)
+            (.addChild builder (.getKind k) (.getId k)))
+          (.addChild builder
+                     (.getKind k)
+                     (identifier k)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti keychainer
-  "Make a datastore Key from a Clojure symbol or a pair of args.  For
+  "Make a datastore Key from a Clojure keyword or vector of keywords.  For
   numeric IDs with keywords use e.g. :Foo/d123 (decimal) or :Foo/x0F (hex)"
   (fn [arg & args]
     [(type arg) (type args)]))
@@ -646,10 +867,15 @@
 (defmethod keychainer [Key nil]
   [k] k)
 
+;; (defmethod keychainer [clojure.lang.PersistentVector nil]
+;;   ([^clojure.lang.Keyword k]
+;;    (
+;;    ))
+
 (defmethod keychainer [clojure.lang.Keyword nil]
   ([^clojure.lang.Keyword k]
    {:pre [(= (type k) clojure.lang.Keyword)]}
-   ;; (log/trace "keychainer Keyword nil" k)
+   ;; (log/trace "keychainer [Keyword nil]" k) (flush)
    (let [kind (clojure.core/namespace k)
          ident (edn/read-string (clojure.core/name k))]
      ;; (log/trace (format "keychainer 1: kind=%s, ident=%s" kind ident))
@@ -678,41 +904,64 @@
            :else
            (KeyFactory/createKey kind s)))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti identifier class)
+(defmethod keychainer [clojure.lang.Keyword clojure.lang.PersistentVector$ChunkedSeq]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   (log/trace "keychainer Keyword ChunkedSeq" head chain)
+   (flush)
+   ;; (let [root (KeyFactory$Builder. (clj/namespace head)
+   ;;                                 ;; FIXME: check for IDs too, e.g. :Foo/d99, :Foo/x0F
+   ;;                                 (clj/name head))]
+   (let [k (keychainer head)
+         root (KeyFactory$Builder. k)]
+     (.getKey (doto root (add-child-keylink chain))))))
 
-(defmethod identifier Key
-  [^Key k]
-  (log/trace "Key identifier" k)
-  (let [nm (.getName k)
-        id (.getId k)]
-    (if (nil? nm) id nm)))
+(defmethod keychainer [clojure.lang.Keyword clojure.lang.ArraySeq]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   (log/trace "kch Keyword ArraySeq" head chain)
+   ;; (let [root (KeyFactory$Builder. (clj/namespace head)
+   ;;                                 ;; FIXME: check for IDs too, e.g. :Foo/d99, :Foo/x0F
+   ;;                                 (clj/name head))]
+   (let [k (keychainer head)
+         root (KeyFactory$Builder. k)]
+     (.getKey (doto root (add-child-keylink chain))))))
 
-(defmethod identifier EntityMap
-  [^EntityMap em]
-  (log/trace "EM identifier" (.entity em))
-  (let [k (.getKey (.entity em))
-        nm (.getName k)
-        id (.getId k)]
-    (if (nil? nm) id nm)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn add-children
-  [^KeyFactory$Builder builder chain]
-  ;; (log/trace "add-chilren" builder chain)
-  (doseq [sym chain]
-    (let [k (keychainer sym)]
-      ;; (log/trace "Keychainer: " sym " -> " k)
-      (if (keyword? k)
-        (let [parent (.getKey builder)
-              e (Entity. (clj/name k) parent) ; k of form :Foo
-              v (.put (datastore) e)
-              k (.getKey e)]
-          ;; (log/trace "created entity " e)
-          (.addChild builder (.getKind k) (.getId k)))
-        (.addChild builder
-                   (.getKind k)
-                   (identifier k))))))
+   ;; (if (empty? (first (seq chain)))
+   ;;   head
+   ;;   (key (first chain) (rest chain)))))
+
+(defmethod keychainer [clojure.lang.MapEntry nil]
+  [^clojure.lang.MapEntry k]
+  (log/trace "keychainer MapEntry nil" k) (flush)
+  (let [kind (clojure.core/namespace k)
+        ident (edn/read-string (clojure.core/name k))]
+    ;; (log/trace (format "keychainer 1: kind=%s, ident=%s" kind ident))
+    (cond
+      (nil? kind)
+      k ;; Keyword arg is of form :Foo, interpreted as Kind
+      ;; (let [e (Entity. (str ident))
+      ;;       k (.put (datastore) e)]
+      ;;   (log/trace "created entity with key " k)
+      ;;   k)
+      (integer? ident)
+      (KeyFactory/createKey kind ident)
+      (symbol? ident)                  ;; edn reader makes symbols
+      (let [s (str ident)]
+        (cond
+          (= (first s) \d)
+          (let [id (edn/read-string (apply str (rest s)))]
+            (if (= (type id) java.lang.Long)
+              (KeyFactory/createKey kind id)
+              (KeyFactory/createKey kind s)))
+          (= (first s) \x)
+          (let [id (edn/read-string (str "0" s))]
+            (if (= (type id) java.lang.Long)
+              (KeyFactory/createKey kind id)
+              (KeyFactory/createKey kind s)))
+          :else
+          (KeyFactory/createKey kind s))))))
 
 (defmethod keychainer [com.google.appengine.api.datastore.Key clojure.lang.ArraySeq]
   ;; vector of keywords, string pairs, or both
@@ -720,29 +969,13 @@
    ;; (log/trace "keychainer Key ArraySeq" head chain)
    (let [root (KeyFactory$Builder. head)
          k (if (> (count chain) 1)
-             (.getKey (doto root (add-children chain)))
-             (.getKey (doto root (add-children chain))))]
-             ;; (add-children root chain))]
+             (.getKey (doto root (add-child-keylink chain)))
+             (.getKey (doto root (add-child-keylink chain))))]
+             ;; (add-child-keylink root chain))]
      ;; (log/trace "keychainer Key ArraySeq result: " k)
      k)))
   ;; (let [k (first chain)]
        ;;   (if
-
-(defmethod keychainer [clojure.lang.Keyword clojure.lang.ArraySeq]
-  ;; vector of keywords, string pairs, or both
-  ([head & chain]
-   ;; (log/trace "kw Keyword ArraySeq" head chain)
-   ;; (let [root (KeyFactory$Builder. (clj/namespace head)
-   ;;                                 ;; FIXME: check for IDs too, e.g. :Foo/d99, :Foo/x0F
-   ;;                                 (clj/name head))]
-   (let [k (keychainer head)
-         root (KeyFactory$Builder. k)]
-     (.getKey (doto root (add-children chain))))))
-
-
-   ;; (if (empty? (first (seq chain)))
-   ;;   head
-   ;;   (key (first chain) (rest chain)))))
 
 (defmethod keychainer [java.lang.String clojure.lang.ArraySeq]
   ;; vector of keywords, string pairs, or both
@@ -753,6 +986,12 @@
   ;; vector of keywords, string pairs, or both
   ([head & chain]
    (log/trace "seq nil" head chain)))
+
+(defmethod keychainer [clojure.lang.PersistentVector$ChunkedSeq nil]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+   (log/trace "keychainer ChunkedSeq nil:" head chain)
+   (keychainer (first head) (rest head))))
 
 (defmethod keychainer [clojure.lang.PersistentList$EmptyList clojure.lang.ArraySeq]
   ([head & chain]
@@ -798,7 +1037,7 @@
     (let [k (apply keychainer keychain)
           e (Entity. k)]
       (doseq [[k v] em]
-        (.setProperty e (clj/name k) (get-val-ds v)))
+        (.setProperty e (subs (str k) 1) (get-val-ds v)))
       (EntityMap. e))))
 
 ;; without override - discard body if entity already exists
@@ -817,7 +1056,7 @@
        (if (nil? e)
          (let [e (Entity. k)]
            (doseq [[k v] em]
-             (.setProperty e (clj/name k) (get-val-ds v)))
+             (.setProperty e (subs (str k) 1) (get-val-ds v)))
            (.put (datastore) e)
            ;; (log/trace "created and put entity " e)
            (EntityMap. e))
@@ -855,7 +1094,7 @@
   ;; (log/trace "emap-new " k content)
   (let [e (Entity. k)]
     (doseq [[k v] content]
-      (let [prop (clj/name k)
+      (let [prop (subs (str k) 1)
             val (get-val-ds v)]
         ;; (log/trace "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
@@ -870,7 +1109,7 @@
     (EntityMap. e)
     (do
       (doseq [[k v] content]
-        (let [prop (clj/name k)]
+        (let [prop (subs (str k) 1)]        ; FIXME - don't exclude ns!
           (if (.hasProperty e prop)
             (let [pval (.getProperty e prop)
                   propval (get-val-ds pval)]
@@ -920,7 +1159,7 @@
   (let [k (apply keychainer keychain)]
     ;; (log/trace "emap-update-map key: " k)
     (let [e (if (keyword? k)
-              (let [e (Entity. (clj/name k))] ;; key of form :Foo, i.e. a Kind specifier
+              (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
                 (.put (datastore) e)
                 e)
               (try (.get (datastore) k)
@@ -1012,6 +1251,23 @@
           (emap-update-fn keychain (first content))
           (throw (IllegalArgumentException. "content must be map or function")))))))
 
+(defn emaps!!
+  "e.g. (emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}]) saves three Entities of kind :Foo
+
+  If keychain ends in a kind (e.g. [:Foo] create anonymous Entities of
+  that kind.  If it ends in a full key?  Merge the maps?"
+  [keychain maps]
+  (log/trace "emaps!!" keychain maps)
+  (if (keylink? (last keychain))
+    (throw (IllegalArgumentException. "emaps!! keychain must end in a Kind keyword (e.g. :Foo); try emap!!"))
+    (let [s (for [emap maps]
+              (do
+                ;; (log/trace "emap" emap)
+                (emap!! keychain emap)))]
+    (doseq [item s]
+      (log/trace "item" (meta item) item)
+      (log/trace "item entity" (.entity item)))))
+    )
 
 (defn alter!
   "Replace existing entity, or create a new one."
@@ -1023,36 +1279,36 @@
     (let [k (apply keychainer keychain)
           e (Entity. k)]
       (doseq [[k v] content]
-        (.setProperty e (clj/name k) v))
+        (.setProperty e (subs (str k) 1) v))
       (.put (datastore) e)
       ;; (log/trace "created and put entity " e)
       (EntityMap. e))))
 
-(defn assoc!
-  "unsafe assoc with save but no txn for DS Entities"
-  [m k v & kvs]
-  ;; (log/trace "assoc! " m k v  "&" kvs)
-   (let [txn (.beginTransaction (datastore))
-         coll (if (emap? m)
-                (.entity m)
-                (if (= (class m) Entity)
-                  m
-                  (do (log/trace "HELP: assoc!") (flush))))]
-     (try
-       (.setProperty coll (clj/name k) v)
-       (if (nil? (first kvs))
-         (try
-           (.put (datastore) coll)
-           (.commit txn)
-           (finally
-             (if (.isActive txn)
-               (.rollback txn))))
-         (do ;; (log/trace "recur on assoc!")
-             (assoc! coll (first kvs) (second kvs) (nnext kvs))))
-       (finally
-         (if (.isActive txn)
-               (.rollback txn))))
-       coll))
+;; (defn assoc!
+;;   "unsafe assoc with save but no txn for DS Entities"
+;;   [m k v & kvs]
+;;   ;; (log/trace "assoc! " m k v  "&" kvs)
+;;    (let [txn (.beginTransaction (datastore))
+;;          coll (if (emap? m)
+;;                 (.entity m)
+;;                 (if (= (class m) Entity)
+;;                   m
+;;                   (do (log/trace "HELP: assoc!") (flush))))]
+;;      (try
+;;        (.setProperty coll (subs (str k) 1) v)
+;;        (if (nil? (first kvs))
+;;          (try
+;;            (.put (datastore) coll)
+;;            (.commit txn)
+;;            (finally
+;;              (if (.isActive txn)
+;;                (.rollback txn))))
+;;          (do ;; (log/trace "recur on assoc!")
+;;              (assoc! coll (first kvs) (second kvs) (nnext kvs))))
+;;        (finally
+;;          (if (.isActive txn)
+;;                (.rollback txn))))
+;;        coll))
 
 (defn assoc!!
   "safe assoc with save and txn for DS Entities"
@@ -1065,7 +1321,7 @@
                   m
                   (log/trace "HELP: assoc!!")))]
      (try
-       (.setProperty coll (clj/name k) v)
+       (.setProperty coll (subs (str k) 1) v)
        (if (nil? (first kvs))
          (try
            (.put (datastore) coll)
@@ -1096,90 +1352,197 @@
                                   ~(last pred))
       )))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;  single '?'  means predicate
 ;;  double '??' means expression as query (= sync expression against datastore)
-(defn emap??                            ;FIXME: use a multimethod?
-  [kws]                                 ; vector of keywords (DSKeys)
-  ;; {:pre []} ;; check types
-  ;; (log/trace "emap?? args: " kws)
-  (let [k (if (coll? kws)
-            (apply keychainer kws)
-            (apply keychainer [kws]))
-        ;; foo (log/trace "emap?? kw args: " k)
-        e (try (.get (datastore) k)
-                  (catch EntityNotFoundException e (throw e))
-                  (catch DatastoreFailureException e (throw e))
-                  (catch java.lang.IllegalArgumentException e (throw e)))]
-      (EntityMap. e)))
+;; examples:
+;;  (emap?? []) everything
+;;  (emap?? [:Foo])  ; every :Foo
+;;  (emap?? [:Foo] {:a 1})  ; kind+property filter
+;;  (emap?? [:Foo/Bar]) key filter
+;;  (emap?? {:a 1})  ; property filter
+;;  (emap?? [:Foo/Bar :Baz] ; ancestor filter
+;;  (emap?? [:Foo/Bar :migae/*] ; kindless ancestor filter: all childs of :Foo/Bar
+;;  (emap?? [:Foo/Bar :migae/**] ; kindless ancestor filter: all descendants of :Foo/Bar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; (cond
+      ;;   (= 1 (count keylinks))
+      ;;   (let [kw (first keylinks)]
+      ;;     (if (keyword? kw)
+      ;;       (if (nil? (clj/namespace kw))
+      ;;         'KindVec
+      ;;         'KeyVec)
+      ;;       (throw (IllegalArgumentException. "keylinks must be keywords"))))
+      ;;   (= 2 (count keylinks))
+      ;;   (let [kw1 (first keylinks)
+      ;;         kw2 (last keylinks)]
+      ;;     (if (and (keyword? kw1) (keyword? kw2))
+      ;;       (if (nil? (namespace kw2))
+      ;;         'Ancestor                   ; e.g. [:Foo/Bar :Baz]
+      ;;         'Keychain)
+      ;;       ;; 'Multikey)                  ; e.g. #{:Foo/Bar :Baz/Buz}
+      ;;       (if (and (key? kw1) (keyword? kw2))
+      ;;         (if (nil? (namespace kw2))
+      ;;           'Ancestor                   ; e.g. [:Foo/Bar :Baz]
+      ;;           'Keychain)
+      ;;         (throw (IllegalArgumentException. "both keylinks must be keywords")))))
+      ;; (key? keylinks)
+      ;; 'Key
+      ;; (keyword? keylinks)
+      ;; (if (nil? (clj/namespace keylinks))
+      ;;   'Kind                           ; e.g.  :Foo
+      ;;   'Key)                          ; e.g.  :Foo/Bar
+      ;;   :else
+      ;;   'Multikey)
+      ;; :else
+      ;; (throw (IllegalArgumentException. "arg must be key, keyword, or a vector of keywords")))))
+
 (defmulti emaps??
-  (fn [arg]
-    (cond
-      (key? arg)
-      'Key
-      (keyword? arg)
-      (if (nil? (clj/namespace arg))
-        'Kind                           ; e.g.  :Foo
-        'Key)                          ; e.g.  :Foo/Bar
-      (vector? arg)
+  (fn [keylinks & pm]
+    (log/trace "")
+    (log/trace "emaps?? start: keylinks:" keylinks " pm:" pm)
+    (if (vector? keylinks)
       (cond
-        (= 1 (count arg))
-        (let [kw (first arg)]
-          (if (keyword? kw)
-            (if (nil? (clj/namespace kw))
-              'KindVec
-              'KeyVec)
-            (throw (IllegalArgumentException. "arg must be a keyword"))))
-        (= 2 (count arg))
-        (let [kw1 (first arg)
-              kw2 (last arg)]
-          (if (and (keyword? kw1) (keyword? kw2))
-            (if (nil? (namespace kw2))
-              'Ancestor                   ; e.g. [:Foo/Bar :Baz]
-              'Keychain)
-            ;; 'Multikey)                  ; e.g. #{:Foo/Bar :Baz/Buz}
-            (if (and (key? kw1) (keyword? kw2))
-              (if (nil? (namespace kw2))
-                'Ancestor                   ; e.g. [:Foo/Bar :Baz]
-                'Keychain)
-              (throw (IllegalArgumentException. "both args must be keywords")))))
+        (empty? keylinks)
+        'Kindless
+        (vector? keylinks)
+        (if (keylink? (last keylinks))
+          'Keychain
+          'Kinded)
+        (set? keylinks)
+        'Multikey
         :else
-        'Multikey)
-      :else
-      (throw (IllegalArgumentException. "arg must be key, keyword, or a vector of keywords")))))
-
-
-;; Key query (i.e. plain get)
-(defmethod emaps?? 'Key
-  [^clojure.lang.Keyword k]             ; e.g. :Foo/Bar
-  (let [dskey (key k)
-        e (try (.get (datastore) dskey)
-         (catch EntityNotFoundException e (throw e))
-         (catch Exception e (throw e)))]
-    (EntityMap. e)))
+        (throw (IllegalArgumentException. "first arg must be a vector or set of keywords"))))))
 
 (defmethod emaps?? 'Keychain
-  [k]             ; e.g. :Foo/Bar
-  (let [dskey (keychainer (first k) (second k))
+  [keylinks & pm]             ; e.g. :Foo/Bar
+  (log/trace "emaps?? Keychain:" keylinks pm)
+  (let [dskey (keychainer (first keylinks) (second keylinks))
         e (try (.get (datastore) dskey)
          (catch EntityNotFoundException e (throw e))
          (catch Exception e (throw e)))]
     (EntityMap. e)))
 
-(defmethod emaps?? 'KeyVec
-  [[^clojure.lang.Keyword k]]           ; e.g [:Foo/Bar]
-  (let [dskey (key k)
-        ;; foo (log/trace "key: " dskey)
-        e (try (.get (datastore) dskey)
-         (catch EntityNotFoundException e (throw e))
-         (catch Exception e (throw e)))]
-    (EntityMap. e)))
+(defn- finish-q
+  [q]
+  (log/trace "finish-q")
+  (let [pq (.prepare (datastore) q)
+        it (.asIterator pq)
+        em-seq (emap-seq it)]
+    ;; (log/trace "em-seq " em-seq)
+    em-seq))
+
+(defn- do-filter
+  [q filter]
+  (log/trace "do-filter" filter)
+  )
+
+(defn- kinded-no-ancestor
+  [q filter-map]
+  ;; (log/trace "kinded-no-ancestor" q filter-map)
+  (let [filter (last filter-map)    ; constraint is the filter map
+        foo (log/trace "filter:" filter)
+        mapentry (first filter)
+        fld (first mapentry)
+        foo (log/trace "fld:" fld)
+        constraint (last mapentry)
+        foo (log/trace "constraint:" constraint)
+        op (first constraint)
+        foo (log/trace "op:" op)
+        operand (last constraint)
+        foo (log/trace "operand:" operand)
+        ]
+    (let [filter (Query$FilterPredicate. (subs (str fld) 1) ; remove ':' prefix
+                                         (cond
+                                           (= op '<)
+                                           Query$FilterOperator/LESS_THAN
+                                           (= op '<=)
+                                           Query$FilterOperator/LESS_THAN_OR_EQUAL
+                                           (= op '=)
+                                           Query$FilterOperator/EQUAL
+                                           (= op '>)
+                                           Query$FilterOperator/GREATER_THAN
+                                           (= op '>=)
+                                           Query$FilterOperator/GREATER_THAN_OR_EQUAL
+                                           :else (throw (IllegalArgumentException.
+                                                         (str "illegal predicate op " op))))
+                                         operand)
+          q (.setFilter q filter)
+          pq (.prepare (datastore) q)
+          it (.asIterator pq)
+          emseq (emap-seq it)]
+      emseq)))
+
+(defmethod emaps?? 'Kinded
+  [keylinks & filter-map]
+  (log/trace "emaps?? Kinded:" keylinks filter-map)
+  (let [kind (clj/name (last keylinks)) ;; we already know last link has form :Foo
+        foo (log/trace "kind:" kind (type kind))
+        q (Query. kind)
+        pfx (butlast keylinks)
+        foo (log/trace "pfx" pfx (type pfx))]
+    (if (nil? pfx)
+      (kinded-no-ancestor q filter-map)
+      ;; we have a prefix keychain, so set it as ancestor constraint
+      (let [k (apply keychainer pfx)
+            kf (log/trace "K:" k (type k))
+            qq (.setAncestor q k)]
+        (if (not (nil? filter-map))
+          (do-filter qq filter-map)
+          (finish-q q))))
+    ))
+
+(defmethod emaps?? 'Kindless
+  [[k] & filter-map]           ; e.g [] {:migae/gt :Foo/Bar}
+  "Kindless queries take a null keychain and an optional map specifying a key filter, of the form
+
+    {:migae/gt [:Foo/Bar]}"
+  (log/trace "emaps?? Kindless:" k filter-map)
+  (if (nil? filter-map)
+    (let [q (Query.)
+          pq (.prepare (datastore) q)
+          it (.asIterator pq)
+          emseq (emap-seq it)]
+      emseq)
+    (if (> (count filter-map) 1)
+      (throw (IllegalArgumentException. "only one filter expr, for now"))
+      (let [constraint (first filter-map)
+            op (first constraint)
+            keychain  (last constraint)]
+        (log/trace "constraint:" constraint op keychain)
+        (if (keylink? (last keychain))
+          (let [;f (ffirst filter-map)
+                k (apply keychainer keychain)
+                foo (log/trace "KEY: " k)
+                filter (Query$FilterPredicate. Entity/KEY_RESERVED_PROPERTY
+                                               (cond
+                                                 (= op '<)
+                                                 Query$FilterOperator/LESS_THAN
+                                                 (= op '<=)
+                                                 Query$FilterOperator/LESS_THAN_OR_EQUAL
+                                                 (= op '=)
+                                                 Query$FilterOperator/EQUAL
+                                                 (= op '>)
+                                                 Query$FilterOperator/GREATER_THAN
+                                                 (= op '>=)
+                                                 Query$FilterOperator/GREATER_THAN_OR_EQUAL)
+                                               ;; (keychainer (first (second op)) (rest (second op))))
+                                               k)
+                q (.setFilter (Query.) filter)
+                pq (.prepare (datastore) q)
+                it (.asIterator pq)
+                emseq (emap-seq it)]
+            emseq)
+          (throw (IllegalArgumentException.
+                  "emaps?? kindless query key filter: all elements must be keylinks (not kind only)")))
+        ))))
 
 ;; Kind query
 (defmethod emaps?? 'Kind               ; e.g. :Foo
   [^clojure.lang.Keyword kind]
-  ;; (log/trace "emaps?? Kind")
+  (log/trace "emaps?? Kind")
   (let [q (Query. (clj/name kind))
         pq (.prepare (datastore) q)
         it (.asIterator pq)
@@ -1193,25 +1556,58 @@
 
 (defmethod emaps?? 'KindVec               ; e.g. [:Foo]
   [[^clojure.lang.Keyword kind]]
+  (log/trace "emapss?? KindVec:")
   (let [q (Query. (clj/name kind))
         pq (.prepare (datastore) q)
         it (.asIterator pq)
         em-seq (emap-seq it)]
     em-seq))
 
-(defmethod emaps?? 'Ancestor
-  [kw-pair]
-  (let [q (Query. (clj/name (last kw-pair)))
-        qq (.setAncestor q (key (first kw-pair)))
-        pq (.prepare (datastore) qq)
-        it (.asIterator pq)
-        em-seq (emap-seq it)]
-    ;; (log/trace "em-seq " em-seq)
-    em-seq))
+(defmethod emaps?? 'Key
+  [^clojure.lang.Keyword k]             ; e.g. :Foo/Bar
+  (log/trace "emapss?? Key:")
+  (let [dskey (key k)
+        e (try (.get (datastore) dskey)
+         (catch EntityNotFoundException e (throw e))
+         (catch Exception e (throw e)))]
+    (EntityMap. e)))
 
 (defmethod emaps?? 'Multikey
   [key-set]
+  (log/trace "emapss?? Multikey:")
   )
+
+(defn emap??                            ;FIXME: use a multimethod?
+  [keylinks filter-map]  ; keychain and predicate-map
+  ;; {:pre []} ;; check types
+  (log/trace "emap?? keylinks" keylinks (type keylinks))
+  (log/trace "emap?? filter-map" filter-map (type filter-map))
+)
+  ;; (if (empty? keylinks)
+  ;;   (do
+  ;;     (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
+  ;;     (let [ks (clj/keylinks filter-map)
+  ;;           vs (vals filter-map)
+  ;;           k  (subs (str (first ks)) 1)
+  ;;           v (last vs)
+  ;;           f (Query$FilterPredicate. k Query$FilterOperator/EQUAL v)]
+  ;;       (log/trace (format "key: %s, val: %s" k v))))
+  ;;   (let [k (if (coll? keylinks)
+  ;;             (apply keychainer keylinks)
+  ;;             (apply keychainer [keylinks]))
+  ;;         ;; foo (log/trace "emap?? kw keylinks: " k)
+  ;;         e (try (.get (datastore) k)
+  ;;                (catch EntityNotFoundException e (throw e))
+  ;;                (catch DatastoreFailureException e (throw e))
+  ;;                (catch java.lang.IllegalArgumentException e (throw e)))]
+  ;;     (EntityMap. e))))
+
+;; Filter propertyFilter =
+;;   new FilterPredicate("height",
+;;                       FilterOperator.GREATER_THAN_OR_EQUAL,
+;;                       minHeight);
+;; Query q = new Query("Person").setFilter(propertyFilter);
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- get-keychain
@@ -1251,14 +1647,64 @@
         ;; em (clj/into {} {:key kch})]
     (clj/into em (for [[k v] props] [(keyword k) v]))))
 
+;; from 1.7-alpha6
 (defn into
-  [to-coll from-coll]
-  {:pre [(emap? from-coll)]}
-  (log/trace "ds into" to-coll from-coll (type from-coll))
-  (let [result (clj/into to-coll from-coll)]
-    (log/trace "result " result (type result))
-    (if (emap? to-coll)
-      to-coll
-      (with-meta to-coll
-        {:migae/key
-         (keychain (key from-coll))}))))
+  "Returns a new coll consisting of to-coll with all of the items of
+  from-coll conjoined. A transducer may be supplied."
+  {:added "1.0"
+   :static true}
+  ([to from]
+   (log/trace "ds/into")
+     (if (instance? clojure.lang.IEditableCollection to)
+       ;; (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
+       (let [res (persistent! (clj/reduce conj! (transient to) from))]
+         (log/trace "ds/into result w/o meta:" (epr res))
+         (let [metameta (merge (meta to) (meta from))] ; the fix
+           (log/trace "ds/into metameta:" (epr metameta))
+           (let [result (with-meta res metameta)]
+             (log/trace "ds/into result w/meta:" (epr result))
+             result)))
+       (clj/reduce conj to from)))
+  ([to xform from]
+     (if (instance? clojure.lang.IEditableCollection to)
+       (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
+       (transduce xform conj to from))))
+
+;; for Clojure < 1.7 we need to borrow from 1.7:
+;; (defn reduce  ;; from 1.7 lang/core.clj
+;;   ([f coll]
+;;    (log/trace "ds/reduce v1.7")
+;;      (if (instance? clojure.lang.IReduce coll)
+;;        (.reduce ^clojure.lang.IReduce coll f)
+;;        (clojure.core.protocols/coll-reduce coll f)))
+;;   ([f val coll]
+;;      ;; (if (instance? clojure.lang.IReduceInit coll)
+;;        ;; (.reduce ^clojure.lang.IReduceInit coll f val)
+;;      (if (instance? clojure.lang.IReduce coll)
+;;        (.reduce ^clojure.lang.IReduce coll f val)
+;;        (clojure.core.protocols/coll-reduce coll f val))))
+
+;; (defn into  ;; from 1.7 lang/core.clj
+;;   "Returns a new coll consisting of to-coll with all of the items of
+;;   from-coll conjoined. A transducer may be supplied."
+;;   {:added "1.0"
+;;    :static true}
+;;   ([to from]
+;;    (log/trace "ds/into v1.7")
+;;      (if (instance? clojure.lang.IEditableCollection to)
+;;        (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
+;;        (reduce clj/conj to from))))
+;;   ;; ([to xform from]
+;;   ;;    (if (instance? clojure.lang.IEditableCollection to)
+;;   ;;      (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
+;;   ;;      (transduce xform clj/conj to from))))
+
+(defn epr
+  [^EntityMap em]
+  (binding [*print-meta* true]
+    (pr-str em)))
+
+(defn eprn
+  [^EntityMap em]
+  (binding [*print-meta* true]
+    (prn-str em)))

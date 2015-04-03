@@ -149,11 +149,6 @@
       (is (= (seq e) '([:b 2] [:c 3] [:a 1])))
       )))
 
-(deftest ^:query kind-query
-  (testing "kind query"
-    (let [e1 (ds/emaps?? :Foo)]
-      (log/trace e1))))
-
 (def test-study-members
   [["Libbie" "Greenlee" "Greenlee@example.org"]
    ["Mohammad" "Hoffert" "Hoffert@example.org"],
@@ -364,25 +359,6 @@
         (is (ds/emap? em4))
         ))))
 
-(deftest ^:emap emap??
-  (testing "entitymap get by key")
-  (let [putit (ds/emap!! [:Species/Felis_catus] {})
-        getit (ds/emap?? [:Species/Felis_catus])
-        getit2 (ds/emap?? :Species/Felis_catus)
-        getit3 (ds/emap?? (keyword "Species" "Felis_catus"))]
-    (log/trace "putit " putit)
-    (log/trace "key putit " (ds/key putit))
-    (log/trace "type putit " (type putit))
-    (log/trace "getit " getit)
-    (log/trace "getit2 " getit2)
-    (log/trace "getit3 " getit3)
-    (is (= (ds/key putit) (ds/key getit) (ds/key getit2) (ds/key getit3)))
-    (is (= (type putit) migae.datastore.EntityMap))
-    (is (= (try (ds/emap?? (keyword "Group" "foo"))
-                      (catch EntityNotFoundException e EntityNotFoundException))
-            EntityNotFoundException))
-    ))
-
 (deftest ^:emap emap!
   (testing "entitymap deftype"
     (binding [*print-meta* true]
@@ -513,125 +489,17 @@
 
 
 ;; ################################################################
-(deftest ^:query emaps-q
-  (testing "emaps?? 1"
-    (let [em1 (ds/emap!! [:Group] {:name "Acme"})
-          em2 (ds/emap!! [:Group] (fn [e] (assoc e :name "Tekstra")))
-          ems (ds/emaps?? :Group)]
-      (log/trace "ems " ems)
-      (log/trace "ems type " (type ems))
-      (log/trace (format "(seq? ems) %s\n" (seq? ems)))
-      [(doseq [e ems]
-         (do
-           (log/trace (format "e: %s" e))
-           (log/trace "(meta e): " (meta e))
-           (log/trace "(type e): " (type e))
-           (log/trace "(.entity e): " (.entity e))
-           {:id (ds/id e) :name (e :name)}))]
-      )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  ANCESTRY - i.e. Namespacing
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest ^:query ancestor-path
-  (testing "emaps?? ancestor query"
-    (let [e1 (ds/emap!! [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
-          f1 (ds/emap?? [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus])
-          e2 (ds/emap!! [:Species/Felis_catus]{})
-          f2 (ds/emap?? [:Species/Felis_catus])]
-      (log/trace "e1 " e1)
-      (log/trace "f1 " f1)
-      (log/trace "e2 " e2)
-      (log/trace "f2 " f2))))
-
-(deftest ^:query ancestor-query
-  (testing "emaps?? ancestor query"
-    (let [acme (ds/emap!! [:Group] {:name "Acme"})
-          k (ds/key acme)
-          foo (log/trace "key: " k)
-          id (ds/id k)
-          joe (ds/emap!! [k :Member/Joe] {:fname "Joe" :lname "Cool"})
-          ;; joeq  (ds/emaps?? [:Group/Acme :Member/Joe])
-          ;; joev  (ds/emaps?? :Member/Joe)
-          jane (ds/emap!! [k :Member/Jane] {:fname "Jane" :lname "Hip"})
-          frank (ds/emap!! [:Member/Frank] {:fname "Frank" :lname "Funk"})
-          root (ds/emaps?? k)
-          members (ds/emaps?? :Member)
-          membersV (ds/emaps?? [:Member])
-          members-acme (ds/emaps?? [k :Member])
-          ] ; ancestor query
-      ;; (log/trace "root: " root)
-      ;; (log/trace "all members: " members)
-      ;; (log/trace "all membersV: " membersV)
-      (log/trace "acme members: " members-acme)
-      (log/trace "joe " joe)
-      ;; (log/trace "joeq " joeq)
-      ;; (log/trace "joev " joev)
-      ;; (is (=  (ds/emaps?? :Group/Acme)  (ds/emaps?? [:Group/Acme])))
-      ;; (is (ds/key=  (first (ds/emaps?? [:Group/Acme :Member/Joe])) joe))
-      (is (=  (count (ds/emaps?? :Member)) 3))
-      (is (=  (count (ds/emaps?? [:Member])) 3))
-      (is (=  (count (ds/emaps?? [k :Member])) 2))
-      )))
-
-;; ################################################################
-
-(deftest ^:query query-entities-1
-  (testing "query 1"
-    (let [q (dsqry/entities)]
-      (log/trace "query entities 1" q)
-      )))
-
-(deftest ^:query query-entities-2
-  (testing "query 2"
-    (let [q (dsqry/entities :kind :Employee)]
-      (log/trace "query entities 2" q)
-      )))
-
-
-;; (deftest ^:query query-ancestors-1
-;;   (testing "query ancestors-1"
-;;     (let [k (dskey/make "foo" "bar")
-;;           q (dsqry/ancestors :key k)]
-;;       (log/trace "query ancestors-1:" q)
-;;       )))
-
-(deftest ^:query query-ancestors-2
-  (testing "query ancestors-2"
-    (let [q (dsqry/ancestors :kind "foo" :name "bar")]
-      (log/trace "query ancestors-2:" q)
-      )))
-
-(deftest ^:query query-ancestors-3
-  (testing "query ancestors-3"
-    (let [q (dsqry/ancestors :kind "foo" :id 99)]
-      (log/trace "query ancestors-3:" q)
-      )))
-
-(deftest ^:query query-ancestors-3
-  (testing "query ancestors-3"
-    (let [q (dsqry/ancestors :kind "foo" :id 99)]
-      (log/trace "query ancestors-3:" q)
-      )))
-
-(deftest ^:query query-ancestors-4
-  (testing "query ancestors-4"
-    (let [q (dsqry/ancestors :kind :Person :id 99)]
-      (log/trace "query ancestors-3:" q)
-      )))
-
-;; ################################################################
 ;;  infix
 
-(deftest ^:infix infix-1
-  (testing "infix 1"
-    (log/trace (infix/$= :sex = :M))
-    (log/trace (infix/$= :age >= 50))
-    (log/trace (infix/$= :age >= 18 && :age <= 65))
-    ;; (is (= (infix/$= m = m)
-    ;;        true))
-    ;; (is (= (infix/$= :age < 50)
-    ;;        true))
-    ;; (is (= (infix/$= m > n)
-    ;;        false))
-    ))
+;; (deftest ^:infix infix-1
+;;   (testing "infix 1"
+;;     (log/trace (infix/$= :sex = :M))
+;;     (log/trace (infix/$= :age >= 50))
+;;     (log/trace (infix/$= :age >= 18 && :age <= 65))
+;;     ;; (is (= (infix/$= m = m)
+;;     ;;        true))
+;;     ;; (is (= (infix/$= :age < 50)
+;;     ;;        true))
+;;     ;; (is (= (infix/$= m > n)
+;;     ;;        false))
+;;     ))
