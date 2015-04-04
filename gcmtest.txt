@@ -1,2 +1,0 @@
-{:study-id 12345 :email "foo@example.org" :gcm-regid 98765 :app-id "foobar"}
-

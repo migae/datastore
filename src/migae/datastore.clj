@@ -27,7 +27,9 @@
             Link
             PhoneNumber
             ReadPolicy ReadPolicy$Consistency
-            Query Query$FilterOperator Query$FilterPredicate Query$SortDirection
+            Query Query$SortDirection
+            Query$FilterOperator Query$FilterPredicate
+            Query$CompositeFilter Query$CompositeFilterOperator
             ShortBlob
             Text
             Transaction]
@@ -573,6 +575,10 @@
   (.getName (.getKey (.entity e))))
 
 (defmulti id class)
+(defmethod id clojure.lang.PersistentVector
+  [ks]
+   (let [keylink (last ks)]
+     (.getId keylink)))
 (defmethod id Key
   [^Key k]
   (.getId k))
@@ -745,8 +751,8 @@
 
 (defn keylink?
   [k]
-  (log/trace "keylink?" k (and (keyword k)
-                               (not (nil? (clj/namespace k)))))
+  ;; (log/trace "keylink?" k (and (keyword k)
+  ;;                              (not (nil? (clj/namespace k)))))
   (and (keyword k)
        (not (nil? (clj/namespace k)))))
 
@@ -822,8 +828,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-child-keylink
   [^KeyFactory$Builder builder chain]
-  (log/trace "add-child-keylink builder:" builder)
-  (log/trace "add-child-keylink chain:" chain)
+  ;; (log/trace "add-child-keylink builder:" builder)
+  ;; (log/trace "add-child-keylink chain:" chain)
   (doseq [sym chain]
     (if (nil? sym)
       nil
@@ -919,7 +925,7 @@
 (defmethod keychainer [clojure.lang.Keyword clojure.lang.ArraySeq]
   ;; vector of keywords, string pairs, or both
   ([head & chain]
-   (log/trace "kch Keyword ArraySeq" head chain)
+   ;; (log/trace "kch Keyword ArraySeq" head chain)
    ;; (let [root (KeyFactory$Builder. (clj/namespace head)
    ;;                                 ;; FIXME: check for IDs too, e.g. :Foo/d99, :Foo/x0F
    ;;                                 (clj/name head))]
@@ -1257,17 +1263,20 @@
   If keychain ends in a kind (e.g. [:Foo] create anonymous Entities of
   that kind.  If it ends in a full key?  Merge the maps?"
   [keychain maps]
+  (log/trace "")
   (log/trace "emaps!!" keychain maps)
   (if (keylink? (last keychain))
     (throw (IllegalArgumentException. "emaps!! keychain must end in a Kind keyword (e.g. :Foo); try emap!!"))
-    (let [s (for [emap maps]
-              (do
-                ;; (log/trace "emap" emap)
-                (emap!! keychain emap)))]
-    (doseq [item s]
-      (log/trace "item" (meta item) item)
-      (log/trace "item entity" (.entity item)))))
-    )
+    ;; (let [s
+    (doseq [emap maps]
+      (do
+        ;; (log/trace "emap" emap)
+        (emap!! keychain emap)))
+    ;; ]
+      ;; (doseq [item s]
+      ;;   (log/trace "item" (meta item) item)
+      ;;   (log/trace "item entity" (.entity item)))
+      ))
 
 (defn alter!
   "Replace existing entity, or create a new one."
@@ -1402,7 +1411,7 @@
 (defmulti emaps??
   (fn [keylinks & pm]
     (log/trace "")
-    (log/trace "emaps?? start: keylinks:" keylinks " pm:" pm)
+    (log/trace "emaps??" keylinks pm)
     (if (vector? keylinks)
       (cond
         (empty? keylinks)
@@ -1441,53 +1450,60 @@
 
 (defn- kinded-no-ancestor
   [q filter-map]
-  ;; (log/trace "kinded-no-ancestor" q filter-map)
-  (let [filter (last filter-map)    ; constraint is the filter map
-        foo (log/trace "filter:" filter)
-        mapentry (first filter)
-        fld (first mapentry)
-        foo (log/trace "fld:" fld)
-        constraint (last mapentry)
-        foo (log/trace "constraint:" constraint)
-        op (first constraint)
-        foo (log/trace "op:" op)
-        operand (last constraint)
-        foo (log/trace "operand:" operand)
-        ]
-    (let [filter (Query$FilterPredicate. (subs (str fld) 1) ; remove ':' prefix
-                                         (cond
-                                           (= op '<)
-                                           Query$FilterOperator/LESS_THAN
-                                           (= op '<=)
-                                           Query$FilterOperator/LESS_THAN_OR_EQUAL
-                                           (= op '=)
-                                           Query$FilterOperator/EQUAL
-                                           (= op '>)
-                                           Query$FilterOperator/GREATER_THAN
-                                           (= op '>=)
-                                           Query$FilterOperator/GREATER_THAN_OR_EQUAL
-                                           :else (throw (IllegalArgumentException.
-                                                         (str "illegal predicate op " op))))
-                                         operand)
-          q (.setFilter q filter)
-          pq (.prepare (datastore) q)
-          it (.asIterator pq)
-          emseq (emap-seq it)]
-      emseq)))
+  (log/trace "kinded-no-ancestor" q filter-map)
+
+  (if (nil? filter-map)
+    (finish-q q)
+    ;; FIXME:  support multiple filters using
+    ;;  Query$CompositeFilterOperator.and and  Query$CompositeFilterOperator.or
+
+    (let [filter (last filter-map)    ; constraint is the filter map
+          foo (log/trace "kinded-no-ancestor filter:" filter)
+          mapentry (first filter)
+          fld (first mapentry)
+          foo (log/trace "kinded-no-ancestor fld:" fld)
+          constraint (last mapentry)
+          foo (log/trace "kinded-no-ancestor constraint:" constraint)
+          op (first constraint)
+          foo (log/trace "kinded-no-ancestor op:" op)
+          operand (last constraint)
+          foo (log/trace "kinded-no-ancestor operand:" operand)
+          ]
+      (let [filter (Query$FilterPredicate. (subs (str fld) 1) ; remove ':' prefix
+                                           (cond
+                                             (= op '<)
+                                             Query$FilterOperator/LESS_THAN
+                                             (= op '<=)
+                                             Query$FilterOperator/LESS_THAN_OR_EQUAL
+                                             (= op '=)
+                                             Query$FilterOperator/EQUAL
+                                             (= op '>)
+                                             Query$FilterOperator/GREATER_THAN
+                                             (= op '>=)
+                                             Query$FilterOperator/GREATER_THAN_OR_EQUAL
+                                             :else (throw (IllegalArgumentException.
+                                                           (str "illegal predicate op " op))))
+                                           operand)
+            q (.setFilter q filter)
+            pq (.prepare (datastore) q)
+            it (.asIterator pq)
+            emseq (emap-seq it)]
+        emseq))))
 
 (defmethod emaps?? 'Kinded
   [keylinks & filter-map]
-  (log/trace "emaps?? Kinded:" keylinks filter-map)
+  ;; (log/trace "emaps?? Kinded:" keylinks filter-map)
   (let [kind (clj/name (last keylinks)) ;; we already know last link has form :Foo
-        foo (log/trace "kind:" kind (type kind))
+        ;; foo (log/trace "kind:" kind (type kind))
         q (Query. kind)
         pfx (butlast keylinks)
-        foo (log/trace "pfx" pfx (type pfx))]
+        ;; foo (log/trace "pfx" pfx (type pfx))
+        ]
     (if (nil? pfx)
       (kinded-no-ancestor q filter-map)
       ;; we have a prefix keychain, so set it as ancestor constraint
       (let [k (apply keychainer pfx)
-            kf (log/trace "K:" k (type k))
+            ;; kf (log/trace "K:" k (type k))
             qq (.setAncestor q k)]
         (if (not (nil? filter-map))
           (do-filter qq filter-map)
@@ -1499,7 +1515,7 @@
   "Kindless queries take a null keychain and an optional map specifying a key filter, of the form
 
     {:migae/gt [:Foo/Bar]}"
-  (log/trace "emaps?? Kindless:" k filter-map)
+  ;; (log/trace "emaps?? Kindless:" k filter-map)
   (if (nil? filter-map)
     (let [q (Query.)
           pq (.prepare (datastore) q)
