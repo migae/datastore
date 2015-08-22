@@ -226,7 +226,7 @@
 
       )))
 
-(deftest ^:coll emap-seq-into
+(deftest ^:into emap-seq-into
   (testing "clojure map api: put an emap-seq into a map"
     (do ;; construct elements of kind :A
       (ds/emap!! [:A] {:a 1})
@@ -259,7 +259,7 @@
         (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
         )))
 
-(deftest ^:coll emap-seq-merge
+(deftest ^:merge emap-seq-merge
   (testing "clojure map api: merge map with an emap-seq"
     (do ;; construct elements of kind :A
       (ds/emap!! [:A] {:a 1})
@@ -277,7 +277,9 @@
                     )
             ;; em (merge {} ems)]
             em (into {} ems)]
-        (log/trace "em" em))
+        (log/trace "em" em)
+        (doseq [em ems]
+          (log/trace "em" (ds/epr em))))
 
       (let [ems (ds/emaps?? [:A])
             foo (do ;; (log/trace "ems" ems)
@@ -293,57 +295,37 @@
         (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
         )))
 
-(deftest ^:coll merge-cljmap-emap
+(deftest ^:merge merge-cljmap-emap
   (testing "clojure map api: merge emap to clj-map"
     (log/trace "test: clojure map api: merge-cljmap-emap")
-    (let [em1 (ds/emap!! [:A/B] {:a 1})]
+    (let [em1 (ds/emap!! [:A/B] {:a 1 :b 2})]
       ;; (log/trace "em1" em1)
       (let [cljmap (merge {} em1)]
-        ;; (log/trace "em1" em1 (class em1))
+        (log/trace "em1" em1 (class em1)))
         ;; (log/trace "cljmap" cljmap (class cljmap))
         ;; (is (map? em1))
         ;; (is (ds/emap? em1))
         ;; (is (map? cljmap))
         ;; (should-fail (is (ds/emap? cljmap)))
-        ))))
 
-;;      (should-fail (is (ds/key= em1 cljmap)))))))
+      (let [em2 (merge {:x 9} em1)]
+        (log/trace "em1" (ds/epr em1))
+        (log/trace "em2" em2 (type em2))
+        )
+      )))
 
-      ;; (let [em4 (merge em3 {:c 3})]
-      ;;   (log/trace "em4" em4)
-      ;;   ;; emap into mutates in place
-      ;;   (is (= em3 em4)))
-
-      ;; (let [em4 (merge em3 {:c #{{:d 3}}})]
-      ;;   (log/trace "em4" em4)
-      ;;   ;; emap into mutates in place
-      ;;   (is (= em3 em4)))
-
-      ;; ;; what if we want into to generate a new Entity?
-      ;; ;; (let [em4a (into! em3 {:c 3})]
-      ;; ;;   (log/trace "em4a" em4a)
-      ;; ;;   ;; emap into mutates in place
-      ;; ;;   (is (= em3 em4a)))
-
-      ;; ;; convert emap to clj persistent map
-      ;; (let [em5 (merge {:x 9} em3)]
-      ;;   (log/trace "em5" em5 (type em5))
-      ;;   (is (map? em5))
-      ;;   (should-fail (is (ds/emap? em5))))
-      ;; )))
-
-(deftest ^:coll merge-emap-cljmap
+(deftest ^:merge merge-emap-cljmap
   (testing "clojure map api: merge emap to clj-map"
     (log/trace "test: clojure map api: merge-cljmap-emap")
     (let [em1 (ds/emap!! [:A/B] {:a 1})
           em2 (ds/emap!! [:X/Y] {:b 2})
           foo (do
-                (log/trace "em1" em1)
-                (log/trace "em2" em2))
+                (log/trace "em1" (ds/epr em1))
+                (log/trace "em2" (ds/epr em2)))
           em3 (merge em1 {:foo "bar"} em2)
           ]
-      (log/trace "em1" em1)
-      (log/trace "em3" em3)
+      (log/trace "em1" (ds/epr em1))
+      (log/trace "em3" (ds/epr em3))
       (is (= em1 em3))
       (is (ds/key= em1 em3))
 
@@ -362,13 +344,8 @@
       ;;   (log/trace "em4a" em4a)
       ;;   ;; emap into mutates in place
       ;;   (is (= em3 em4a)))
-
-      ;; convert emap to clj persistent map
-      (let [em5 (merge {:x 9} em3)]
-        (log/trace "em5" em5 (type em5))
-        (is (map? em5))
-        (should-fail (is (ds/emap? em5))))
       )))
+
 
 (deftest ^:assoc emap-assoc
   (testing "emap assoc"

@@ -78,21 +78,22 @@
 
 (deftest ^:query kindless
   (testing "ds kindless queries"
-    (ds/emaps!! [:A] [{:a 1} {:a 2} {:a 3}])
+    ;; populate ds with test entities
+    (ds/emaps?! [:A] [{:a 1} {:a 2} {:a 3}])
     (ds/emap!!  [:A/A] {:a 1})
-    (ds/emaps!! [:A/A :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/A :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/A :C] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:B] [{:a 1} {:a 2} {:a 3}])
     (ds/emap!!  [:A/B] {:a 1})
-    (ds/emaps!! [:A/B :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/B :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:C] [{:a 1} {:a 2} {:a 3}])
     (ds/emap!!  [:A/C] {:a 1})
-    (ds/emaps!! [:A/C :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/C :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/C :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :C] [{:a 1} {:a 2} {:a 3}])
 
     (let [ems (ds/emaps?? [])]
       ;; ems: all entities (6)
@@ -115,21 +116,22 @@
 
 (deftest ^:query by-kind
   (testing "ds query by kind"
-    (ds/emaps!! [:A] [{:a 1} {:a 2} {:a 3}])
+    ;; populate ds with test entities
+    (ds/emaps?! [:A] [{:a 1} {:a 2} {:a 3 :b "foo"}])
     (ds/emap!!  [:A/A] {:a 1})
-    (ds/emaps!! [:A/A :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/A :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/A :C] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/A :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:B] [{:a 1} {:a 2} {:a 3}])
     (ds/emap!!  [:A/B] {:a 1})
-    (ds/emaps!! [:A/B :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/B :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:C] [{:a 1} {:a 2} {:a 3}])
     (ds/emap!!  [:A/C] {:a 1})
-    (ds/emaps!! [:A/C :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/C :B] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/C :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :B] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :C] [{:a 1} {:a 2} {:a 3}])
 
     (let [ems1 (ds/emaps?? [:A])
           ems2 (ds/emaps?? [:A] {:a '(= 2)})]
@@ -145,8 +147,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:query by-ancestor
   (testing "query by ancestor"
+    ;; populate ds with test entities
     (ds/emap!! [:A/B]{})
-    (ds/emaps!! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :C] [{:a 1} {:a 2} {:a 3}])
     (let [parent (try (ds/emaps?? [:A/B]{})
                       (catch EntityNotFoundException e
                         (log/trace (.getMessage e))
@@ -171,17 +174,29 @@
 
 (deftest ^:query by-property
   (testing "ds property filter query"
-    (ds/emaps!! [:A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/B :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:X/Y :A] [{:a 1} {:a 2} {:a 3}])
-    (ds/emaps!! [:A/C :A] [{:a 1} {:a 2} {:a 3}])
+    ;; populate ds with test entities
+    (ds/emaps?! [:A] [{:a 1 :b 2} {:a 2} {:a 3}])
+    (ds/emaps?! [:A] {:a 1 :b 2})
+    (ds/emaps?! [:A/B :A] [{:a 1} {:a 2} {:a "foo@example.org"}])
+    (ds/emaps?! [:X/Y :A] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/C :A] [{:a 1 :b 2} {:a 2} {:a 3}])
 
     (let [ems (ds/emaps?? [])]
       (log/trace "all ems:")
       (doseq [em ems]
         (log/trace (ds/epr em))))
 
+    ;;  (:: (:a = 1 & :b > 2) | (:a < 5))
+
+;; better: use a reader to mimic function
+;;     (ds/emaps?? [:A] {:a #migae/fn (= % 2)})
+;; or: (ds/emaps?? [:A] {:a '(= % 2)})
+
     (let [ems (ds/emaps?? [:A] {:a '(= 2)})]
+    ;; (let [ems (ds/emaps?? [:A] (& :a = 1 ;  and
+    ;;                               :b = 2))
+    ;;       ems2 (ds/emaps?? [:A] (| :a = 1 ; or
+    ;;                                :b = 2))]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/epr em))))
@@ -195,27 +210,65 @@
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/epr em))))
+
+    (let [m {:a "foo@example.org"}
+          ems (ds/emaps?? [:A] {:a (list '= (:a m))})]
+      (log/trace "ems:")
+      (doseq [em ems]
+        (log/trace (ds/epr em))))
+
+    ;; default is '=;  {:a "foo@example.org"} as predicate
+    (let [ems (ds/emaps?? [:A] {:a "foo@example.org"})]
+      (log/trace "ems:")
+      (doseq [em ems]
+        (log/trace (ds/epr em))))
     ))
 
 (deftest ^:query by-key
   (testing "entitymap get by key")
-  (let [putit (ds/emap!! [:Species/Felis_catus] {})
-        getit (ds/emap?? [:Species/Felis_catus] {})
-        ;; getit2 (ds/emap?? :Species/Felis_catus)
-        getit3 (ds/emap?? [(keyword "Species" "Felis_catus")] {})]
-    ;; (log/trace "putit " putit)
-    ;; (log/trace "key putit " (ds/key putit))
-    ;; (log/trace "type putit " (type putit))
-    ;; (log/trace "getit " getit)
-    ;; (log/trace "getit2 " getit2)
-    ;; (log/trace "getit3 " getit3)
+  (let [em1 (ds/emap!! [:Species/Felis_catus] {:nm "Chibi"})
+        em2 (ds/emap?? [:Species/Felis_catus])
+        ;; em3 (ds/emap?? :Species/Felis_catus)
+        em4 (ds/emap?? [(keyword "Species" "Felis_catus")])]
+    (log/trace "em1 " (ds/epr em1))
+    (log/trace "key em1 " (ds/key em1))
+    (log/trace "em2 " em2 (type em1))
+    ;; (log/trace "em3 " em3)
+    (log/trace "em4 " em4)
 
     ;; FIXME:
-    ;; (is (= (ds/key putit) (ds/key getit) (ds/key getit3))) ; (ds/key getit2)
-    (is (= (type putit) migae.datastore.EntityMap))
-    (is (= (try (ds/emap?? [(keyword "Group" "foo")] {})
-                      (catch EntityNotFoundException e EntityNotFoundException))
-            EntityNotFoundException))
+    ;; (is (= (ds/key em1) (ds/key getit) (ds/key em4))) ; (ds/key em3)
+    (is (= (type em1) migae.datastore.EntityMap))
+    (is (= (try (ds/emap?? [(keyword "Group" "foo")])
+                      (catch EntityNotFoundException e
+                        (log/trace "Exception:" (.getMessage e))
+                        EntityNotFoundException))
+           EntityNotFoundException))
+    (is (= (try (ds/emap?? [:A])
+                      (catch IllegalArgumentException e
+                        (log/trace "Exception:" (.getMessage e))
+                        (.getClass e)))
+           IllegalArgumentException))
+    (is (= (try (ds/emap?? [:A/B :C])
+                      (catch IllegalArgumentException e
+                        (log/trace "Exception:" (.getMessage e))
+                        (.getClass e)))
+           IllegalArgumentException))
+    (is (= (try (ds/emap?? [:A/B 9])
+                      (catch IllegalArgumentException e
+                        (log/trace "Exception:" (.getMessage e))
+                        (.getClass e)))
+           IllegalArgumentException))
+    (is (= (try (ds/emap?? [:A/B 'C/D])
+                      (catch IllegalArgumentException e
+                        (log/trace "Exception:" (.getMessage e))
+                        (.getClass e)))
+           IllegalArgumentException))
+    (is (= (try (ds/emap?? [:A/B "C/D"])
+                      (catch IllegalArgumentException e
+                        (log/trace "Exception:" (.getMessage e))
+                        (.getClass e)))
+           IllegalArgumentException))
     ))
 
 ;; ################################################################
@@ -321,9 +374,40 @@
 ;;       (log/trace "query ancestors-3:" q)
 ;;       )))
 
-;; (deftest ^:query query-ancestors-4
-;;   (testing "query ancestors-4"
-;;     (let [q (dsqry/ancestors :kind :Person :id 99)]
-;;       (log/trace "query ancestors-3:" q)
-;;       )))
+(deftest ^:query dsfilter
+  (testing "query filter "
+    (ds/emaps?! [:Foo] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps?! [:A/B :Foo] [{:a 1} {:a 2} {:a 3}])
+    (ds/emap!! [:Foo/Bar] {:a 1})
+    (ds/emaps?! [:Bar] [{:a 1} {:a 2} {:a 3}])
+
+    ;; preferred syntax: (filter <keypred>? <valpred>?  @ds/DSMap)
+    ;; e.g.   (filter [:Foo] @ds/DSMap)
+
+    (let [es (filter #(= (ds/kind %) :Foo)  @ds/DSMap)]
+      (log/trace "filtered by kind:")
+      (doseq [e es]
+        (log/trace (ds/epr e)))
+      )
+
+    (let [es (ds/filter [:Foo])]
+      (log/trace "filtered on key:")
+      (doseq [e es]
+        (log/trace (ds/epr e)))
+      )
+
+;; FIXME: kindless queries cannot filter on properties
+    ;; (let [es (ds/filter [] {:a 1})]
+    ;;   (log/trace "filtered on val:")
+    ;;   (doseq [e es]
+    ;;     (log/trace (ds/epr e)))
+    ;;   )
+
+    (let [es1 (ds/filter [:Foo] {:a 1})
+          es2 (ds/filter [:Foo] {:a '(> 1)})]
+      (log/trace "filtered on key and val:")
+      (doseq [e es]
+        (log/trace (ds/epr e)))
+      )
+    ))
 
