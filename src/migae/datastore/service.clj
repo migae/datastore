@@ -1,10 +1,10 @@
-(ns migae.datastore.service
-  (:refer-clojure :exclude [name hash])
-  (:import [com.google.appengine.api.datastore
-            DatastoreService
-            DatastoreServiceFactory
-            DatastoreServiceConfig
-            DatastoreServiceConfig$Builder]))
+(in-ns 'migae.datastore)
+  ;; (:refer-clojure :exclude [name hash])
+  ;; (:import [com.google.appengine.api.datastore
+  ;;           DatastoreService
+  ;;           DatastoreServiceFactory
+  ;;           DatastoreServiceConfig
+  ;;           DatastoreServiceConfig$Builder]))
 ;  (:require [clojure.tools.logging :as log :only [trace debug info]]))
 
 

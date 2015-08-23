@@ -1,4 +1,4 @@
-(ns migae.ds
+(ns migae.dsm
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -118,15 +118,21 @@
 
       (log/trace "")
       (log/trace "em3:" (ds/epr em3))
+      (log/trace "type em3:" (type em3))
+      (log/trace "class em3:" (class em3))
       (log/trace "(key em3)" (key em3))
       (log/trace "(val em3)" (pr-str (val em3)))
       (log/trace "(keys em3)" (keys em3))
       (log/trace "(vals em3)" (pr-str (vals em3)))
 
-      (let [cm (ds/into {} em3)]
+      (let [cm (into {} em3)            ; copy into {} loses metadata!
+            cm2 (into ^migae.datastore.EntityMap {} em3)]
         (log/trace "")
         (log/trace "cm:" (ds/epr cm))
-        (log/trace "(key cm)" (key cm))
+        (log/trace "meta cm:" (meta cm))
+        (log/trace "type cm:" (type cm))
+        (log/trace "class cm:" (class cm))
+        (log/trace "(key cm): " (key cm))
         ;; (log/trace "(val cm)" (pr-str (val cm)))
         (log/trace "(keys cm)" (keys cm))
         (log/trace "(vals cm)" (pr-str (vals cm))))

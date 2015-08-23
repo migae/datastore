@@ -42,6 +42,117 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
+(deftest ^:emap emap1
+  (testing "emap key vector must not be empty"
+    (try (ds/emap [] {})
+         (catch IllegalArgumentException e
+           (log/trace (.getMessage e))))))
+
+(deftest ^:emap emap?
+  (testing "entitymap deftype"
+    (binding [*print-meta* true]
+      (let [em1 (ds/emap [:Species/Felis_catus] {:name "Chibi"})
+            em2 (ds/emap [:Genus/d99 :Species/Felis_catus] {:name "Chibi"})
+            em2b (ds/emap [(keyword "Genus" "999") :Species/Felis_catus] {:name "Chibi"})
+            em2c (ds/emap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
+        (log/trace "em1" em1)
+        (is (ds/emap? em1))
+        (log/trace "em2" em2)
+        (is (ds/emap? em2))
+        (log/trace "em3" em3)
+        (is (ds/emap? em3))
+        (log/trace "em4" em4)
+        (is (ds/emap? em4))
+        ))))
+
+(deftest ^:emap emap!
+  (testing "entitymap deftype"
+    (binding [*print-meta* true]
+      (let [em1 (ds/emap! [:Species/Felis_catus] {})
+            em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
+            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
+            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
+        (is (ds/emap? em1))
+        (is (ds/emap? em2))
+        (is (ds/emap? em3))
+        (is (ds/emap? em4))
+        ))))
+
+(deftest ^:emap emap-props-1
+  (testing "emap! with properties"
+    ;; (binding [*print-meta* true]
+      (let [k [:Genus/Felis :Species/Felis_catus]
+            e1 (ds/emap! k {:name "Chibi" :size "small" :eyes 1})
+            e2 (ds/emap! k)]
+        (log/trace "e1" e1)
+        (log/trace "e1 entity" (.entity e1))
+        (log/trace "e2" e2)
+        (log/trace "e2 entity" (.entity e2))
+        (is (= (e1 :name) "Chibi"))
+        (is (= (e2 :name) "Chibi"))
+        (is (= (:name (ds/emap! k)) "Chibi"))
+        (should-fail (is (= e1 e2)))
+        (is (ds/key= e1 e2))
+        )))
+
+(deftest ^:emap emap-fetch
+  (testing "emap! new, update, replace"
+    ;; ignore new if exists
+    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})
+          em2 (ds/emap! [:Species/Felis_catus] {})]
+        (is (ds/key= em1 em2))
+        (is (= (get em1 :name) "Chibi"))
+        (is (= (em1 :name) "Chibi"))
+        (is (= (:name em1) "Chibi"))
+        (is (= (get em2 :name) "Chibi")))
+
+    ;; ! do not override existing
+    (let [em2 (ds/emap! [:Species/Felis_catus] {:name "Booger"})]
+      (log/trace "em2 " em2)
+      (is (= (:name em2) "Chibi")))
+
+    ;; !! - update existing
+    (let [em3 (ds/emap!! [:Species/Felis_catus] {:name "Booger"})
+          em3 (ds/emap!! [:Species/Felis_catus] {:name 4})]
+      (log/trace "em3 " em3)
+      (log/trace "em3: " (.entity em3))
+      (log/trace "em3 key: " (:migae/key (meta em3)))
+      (is (= (:name em3) ["Chibi", "Booger" 4]))
+      (is (= (first (:name em3)) "Chibi")))
+
+    ;; replace existing
+    (let [em4 (ds/alter! [:Species/Felis_catus] {:name "Max"})]
+      (log/trace "em4 " em4)
+      (is (= (:name em4) "Max")))
+
+    (let [em5 (ds/emap! [:Species/Felis_catus :Name/Chibi]
+                       {:name "Chibi" :size "small" :eyes 1})
+          em6 (ds/alter!  [:Species/Felis_catus :Name/Booger]
+                       {:name "Booger" :size "lg" :eyes 2})]
+      (log/trace "em5" em5)
+      (log/trace "em6" em6))
+    ))
+
+(deftest ^:emap emap-fn
+  (testing "emap fn"
+    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})]
+      (log/trace em1))
+      ))
+
+;; ################################################################
+;; NB:  the emaps! family does not (yet) create entities
+;; (deftest ^:emap emaps
+;;   (testing "emaps"
+;;     (let [em1 (ds/emaps! :Species (>= :weight 5))
+;;           ;; em2 (ds/emaps! :Species (and (>= :weight 5)
+;;           ;;                              (<= :weight 7)))
+;;           ]
+;;       (log/trace em1)
+;;       )))
+
+
 (deftest ^:emaps emaps
   (testing "use emaps!! to create multiple EntityMaps of a kind in one stroke"
     (ds/emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}])
