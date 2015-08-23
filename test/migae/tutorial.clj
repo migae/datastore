@@ -335,6 +335,10 @@
       (is (= (type (.getKey (.entity e))) com.google.appengine.api.datastore.Key))
     )))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
 ;; ################################################################
 ;;  entity lists
 (deftest ^:props props1

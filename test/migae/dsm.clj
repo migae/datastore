@@ -8,7 +8,10 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy])
+           [com.google.apphosting.api ApiProxy]
+           [com.google.appengine.api.datastore
+            EntityNotFoundException]
+           [java.lang RuntimeException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.infix :as infix]
@@ -137,3 +140,12 @@
         (log/trace "(keys cm)" (keys cm))
         (log/trace "(vals cm)" (pr-str (vals cm))))
       )))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:ds mapentry
+  (testing "entity as mapentry"
+    (let [e (ds/emap!! [:Foo/Bar] {:a 1})]
+      (log/trace "contains? [:Foo/Bar]" (contains? @ds/DSMap [:Foo/Bar]))
+      (log/trace "contains? [:Foo/Baz]" (contains? @ds/DSMap [:Foo/Baz]))
+    )))
