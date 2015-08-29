@@ -1,5 +1,8 @@
 # migae - clojurizing the appengine datastore
 
+*CAVEAT* late Aug 2015: still working on code and doc; this will give
+ you the general idea, that's all.
+
 Update (late March 2015): major change in approach.  On my first try I
 used ordinary metadata to wrap the datastore stuff in clojure.  I've
 since learned a lot more about how to implement Clojure interfaces, so
