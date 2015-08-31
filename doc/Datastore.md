@@ -1,5 +1,15 @@
 # migae Datastore
 
+### API summary
+
+* `(into-ds! e)` - destructively save [entity](Entities.md) `e` into the datastore;
+  any previously saved version of ``e` will be replaced.
+* `(get-ds k)` - retrieve the entity whose [keychain](Keychain.md) is `k`.
+* `(datastore k)` - retrieve the entity whose keychain is `k`.
+* `(k datastore)` - retrieve the entity whose keychain is `k`.
+
+# overview
+
 The GAE datastore is a collection of _Entities_; an Entity extends
 PropertyContainer (i.e. a Map) by adding a Key.
 
@@ -26,6 +36,14 @@ To fetch an entity by key, we treat the datastore as an ordinary map:
 object; we can just write `(get-ds k)`.  Alternatively, since the
 (migae) datastore is a map, we can write `(datastore k)` or `(k
 datastore)`.
+
+# updating
+
+Datastore does not support selective updating of portions of an
+Entity.  The unit of change is the entire Entity; if you want to
+change one field in an entity, you must retrieve the entire Entity,
+change the field in the Entity object, and then save the entire
+Entity.  This will replace the previously stored Entity _in toto_.
 
 # namespaces
 
