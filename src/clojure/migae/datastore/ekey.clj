@@ -1,26 +1,27 @@
 (in-ns 'migae.datastore)
 
-(load "datastore/emap")
+;;(load "emap")
 
 (declare keychain=)
 
 (defn key? [^com.google.appengine.api.datastore.Key k]
   (= (type k) com.google.appengine.api.datastore.Key))
 
-(defmulti key class)
-(defmethod key Key
+;; FIXME:  key ->  ekey, to avoid clash with clj/key
+(defmulti ekey class)
+(defmethod ekey Key
   [^Key k]
   k)
-(defmethod key migae.datastore.EntityMap
-  [^EntityMap e]
+(defmethod ekey migae.datastore.EntityMap
+  [^migae.datastore.EntityMap e]
   (.getKey (.entity e)))
-(defmethod key com.google.appengine.api.datastore.Entity
+(defmethod ekey com.google.appengine.api.datastore.Entity
   [^Entity e]
   (.getKey e))
-(defmethod key clojure.lang.Keyword
+(defmethod ekey clojure.lang.Keyword
   [^clojure.lang.Keyword k]
   (keychain-to-key k))
-(defmethod key clojure.lang.PersistentVector
+(defmethod ekey clojure.lang.PersistentVector
   [kchain]
   (keychain-to-key kchain))
 
@@ -40,6 +41,12 @@
   ;;                              (not (nil? (clj/namespace k)))))
   (and (keyword k)
        (not (nil? (clj/namespace k)))))
+
+(defn keykind?
+  [k]
+  ;; (log/trace "keykind?" k (and (keyword k)
+  ;;                              (not (nil? (clj/namespace k)))))
+  (and (keyword? k) (nil? (clj/namespace k))))
 
 (defn keychain? [k]
   ;; k is vector of DS Keys and clojure keywords

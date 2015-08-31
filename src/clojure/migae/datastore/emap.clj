@@ -6,11 +6,10 @@
   ;;           ;; Key])
   ;; (:require [clojure.tools.logging :as log :only [trace debug info]]))
 
-(load "datastore/entity_map")
-(load "datastore/service")
+;;(load "datastore/entity_map")
+;;(load "datastore/service")
 
 ;; (declare get-val-clj get-val-ds)
-;; (declare get-next-emap-prop)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  single '?'  means predicate
@@ -33,12 +32,13 @@
   [e]
   (= (type e) Entity))
 
-(defn empty?
-  [em]
-  (= (count em) 0))
+;; (defn empty?
+;;   [em]
+;;   (= (count em) 0))
 
 ;; no put - EntityMap only
-(defn emap
+(defn entity-map
+  "create EntityMap object"
   [keychain em]
   (if (clj/empty? keychain)
     (throw (IllegalArgumentException. "key vector must not be empty"))
@@ -47,6 +47,40 @@
       (doseq [[k v] em]
         (.setProperty e (subs (str k) 1) (get-val-ds v)))
       (EntityMap. e))))
+
+;; OBSOLETE - use entity-map for consistency with hash-map, array-map, etc
+(defn emap
+  "create EntityMap object"
+  [keychain em]
+  (if (clj/empty? keychain)
+    (throw (IllegalArgumentException. "key vector must not be empty"))
+    (let [k (apply keychain-to-key keychain)
+          e (Entity. k)]
+      (doseq [[k v] em]
+        (.setProperty e (subs (str k) 1) (get-val-ds v)))
+      (EntityMap. e))))
+
+;; (defn emap!
+;;   "Like emap!! but works with partial keychain, so will always create new"
+;;   [keylinks & propmap]
+;;   (log/trace "emap!" keylinks propmap)
+;;   (if (clj/empty? keylinks)
+;;     (throw (IllegalArgumentException. "key vector must not be empty"))
+;;     (if (every? keylink? (butlast keylinks))
+;;       (if (and (keyword? (last keylinks)) (nil? (namespace (last keylinks))))
+;;         (let [k (if (> (count keylinks) 1)
+;;                   (apply keychainer (butlast keylinks)))
+;;               e (if (> (count keylinks) 1)
+;;                   (Entity. (subs (str (last keylinks)) 1)  k)
+;;                   (Entity. (subs (str (last keylinks)) 1)))]
+;;           (if (not (nil? propmap))
+;;             (let [props (first propmap)]
+;;               (doseq [[k v] props]
+;;                 (.setProperty e (subs (str k) 1) (get-val-ds v)))))
+;;           (.put (datastore) e)
+;;           (EntityMap. e))
+;;         (throw (IllegalArgumentException. "last element of key vector must be name only (i.e. kind keyword), e.g. :Customer")))
+;;       (throw-bad-keylinks keylinks))))
 
 ;; without override - discard body if entity already exists
 (defn emap!
@@ -179,7 +213,6 @@
         (emap-old k e content) ; even a new one hits this if id autogenned by keychain-to-key
         ))))
 
-
 (defn- emap-update-fn
   "Second arg is a function to be applied to the Entity whose key is first arg"
   [keychain f]
@@ -228,6 +261,21 @@
                 (.rollback txn))))
           em)))))
 
+;; (defn emap!!
+;;   "Replace, necessarily.  Create new, discarding old even if found (so
+;;   don't bother searching)."
+;;   [keylinks & propmap]
+;;   (log/trace "emap!!" keylinks propmap)
+;;   (if (clj/empty? keylinks)
+;;     (throw (IllegalArgumentException. "key vector must not be empty"))
+;;     (if (keylink? (last keylinks))
+;;       (if (every? keylink? (butlast keylinks))
+;;         (emap-definite!! keylinks propmap)
+;;         (throw-bad-keylinks (butlast keylinks)))
+;;       (if (keykind? (last keylinks))
+;;         (apply emap-indefinite!! keylinks propmap)
+;;         (apply throw-bad-keykind (butlast keylinks))))))
+
 (defn emap!!
   "Syntax:  (emap!! [<keychain>] content)
 
@@ -259,13 +307,32 @@
           (emap-update-fn keychain (first content))
           (throw (IllegalArgumentException. "content must be map or function")))))))
 
+;; (defn emap??
+;;   "Find, possibly.  If entity found, return without change, otherwise
+;;   throw exception."
+;;   ;; [keylinks & propmap]
+;;   [keylinks]
+;;    (log/trace "emap??" keylinks)
+;;    (if (clj/empty? keylinks)
+;;      (throw (IllegalArgumentException. "key vector must not be empty"))
+;;      (if (every? keylink? keylinks)
+;;        (let [k (apply keychainer keylinks)
+;;              e ;;(try
+;;                  (.get (datastore) k)]
+;;                     ;; (catch EntityNotFoundException ex (throw ex))
+;;                     ;; (catch DatastoreFailureException ex (throw ex))
+;;                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
+;;          (EntityMap. e))
+;;        (throw-bad-keylinks keylinks))))
+
 (defn emap??                            ;FIXME: use a multimethod?
+  "return matching emaps"
   [keylinks & filter-map]  ; keychain and predicate-map
   ;; {:pre []} ;; check types
   (log/trace "emap?? keylinks" keylinks (type keylinks))
   (log/trace "emap?? filter-map" filter-map (type filter-map))
 ;; )
-  (if (empty? keylinks)
+  (if (clj/empty? keylinks)
     (do
       (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
       )
@@ -284,10 +351,3 @@
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
       (EntityMap. e))))
-
-(defn get-next-emap-prop [this]
-  ;; (log/trace "get-next-emap-prop" (.ds-iter this))
-  (let [r (.next (.ds-iter this))]
-    ;; (log/trace "next: " r)
-    r))
-

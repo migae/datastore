@@ -5,6 +5,9 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :aot [:all]
+  :source-paths ["src/clojure"]
+  :java-source-paths ["src/java"]
+  :test-paths ["test/clojure"]
   :test-selectors {:ancestor :ancestor
                    :api :api
                    :assoc :assoc
