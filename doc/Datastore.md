@@ -3,7 +3,7 @@
 ### API summary
 
 * `(into-ds! e)` - destructively save [entity](Entities.md) `e` into the datastore;
-  any previously saved version of ``e` will be replaced.
+  any previously saved version of `e` will be replaced.
 * `(get-ds k)` - retrieve the entity whose [keychain](Keychain.md) is `k`.
 * `(datastore k)` - retrieve the entity whose keychain is `k`.
 * `(k datastore)` - retrieve the entity whose keychain is `k`.
