@@ -42,7 +42,10 @@ A Clojurish way to handle this sort of situation is to use a
 `with-namespace` operation.  So we might write:
 
 ```clojure
-(with-namespace "foo" \n
+(with-namespace "foo"
+  (let [e (entity-map [:A/B] {:a 1})]
+    (into-ds! e)))
+(with-namespace "bar"
   (let [e (entity-map [:A/B] {:a 1})]
     (into-ds! e)))
 ```
