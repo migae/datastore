@@ -35,8 +35,8 @@ we want to write `(:foo em)` instead of `(:foo (val em))`, and `(keys
 em)` instead of `(keys (val em))`, etc.
 
 In other words, instead of treating an Entity as a MapEntry of form
-[Key,PropertyContainer], we inject/pivot the key into the
-PropertyContainer as the value associated with a disinguished key
+[Key,PropertyContainer], we (conceptually) inject/pivot the key into
+the PropertyContainer as the value associated with a disinguished key
 (:migae/key) so we can treat it as a Map.
 
 **CAVEAT**: the standard map/coll ops are not all fully implemented or
