@@ -1,5 +1,25 @@
+# migae entity-maps
 
 *CAVEAT* These are old notes.
+
+EntityMap: a deftype that implements protocols/interfaces to make it
+behave like a clojure map (extended so it also behaves like a map
+entry):
+
+* clojure.lang.IFn
+* clojure.lang.ILookup
+* clojure.lang.IMapEntry
+* clojure.lang.IMeta
+* clojure.lang.IObj
+* clojure.lang.IPersistentCollection
+* clojure.lang.IPersistentMap
+* clojure.lang.IReduce
+* clojure.lang.ITransientCollection
+* clojure.lang.Associative
+* clojure.lang.Indexed
+* clojure.lang.Seqable
+* java.lang.Iterable
+* java.util.Map$Entry
 
 EntityMap - design goal is to have DS entities behave just like
 ordinary Clojure maps.  E.g. for ent.getProperty("foo") we want to
@@ -31,16 +51,6 @@ interactive development, need not be AOT compiled, and can be
 re-evaluated in the course of a single session.  So we use deftype
 with a single data field (holding a map) and the protocols needed to
 support a map-like interface.
-
-EntityMap: implements protocols/interfaces to make it behave like
-a clojure map:
-
-  clojure.lang.IPersistentCollection
-  clojure.lang.IPersistentMap
-  java.lang.Iterable
-  clojure.lang.Associative
-  clojure.lang.Seqable
-  clojure.lang.ILookup
 
 The problem is that there doesn't seem to be a way to support
 metadata, which we need for the key.  Also the doc warns sternly
