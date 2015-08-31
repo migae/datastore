@@ -5,6 +5,15 @@ protocols/interfaces to make it behave like a clojure map (extended so
 it also behaves like a map entry).  The actual Datastore Entity is
 stored as a field in the EntityMap.
 
+The datastore is mutable.  Entities in the datastore are quasi
+immutable; you can replace them, but you cannot change them (i.e. by
+mutating a field in an Entity).  Entities in your program space are
+fully mutable, but EntityMaps are not.  To change a saved
+Entity, retrieve it to an entity-map and use standard map/collection
+operations to "update" it - i.e. to generate new entity-maps.  Then
+put the new entity-map into the datastore using the original key, and
+you will replace the old Entity in the datastore.
+
 ### api
 
 * `(entity-map [:A/B :C/D] {:a 1})` => creates
