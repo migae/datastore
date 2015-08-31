@@ -16,6 +16,14 @@ The standard operations for collections and maps are supported; see
 the test suite for lots of examples using e.g. `into`, `assoc`,
 `merge`, etc.
 
+*Caveat*: the Entity key is treated just like any key; for example, if
+ you say `(into em1 em2)` the result will be a copy of em1 augmented
+ by em2, with em2 vals replacing em1 vales where keys match.  Since
+ both have a datastore key (`:migae/key`), the datastore key of the
+ result will be that of em2, not em1.  TODO: more on the rational for
+ this design choice.
+
+
 Note that EntityMap behaves like a map and also like a MapEntry.  That
 is, it supports `keys` and `vals`, but also `key` and `val`.  The
 justification for this is that technically speaking we should treat an
@@ -26,7 +34,13 @@ distinguished key (`:migae/key`).  And that's just because we're lazy;
 we want to write `(:foo em)` instead of `(:foo (val em))`, and `(keys
 em)` instead of `(keys (val em))`, etc.
 
-**CAVEAT**:  not fully implemented or tested, but see the test suite.
+In other words, instead of treating an Entity as a MapEntry of form
+<key,map>, we inject/pivot the key into the map as the value
+associated with a disinguished key (:migae/key) so we can treat it as
+a Map.
+
+**CAVEAT**: the standard map/coll ops are not all fully implemented or
+  tested, but see the test suite.
 
 # mutability
 
