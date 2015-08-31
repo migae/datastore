@@ -28,7 +28,7 @@ A Key is composed of:
 If you print an Entity to stdout you'll see something like the following:
 
 ```
-Subfamily("Felinae")/Genus("Felis")/Species("Felis_catus")
+[Subfamily("Felinae")/Genus("Felis")/Species("Felis_catus")]
 ```
 
 This is the print representation of a Key whose final node has kind
