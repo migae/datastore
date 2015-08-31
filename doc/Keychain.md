@@ -23,6 +23,7 @@ A Key is composed of:
  * a _name_ of type string, or
  * an _id_ of type `long`
 * optionally, a _parent_ key
+* (hidden: a namespace string)
 
 If you print an Entity to stdout you'll see something like the following:
 
