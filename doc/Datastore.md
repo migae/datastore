@@ -43,12 +43,18 @@ A Clojurish way to handle this sort of situation is to use a
 
 ```clojure
 (with-namespace "foo"
-  (let [e (entity-map [:A/B] {:a 1})]
-    (into-ds! e)))
+    (into-ds! (entity-map [:A/B] {:a 1}))
 (with-namespace "bar"
-  (let [e (entity-map [:A/B] {:a 1})]
-    (into-ds! e)))
+    (into-ds! (entity-map [:A/B] {:a 1}))
 ```
+
+Here we have inserted identical entities into distinct namespaces.
+**_WARNING_**: _entity construction must occur within a `with-namespace`
+expression_.  Namespacing is implemented in the Key and Query
+objects - in effect, a namespace is written into each entity as a
+component of its Key.
+
+See [Using namespaces with the Datastore](https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Using_namespaces_with_the_Datastore)
 
 # Java low-level APIs
 
