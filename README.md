@@ -65,5 +65,19 @@ TODO: support all datastore property types.  see [Properties and value types](ht
 ## mutation
 
 ```
-(into-ds (entity-map [:A/B] {:a 1}))
+(into-ds (entity-map [:A/B] {:a 1})) ;; non-destructive: fail if already exists
+(into-ds! (entity-map [:A/B] {:a 1})) ;; destructive: replace existing
 ```
+
+Patterns:
+
+* augmentation: add a field, or add a value to a field
+* replacement:  replace value of a field, replace entire entity
+* removal:  delete a field or entity
+
+Note that datastore fields may be singletons or collections.  So for
+example you can start by storing an int, and then you can add another
+value to the field, effectively converting it from type int to type
+collection.  So there are three kinds of change that can apply to a
+field: change the value, or augment it by adding another value, or
+remove it.
