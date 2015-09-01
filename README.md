@@ -17,11 +17,14 @@ demonstrate the semantics.
 ## construction
 
 ```
-(def k [:A/B :C/D]) ;; a keychain
-(def em (entity-map k {:a 1}))
-(is  (coll?em))
-(is  (map?em))
-(is  (entity-map?em))
+(def em (entity-map [:A/B C/D] {:a 1 :b 2}))
+(is  (coll? em))
+(is  (map? em))
+(is  (entity-map? em))
+(is (= (key  em) [:A/B :C/D]))
+(is (= (val  em) {:a 1 :b 2}))
+(is (= (keys em) [:a :b]))
+(is (= (vals em) [1 2]))
 ```
 
 ### keychains
