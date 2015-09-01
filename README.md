@@ -58,6 +58,26 @@ In the datastore, kinds are strings; in migae, kinds are keywords.
 (entity-map [:Foo/Bar] {:a '(1 2)})   ;; lists
 (entity-map [:Foo/Bar] {:a {:b :c}})  ;; maps
 (entity-map [:Foo/Bar] {:a #{1 'b "c"}})  ;; sets
+(entity-map [:Foo/Bar] {:a {:b [1 {:c true}]})  ;; mixed, nested
+(entity-map [:Foo] {:a {:b :c}
+                    :b [1 2]
+                    :c '(foo bar)
+                    :d #{1 'x :y "z"}})
+```
+
+Datastore field types:
+```
+(entity-map [:Foo/bar] {:int 1 ;; BigInt and BigDecimal not supported
+                        :float 1.1
+                        :bool true
+						:string "I'm a string"
+                        :today (java.util.Date.)
+                        :email (Email. "foo@example.org")
+                        :dskey [:A/B :C/D] ;; foreign key
+                        :link (Link. "http://example.org")
+						;; TODO: EmbeddedEntity (not same as map value)
+                        ;; TODO: Blob, ShortBlob, Text, GeoPt, PostalAddress, PhoneNumber, etc.
+                        })
 ```
 
 TODO: support all datastore property types.  see [Properties and value types](https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types)
