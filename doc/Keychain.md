@@ -113,3 +113,94 @@ family [Felinae](https://en.wikipedia.org/wiki/Felinae) includes, in
 addition to genus _Felis_, _Leopardus_, _Lynx_, _Puma_, and several
 others, so this might match `[:Subfamily/Felinae :Genus/Felis]`,
 `[:Subfamily/Felinae :Genus/Leopardus]`, etc.
+
+#### other (old) notes
+
+# Ancestry - i.e. Keys, Keychains, and Keylinks
+
+The identity of a datastore entity is determined by its key; two
+entities are equal if they have equal keys.  In other words, the
+Entity method "equals" tests for key equality.
+
+The language of Keys is a little confusing and obscure.  Migae tries
+to make things a little more explicit and clear.
+
+A "Key" is composed of a pair of a Kind and an Identifier (either a
+string name or a long id), plus a parent key.  This recursive
+structure establishes an "ancestor path" for each key.  The native API
+does not provide a "getAncestors" method; to construct the entire path
+you have to recur using getParent.
+
+Note that there is an inherent ambiguity here.  The key of an Entity
+is a Java object that may refer to a parent key - another object.  But
+Entities are not identified solely by their key object - it's the
+entire chain of keys determined by the parent chain that functions as
+the key of the entity.  The Entity's key object is actually the last
+link in a chain of keys.  If you call getKey on an Entity, you don't
+get the entire chain of key objects.  For that, you have to recur using
+getParent.
+
+In other words, when the DS doco says "Key", it might mean the entire
+Key (chain) of an entity, or it might mean jus the last link in the
+chain (a Key object).
+
+Migae replaces "Key" talk with talk of Keychains and Keylinks.
+
+When you call getKey on an Entity, you get a Key object, which
+represents the last link in the chain.  The preceding links in the
+chain are represented by the getParent method of the Key class.  In
+migae, we refer to keylinks rather than Keys, and keychains rather
+than ancestor paths.  So e.g. `(ds/keylink e)` wraps a call to getKey,
+which returns a Key, and `(ds/keychain e)` recurs over the ancestor
+path to produce a vector of keylinks (represented as Clojure
+keywords).  To get the ancestory path (as a vector of keywords), call
+`(ds/keychain (ds/parent e))`.
+
+The Kind of an entity is determined by the kind of its key, which is
+to say by the kind of the last element in its keychain.  Ditto for its
+Identifier (name or id).
+
+This means that distinct Entities can have the same Kind and the same
+Identifier, so long as they have distinct ancestor paths.  So we can
+think of ancestor paths as determining a namespace.
+
+In migae, we use the notion of a keychain to refer to the entire chain
+of ancestor path plus entity Kind+Identifier, and we treat the latter
+as the "name" of the Entity, the former as the namespace.  We
+represent the keychain as a vector of Clojure keywords; the entire
+keychain identifies the entity; the last element of the vector is the
+"name" of the Entity, and the vector up to the last element represents
+the ancestor path.  For example:
+
+
+    [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus :Cat/Chibi]
+
+In this example, `:Cat/Chibi` is the "key node" or "name" of
+the Entity, and `[:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]` is
+the "namespace" or ancestor path.  If you print this key from the ds
+you get something like:
+
+    [Family("Felidae")/Subfamily("Felinae")/Genus("Felis")/Species("Felis_catus")/Cat("Chibi")]
+
+Migae wraps the gory details.  If you ask for the key of an Entity,
+you get the entire keychain vector.(? - SUBJECT TO CHANGE) If you just
+want the "name" part of the key (without the namespace, i.e. the
+ancestor path), use ds/key-name.  ("name" is reserved for getting the
+name component of a Key node).
+
+[Note that the keys in a keychain need not be associated with actual Entities in the datastore.]
+
+Migae uses keywords to encode Kinds and Identifiers.  The native
+datastore uses String for Kinds, and either String or Long for
+Identifiers ("name" and "id", respectively).
+
+    Datastore API			migae
+	Entity("MyKind")	->  (emap :Mykind) or (emap [:MyKind])
+	Entity("MyKind", 99) ->  (emap :Mykind/d99) or (emap [:MyKind/d99]) or (emap (keyword "MyKind" "99"))
+	Entity("MyKind, "Foo") -> (emap :Mykind/Foo) or etc.
+
+Setting ancestry:
+
+    Entity parent = new Entity("A", "B");
+	Entity("MyKind", "Foo", parent) ->   (emap [:A/B :MyKind/Foo])
+

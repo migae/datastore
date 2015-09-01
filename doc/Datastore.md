@@ -83,3 +83,40 @@ See [Using namespaces with the Datastore](https://cloud.google.com/appengine/doc
 [Entity](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Entity)
 
 [Namespaces](https://cloud.google.com/appengine/docs/java/multitenancy/) (a/k/a Multitenancy)
+
+#### old notes
+
+## EntityMap
+
+See the test tutorial.clj for lots of examples.
+
+EntityMap (aka emap) is a deftype that holds a reference to an Entity in field
+"entity".  The user can always use the native API by doing `(.entity
+em)` (where `em` is an EntityMap instance).  But the goal here is to
+completely hide the Java api behind a natural Clojure idiom.
+
+To get or make an emap use emap, emap!, or emap!!.  First arg must be
+a vector of keywords that will serve as the key (all but the last must
+have a namespace), second arg can be a literal map or a function that
+takes an EntityMap and does things to it.
+
+EntityMaps behave just like Clojure maps (except the implementation is
+incomplete and unstable and may be buggy), except for the obvious
+deviation: they're not immutable.  So if you `(into em {:foo "bar"}),
+em - more precisely, the Entity it wraps - will be mutated.
+
+CAVEAT: emap returns an EntityMap that wraps an Entity that has not
+been stored.  emap! checks to see of the key is already in the
+datastore; if so, fetchs it and ignores the second arg of the emap!
+expression; emap!! fetches an existing Entity if there is one, the
+adds/overrides its properties using the second arg, then saves the
+result.
+
+### Getting and putting
+
+We're lazy so currently most if not all operations just go ahead and
+`put` results to the datastore.  Coming up with a more sensible set of
+policies and apis requires further research and experimentation; for
+the moment, the main focus is on making the EntityMap behave just like
+Clojure's maps, DS query results behave like a seq, etc.
+
