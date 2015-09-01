@@ -129,7 +129,7 @@ remove it.
 
 This clashes a little bit with Clojure abstractions.  For example,
 `into` replaces stuff.  That's fine, but we also need a way to
-augment, so we'll have to spell that out.
+augment, so we'll have to spell that out - call it `onto`?.
 
 ```
 (let [e (get-ds [:A/B])
@@ -141,6 +141,6 @@ augmentation:
 
 ```
 (let [e (get-ds [:A/B])
-;; todo: turn {:foo "bar"} into {:foo ["bar" "baz"]}
+     (e2 (ds/augment {:foo 27}))] ;; turn {:foo "bar"} into {:foo ["bar" 27]}
   (into-ds! e))
 ```
