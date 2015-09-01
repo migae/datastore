@@ -82,8 +82,20 @@ collection.  So there are three kinds of change that can apply to a
 field: change the value, or augment it by adding another value, or
 remove it.
 
+This clashes a little bit with Clojure abstractions.  For example,
+`into` replaces stuff.  That's fine, but we also need a way to
+augment, so we'll have to spell that out.
+
 ```
 (let [e (get-ds [:A/B])
-      e2 (into e {:foo "bar"})]
+      e2 (into e {:foo "bar"})] ;; replace val at :foo, or add if not present
+  (into-ds! e))
+```
+
+augmentation:
+
+```
+(let [e (get-ds [:A/B])
+;; todo: turn {:foo "bar"} into {:foo ["bar" "baz"]}
   (into-ds! e))
 ```
