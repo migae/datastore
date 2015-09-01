@@ -27,7 +27,7 @@ demonstrate the semantics.
 (is (= (vals em) [1 2]))
 ```
 
-### keychains
+### Keys, keychains, keylinks, and dogtags
 
 A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  This corresponds
 to a datastore Key, which has a Kind of type String and an Identifier,
@@ -38,13 +38,23 @@ A proper keychain is a vector of namespaced keywords.  To use numeric
 Ids, include a notational prefix, 'd' for decimal and 'x' for
 hexadecimal.  E.g. `[:Foo/d11]` or `[:Foo/x0B]`.
 
+The last link in the chain is the _dogtag_, so named because it serves
+as a (quasi-) identifier for its entity-map.  A dogtag is just a
+Clojure keyword with namespace (e.g. [:A/B]); it corresponds to the
+datastore Key of the underlying datastore Entity.  The Key of an
+Entity does identify it, because it contaiins a link to its parent
+key; but a dogtag does not completely identify its entity-map, since
+it contains no link to its predecessor.  In migae, the "key" of an
+entity-map is the entire keychain.  However, the kind and identifier
+(name or id) of the dogtag do characterize the entity-map.
+
 ```
-(def m {:a 1})
-(entity-map [:Foo/Bar] m) ;;  kind="Foo",  identifier (name) ="Bar"
-(entity-map [:Foo/d10] m) ;;  identifier (id) =  10
-(entity-map [:Foo/x0A] m) ;;  identifier (id) =  10 (hex A)
-(entity-map [(keyword "Foo" "10")] m) ;; same
-(entity-map [:A/B :C/D :E/F :G/H :I/J] m) ;; keychains can be long; only one entity created
+(ds/ekey? (ds/to-ekey :A/B)) ; migae keylink to datastore entity Key (ekey)
+(is (= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B]) ;; dogtag is last link in chain :A/B
+(is (= (ds/keychain (ds/to-ekey :A/B)) [:A/B]))
+(is (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B])))
+      (is (= (ds/name e1) (ds/name e2) (ds/name e3)))
+
 ```
 
 ### kinds
@@ -106,6 +116,29 @@ Datastore field types:
 ```
 
 TODO: support all datastore property types.
+
+## retrieval
+
+We treat the datastore as just another map: `(get datastore k)`
+retrieves the entity-map whose keychain is `k`.  Since there is only
+one datastore, we sugar this to `(get-ds k)`.
+
+## queries
+
+**NB**: these query patterns are experimental and very likely to change.
+
+Query syntax looks like constructor syntax; the difference is we treat
+the map part as a pattern.
+
+Conventions: terminal '?' means "predicate"; '?' followed by another
+char means "find".
+
+* `(entity-map?! k m)` - find ('?'), necessarily ('!').
+ * if `k` is a proper keychain, then:
+  * if no entity with key `k` exists in the datastore, create and store it
+  * if an entity with key `k` does exist, return it (ignoring m argument)
+ * if `k` is an improper keychain, then '?!' means "find _some_ entity", so:
+  * create and save a new entity with autogenned key id
 
 ## mutation
 
