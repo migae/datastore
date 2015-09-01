@@ -81,3 +81,9 @@ value to the field, effectively converting it from type int to type
 collection.  So there are three kinds of change that can apply to a
 field: change the value, or augment it by adding another value, or
 remove it.
+
+```
+(let [e (get-ds [:A/B])
+      e2 (into e {:foo "bar"})]
+  (into-ds! e))
+```
