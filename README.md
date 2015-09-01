@@ -28,18 +28,39 @@ demonstrate the semantics.
 
 ```
 (def m {:a 1})
-(entity-map [:Foo/Bar] m) ;;  name identifier "Bar"
-(entity-map [:Foo/d10] m) ;;  long identifier 10
-(entity-map [:Foo/x0A] m) ;;  long identifier 10 (hex A)
+(entity-map [:Foo/Bar] m) ;;  kind="Foo",  identifier (name) ="Bar"
+(entity-map [:Foo/d10] m) ;;  identifier (id) =  10
+(entity-map [:Foo/x0A] m) ;;  identifier (id) =  10 (hex A)
 (entity-map [(keyword "Foo" "10")] m) ;; same
-(def em1 (entity-map [:Foo] m)) ;; long identifier autogenned
-(def em2 (entity-map [:Foo] m)) ;; em1 and em2 have different key identifiers
+(def em1 (entity-map [:Foo] m)) ;; kind="Foo", id is autogenned.  SIDE EFFECT: empty entity put to ds
+(def em2 (entity-map [:Foo] m)) ;; em1 and em2 have different key ids
+(entity-map [:A/B :C/D :E/F :G/H :I/J] m) ;; keychains can be long; only one entity created
+```
+
+### kinds
+
+In the datastore, kinds are strings; in migae, kinds are keywords.
+
+```
+(= (kind (entity-map [:Foo/Bar] {:a 1})) :Foo)
+(= (kind (entity-map [:Foo/Bar :X/d3] {:a 1})) :X)
 ```
 
 ### field types
 ```
-(entity-map [:Foo/Bar] {:a 1})  ;; ints
+(entity-map [:Foo/Bar] {:a 1})  ;; java.lang.Long
+(entity-map [:Foo/Bar] {:a 1.0})  ;; java.lang.Double
+(entity-map [:Foo/Bar] {:a true})  ;; java.lang.Boolean
+(entity-map [:Foo/Bar] {:a "baz"})  ;; java.lang.String
+(entity-map [:Foo/Bar] {:a :b})  ;; keywords (stored as String)
+(entity-map [:Foo/Bar] {:a 'b})  ;; symbols (stored as String)
+(entity-map [:Foo/Bar] {:a [1 2 3]})  ;; vectors
+(entity-map [:Foo/Bar] {:a '(1 2)})   ;; lists
+(entity-map [:Foo/Bar] {:a {:b :c}})  ;; maps
+(entity-map [:Foo/Bar] {:a #{1 'b "c"}})  ;; sets
 ```
+
+TODO: support all datastore property types.  see [Properties and value types](https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types)
 
 ## mutation
 
