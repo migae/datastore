@@ -68,6 +68,10 @@ values.  All but the last links in the vector must be namespaced; e.g. `[:A/B :C
 ```
 
 ### field types
+
+The value part of an entity-map is just a map.  The datastore
+restricts the permissible value types; see  [Properties and value types](https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types)
+
 ```
 (entity-map [:Foo/Bar] {:a 1})  ;; java.lang.Long
 (entity-map [:Foo/Bar] {:a 1.0})  ;; java.lang.Double
@@ -101,7 +105,7 @@ Datastore field types:
                         })
 ```
 
-TODO: support all datastore property types.  see [Properties and value types](https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types)
+TODO: support all datastore property types.
 
 ## mutation
 
@@ -129,8 +133,8 @@ augment, so we'll have to spell that out.
 
 ```
 (let [e (get-ds [:A/B])
-      e2 (into e {:foo "bar"})] ;; replace val at :foo, or add if not present
-  (into-ds! e))
+      e2 (into e {:foo "bar"})] ;; std clojure.core/into: replace val at :foo, or add if not present
+  (into-ds! e2)) ;; replace e
 ```
 
 augmentation:
