@@ -29,14 +29,21 @@ demonstrate the semantics.
 
 ### keychains
 
+A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  This corresponds
+to a datastore Key, which has a Kind of type String and an Identifier,
+which can be either a String name or a long Id.  See
+[Keychains](doc/Keychain.md) for more detail.
+
+A proper keychain is a vector of namespaced keywords.  To use numeric
+Ids, include a notational prefix, 'd' for decimal and 'x' for
+hexadecimal.  E.g. `[:Foo/d11]` or `[:Foo/x0B]`.
+
 ```
 (def m {:a 1})
 (entity-map [:Foo/Bar] m) ;;  kind="Foo",  identifier (name) ="Bar"
 (entity-map [:Foo/d10] m) ;;  identifier (id) =  10
 (entity-map [:Foo/x0A] m) ;;  identifier (id) =  10 (hex A)
 (entity-map [(keyword "Foo" "10")] m) ;; same
-(def em1 (entity-map [:Foo] m)) ;; kind="Foo", id is autogenned.  SIDE EFFECT: empty entity put to ds
-(def em2 (entity-map [:Foo] m)) ;; em1 and em2 have different key ids
 (entity-map [:A/B :C/D :E/F :G/H :I/J] m) ;; keychains can be long; only one entity created
 ```
 
@@ -47,6 +54,17 @@ In the datastore, kinds are strings; in migae, kinds are keywords.
 ```
 (= (kind (entity-map [:Foo/Bar] {:a 1})) :Foo)
 (= (kind (entity-map [:Foo/Bar :X/d3] {:a 1})) :X)
+```
+
+### autogenned ids
+
+Use a partial ("improper") keychain to have the datastore autogen Id
+values.  All but the last links in the vector must be namespaced; e.g. `[:A/B :C/D :E]`.
+
+```
+(def em1 (entity-map [:Foo] m)) ;; kind="Foo", id is autogenned.  SIDE EFFECT: empty entity put to ds
+(def em2 (entity-map [:Foo] m)) ;; em1 and em2 have different key ids
+(def em2 (entity-map [:A/B :C/D Foo] m)) ;; long keychains ok too
 ```
 
 ### field types
