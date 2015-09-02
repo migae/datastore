@@ -46,6 +46,16 @@ user=> (ds/keychain? k)   ;; ds loaded by dev/user.clj
 true
 user=> (ds/entity-map? em)
 true
+user=> (ds/keychain em)
+[:A/B]
+user=> (key em)
+[:A/B]
+user=> (val em)
+{:a 1}
+user=> (keys em)
+(:a)
+user=> (vals em)
+(1)
 user=> (ds-reset)
 #object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
 user=> (ds/entity-map k m)
