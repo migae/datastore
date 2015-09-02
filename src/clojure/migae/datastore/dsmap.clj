@@ -28,8 +28,8 @@
       ;;       f (Query$FilterPredicate. k Query$FilterOperator/EQUAL v)]
       ;;   (log/trace (format "key: %s, val: %s" k v))))
     (let [k (if (coll? keylinks)
-              (apply keychain-to-key keylinks)
-              (apply keychain-to-key [keylinks]))
+              (apply ekey/keychain-to-key keylinks)
+              (apply ekey/keychain-to-key [keylinks]))
           ;; foo (log/trace "get-emap kw keylinks: " k)
           e (try (.get (ds/datastore) k)
                  (catch EntityNotFoundException e (throw e))

@@ -32,14 +32,20 @@ user=> m   ;; predefined in dev/user.clj
 {:a 1}
 user=> em   ;; predefined in dev/user.clj
 {:a 1}
-user=> (type em)
-migae.datastore.EntityMap
-user=> (ds/keychain? k)
-true
-user=> (ds/entity-map? em)   ;; ds loaded by dev/user.clj
-true
 user=> (meta em)
 {:migae/key [:A/B], :type migae.datastore.EntityMap}
+user=> (type em)
+migae.datastore.EntityMap
+user=> (println (.entity em))
+#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
+	a = 1
+>
+]
+nil
+user=> (ds/keychain? k)   ;; ds loaded by dev/user.clj
+true
+user=> (ds/entity-map? em)
+true
 user=> (ds-reset)
 #object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
 user=> (ds/entity-map k m)
