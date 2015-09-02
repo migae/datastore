@@ -37,7 +37,7 @@ user=> (meta em)
 user=> (type em)
 migae.datastore.PersistentEntityMap
 user=> (println (.entity em))
-\#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
+#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
 	a = 1
 >
 ]
@@ -57,7 +57,7 @@ user=> (keys em)
 user=> (vals em)
 (1)
 user=> (ds-reset)
-\#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
+#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
 user=> (ds/entity-map k m)    ;; local constructor
 {:a 1}
 user=> (ds/entity-map! k m)   ;; push constructor - saves to datastore
