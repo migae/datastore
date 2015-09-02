@@ -12,9 +12,20 @@ lots of simple tests (see esp. test/migae.tutorial.clj) that
 demonstrate the semantics.
 
 
-# examples
+## types
+
+* `migae.datastore.EntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
+* `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).
+
 
 ## construction
+
+We have three ways to construct EntityMap objects:
+
+* local constructor:  `(entity-map <keychain> <map>)`
+* push constructor:   `(entity-map! <keychain> <map>)`
+* pull constructor:   `(entity-map* <keychain> <map>)`
+
 
 ```
 (def em (entity-map [:A/B C/D] {:a 1 :b 2}))
@@ -47,6 +58,10 @@ key; but a dogtag does not completely identify its entity-map, since
 it contains no link to its predecessor.  In migae, the "key" of an
 entity-map is the entire keychain.  However, the kind and identifier
 (name or id) of the dogtag do characterize the entity-map.
+
+Note that a dogtag predicate `(dogtag? x)` doesn't make sense - it's
+not a type.  What makes a keyword a dogtag is its position in a
+keychain.
 
 ```
 (ds/ekey? (ds/to-ekey :A/B)) ; migae keylink to datastore entity Key (ekey)
@@ -122,6 +137,15 @@ TODO: support all datastore property types.
 We treat the datastore as just another map: `(get datastore k)`
 retrieves the entity-map whose keychain is `k`.  Since there is only
 one datastore, we sugar this to `(get-ds k)`.
+
+### experimental:  co-construction
+
+
+
+
+```
+(entity-map* [:A/B]) ;; "co-constructs" (retrieves) entity with key [:A/B] if it exists, otherwise throws exception
+```
 
 ## queries
 
