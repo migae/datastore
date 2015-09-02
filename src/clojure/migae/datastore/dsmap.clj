@@ -31,7 +31,7 @@
               (apply keychain-to-key keylinks)
               (apply keychain-to-key [keylinks]))
           ;; foo (log/trace "get-emap kw keylinks: " k)
-          e (try (.get (datastore) k)
+          e (try (.get (ds/datastore) k)
                  (catch EntityNotFoundException e (throw e))
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
@@ -84,12 +84,12 @@
     )
   ) ;; deftype DatastoreMap
 
-(defonce ^{:dynamic true} DSMap (atom nil))
+;; (defonce ^{:dynamic true} DSMap (atom nil))
 
-(defn init []
-  (when (nil? @DSMap)
-    (do
-        (reset! DSMap (DatastoreMap. *datastore-service*))
-        ))
-  @DSMap)
+;; (defn init []
+;;   (when (nil? @DSMap)
+;;     (do
+;;         (reset! DSMap (ds/datastoreMap. *datastore-service*))
+;;         ))
+;;   @DSMap)
 

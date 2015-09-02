@@ -37,7 +37,7 @@
 (defn- get-val-clj-coll
   "Type conversion: java to clojure"
   [coll]
-  (log/trace "get-val-clj-coll" coll (type coll))
+  ;; (log/trace "get-val-clj-coll" coll (type coll))
   (cond
     (= (type coll) java.util.ArrayList) (clj/into '() (for [item coll]
                                                        (get-val-clj item)))
@@ -95,10 +95,10 @@
 ;; this is for values to be printed (i.e. from ds to clojure)
 (defn- get-val-clj
   [v]
-  (log/trace "get-val-clj" v (type v) (class v))
+  ;; (log/trace "get-val-clj" v (type v) (class v))
   (let [val (cond (integer? v) v
                   (string? v) (str v)
-                  (= (class v) java.lang.Double) (.toString v)
+                  (= (class v) java.lang.Double) v
                   (= (class v) java.lang.Boolean) v
                   (= (class v) java.util.Date) v
                   (instance? java.util.Collection v) (get-val-clj-coll v)

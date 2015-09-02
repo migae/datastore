@@ -1,12 +1,13 @@
-(in-ns 'migae.datastore)
-  ;; (:refer-clojure :exclude [name hash])
-  ;; (:import [com.google.appengine.api.datastore
-  ;;           DatastoreService
-  ;;           DatastoreServiceFactory
+(ns migae.datastore.service
+;  (:refer-clojure :exclude [name hash])
+  (:import [com.google.appengine.api.datastore
+ ;           DatastoreService
+            DatastoreServiceFactory]))
   ;;           DatastoreServiceConfig
   ;;           DatastoreServiceConfig$Builder]))
 ;  (:require [clojure.tools.logging :as log :only [trace debug info]]))
 
+;; FIXME: replace with DatastoreMap?
 
 (defonce ^{:dynamic true} *datastore-service* (atom nil))
 

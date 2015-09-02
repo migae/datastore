@@ -41,7 +41,8 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
             ;; [migae.datastore :refer :all]
-            [migae.datastore.keychain :refer :all]
+            [migae.datastore.service :as ds]
+            [migae.datastore.keychain :as ekey]
             ;; [migae.datastore.dsmap :as dsm]
             ;; [migae.datastore.emap :as emap]
             ;; [migae.datastore.entity :as dse]
@@ -75,7 +76,7 @@
 
 (declare get-val-clj get-val-ds)
 (declare props-to-map get-next-emap-prop)
-;;(declare to-keychain keychain-to-key identifier)
+
 (declare make-embedded-entity)
 
 (defn- get-next-emap-prop [this]
@@ -108,6 +109,7 @@
 ;;  EntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftype EntityMap [entity]
+
   java.lang.Iterable
   (iterator [this]
     (log/trace "Iterable iterator" (.entity this))
@@ -122,7 +124,7 @@
   clojure.lang.IMeta
   (meta [_]
     ;; (log/trace "IMeta meta")
-    {:migae/key (to-keychain entity)
+    {:migae/key (ekey/to-keychain entity)
      :type EntityMap})
 
   clojure.lang.IObj
@@ -145,8 +147,8 @@
   (getKey [this]
     (log/trace "java.util.Map$Entry getKey ")
     (let [k (.getKey entity)]
-      (to-keychain k)))
-  ;; FIXME: just do (to-keychain entity)??
+      (ekey/to-keychain k)))
+  ;; FIXME: just do (ekey/to-keychain entity)??
       ;;     kind (.getKind k)
       ;;     nm (.getName k)]
       ;; [(keyword kind (if nm nm (.getId k)))]))
@@ -283,7 +285,7 @@
             ;;                              val (get-val-clj v)]
             ;;                          {prop val})))
             to-keychain (if (nil? (:migae/keychain (meta to-map)))
-                          (to-keychain entity)
+                          (ekey/to-keychain entity)
                           (:migae/keychain (meta to-map)))]
         (doseq [[k v] from-coll]
           (assoc! to-map k v))
@@ -291,7 +293,7 @@
           (doseq [[k v] p]
             (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
         ;; (let [m1 (persistent! to-map)
-        ;;       m2 (with-meta m1 {:migae/keychain to-keychain
+        ;;       m2 (with-meta m1 {:migae/keychain ekey/to-keychain
         ;;                         :type EntityMap})
         ;;       to-coll (transient m2)]
         ;;   (log/trace "m2: " (meta m2) m2 (class m2))
@@ -320,7 +322,7 @@
     (log/trace "ITransientCollection persistent")
     ;; (try (/ 1 0) (catch Exception e (print-stack-trace e)))
     (let [props (.getProperties entity)
-          kch (to-keychain entity)
+          kch (ekey/to-keychain entity)
           coll (clj/into {} (for [[k v] props]
                               (let [prop (keyword k)
                                     val (get-val-clj v)]
@@ -357,7 +359,7 @@
                                      (let [prop (keyword k)
                                            val (get-val-clj v)]
                                        {prop val})))
-            key-chain (to-keychain this)
+            key-chain (ekey/to-keychain this)
             res (clj/assoc to-coll k v)]
       (log/trace "IPersistentMap assoc res: " res)
       (with-meta res {:migae/keychain key-chain}))))
@@ -415,11 +417,10 @@
 
   clojure.lang.ILookup
   (valAt [_ k]
-    (let [prop (clj/name k)
-          v  (.getProperty entity prop)
-          val (get-val-clj v)]
-      ;; (log/trace "valAt " k ": " prop val)
-      val))
+    (let [prop (clj/name k)]
+      (if-let [v  (.getProperty entity prop)]
+        (get-val-clj v)
+        nil)))
   (valAt [_ k not-found]
     (log/trace "valAt w/notfound: " k)
     (.getProperty entity (str k) not-found)))
@@ -434,7 +435,7 @@
   ;; (remove  [this])
   )
 
-(load "datastore/service")
+;;(load "datastore/service")
 (load "datastore/adapter")
 (load "datastore/emap")
 (load "datastore/ekey")
