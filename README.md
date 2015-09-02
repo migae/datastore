@@ -38,8 +38,24 @@ user=> (ds/keychain? k)
 true
 user=> (ds/entity-map? em)   ;; ds loaded by dev/user.clj
 true
+user=> (meta em)
+{:migae/key [:A/B], :type migae.datastore.EntityMap}
+user=> (ds-reset)
+#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
+user=> (ds/entity-map k m)
+{:a 1}
+user=> (ds/entity-map! k m)
+Sep 02, 2015 6:38:18 AM com.google.appengine.api.datastore.dev.LocalDatastoreService init
+INFO: Local Datastore initialized:
+	Type: Master/Slave
+	Storage: In-memory
+{:a 1}
+user=> (ds/entity-map* k m)
+{:a 1}
 ```
 
+If you get `NullPointerException No API environment is registered for
+this thread.` then run `user=> (ds-reset)`.
 
 
 ## types

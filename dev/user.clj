@@ -14,17 +14,20 @@
 
 (require '(migae [datastore :as ds]))
 
-(def helper (LocalServiceTestHelper.
+(def ds-test-env (LocalServiceTestHelper.
               (into-array LocalServiceTestConfig
                           [(LocalDatastoreServiceTestConfig.)])))
 
 (defn ds-reset []
-  (.tearDown helper) (.setUp helper))
-
-(.setUp helper)
-;; (.tearDown helper))))
+  ;;(.tearDown ds-test-env)
+  (.setUp ds-test-env))
 
 ;; some abbrevs, to save typing in the repl.  season to taste.
 (def k [:A/B])
 (def m {:a 1})
+
+(.setUp ds-test-env)
 (def em (ds/entity-map k m))
+
+;; (.tearDown ds-test-env))))
+
