@@ -7,6 +7,10 @@ repo and run the tests.  Some recent documentation is at
 [Datastore](doc/Datastore.md).  Lots of simple
 [tests](test/clojure/migae) that demonstrate the semantics.
 
+At this point, until I can get more complete documentation organized,
+you'll probably want to at least review Google's official
+[Datastore documentation](https://cloud.google.com/appengine/docs/java/datastore/).
+
 ## getting started
 
 Fork/clone the library.  The project is configured to load
