@@ -54,20 +54,20 @@
     (last keychain)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti to-ekey class)
-(defmethod to-ekey Key
+(defmulti entity-key class)
+(defmethod entity-key Key
   [^Key k]
   k)
-(defmethod to-ekey migae.datastore.PersistentEntityMap
+(defmethod entity-key migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
   (.getKey (.entity e)))
-(defmethod to-ekey com.google.appengine.api.datastore.Entity
+(defmethod entity-key com.google.appengine.api.datastore.Entity
   [^Entity e]
   (.getKey e))
-(defmethod to-ekey clojure.lang.Keyword
+(defmethod entity-key clojure.lang.Keyword
   [^clojure.lang.Keyword k]
-  (ekey/keychain-to-key k))
-(defmethod to-ekey clojure.lang.PersistentVector
+  (ekey/keychain-to-key [k]))
+(defmethod entity-key clojure.lang.PersistentVector
   [kchain]
   ;; FIXME: validate vector contains only keylinks
   (ekey/keychain-to-key kchain))

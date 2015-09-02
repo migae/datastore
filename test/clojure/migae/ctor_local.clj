@@ -1,4 +1,5 @@
-(ns migae.construction
+(ns migae.ctor-local
+  "unit tests for local constructor: entity-map"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper

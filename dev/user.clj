@@ -9,6 +9,7 @@
           LocalDatastoreServiceTestConfig))
 
 (require '(migae [datastore :as ds]))
+(require '(migae.datastore [keychain :as k]))
 
 (def ds-test-env (LocalServiceTestHelper.
               (into-array LocalServiceTestConfig

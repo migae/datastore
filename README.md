@@ -70,8 +70,9 @@ user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datas
 {:a 1}
 ```
 
-If you get `NullPointerException No API environment is registered for
-this thread.`, then run `user=> (ds-reset)`.
+You will sometimes get `NullPointerException No API environment is
+registered for this thread.` (the test env seems to timeout); if so,
+just run `user=> (ds-reset)`.
 
 ## testing
 

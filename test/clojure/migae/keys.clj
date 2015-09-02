@@ -15,8 +15,8 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.infix :as infix]
             [migae.datastore :as ds]
+            [migae.datastore.keychain :as k]
             ;; [migae.datastore.service :as dss]
             ;; [migae.datastore.entity :as dse]
             ;; [migae.datastore.query  :as dsqry]
@@ -53,9 +53,9 @@
 ;; ################################################################
 (deftest ^:keys keys-1
   (testing "keys 1: keylink literals: name"
-    (let [k1 (ds/to-ekey :Employee/asalieri)
-          k2 (ds/to-ekey :Employee/d15)
-          k3 (ds/to-ekey :Employee/x0F)]
+    (let [k1 (ds/entity-key :Employee/asalieri)
+          k2 (ds/entity-key :Employee/d15)
+          k3 (ds/entity-key :Employee/x0F)]
     (log/trace "k1: " k1)
     (is (ds/ekey? k1) true)
     (is (= (type k1) com.google.appengine.api.datastore.Key))
@@ -68,19 +68,92 @@
 
 (deftest ^:keys keys-2
   (testing "keys 2: keychain literals: name"
-    (let [e1 (ds/entity-map [:A]{})
-          e2 (ds/entity-map [:A/B]{})
-          e3 (ds/entity-map [:A/d99]{})
-          e4 (ds/entity-map [(keyword "A" "123")]{})]
-    (log/trace "keys2 e1 key: " (ds/to-ekey e1))
-    (log/trace "keys2 e1 key to keychain: " (ds/to-keychain (ds/to-ekey e1)))
+    (let [e1 (ds/entity-map [:A/B]{})
+          e2 (ds/entity-map [:A/d99]{})
+          e3 (ds/entity-map [(keyword "A" "123")]{})]
+    (log/trace "e1 key: " (ds/entity-key e1))
+    (log/trace "e1 key to keychain: " (ds/to-keychain (ds/entity-key e1)))
     (log/trace "keys2 e1 keychain:" (ds/to-keychain e1))
-    (is (ds/ekey? (ds/to-ekey e1)))
-    (is (= (ds/to-ekey e1)) (ds/to-ekey :A))
-    (is (= (ds/to-ekey e2)) (ds/to-ekey :A/B))
+    (is (ds/ekey? (ds/entity-key e1)))
+    (is (= (ds/entity-key e1)) (ds/entity-key [:A/B]))
+    (is (= (ds/entity-key e2)) (ds/entity-key :A/B))
     )))
 
-;; (deftest ^:keys identifiers
+(deftest ^:keys keys-3
+  (testing "keys 3: keylink construction"
+    (let [e1 (ds/entity-map [(keyword "A" "B")]{})
+          e2 (ds/entity-map [(keyword "A" "99")]{})
+          e3 (ds/entity-map [(keyword "A" "B") (keyword "C" "123")]{})]
+    (log/trace "e1 key: " (ds/entity-key e1))
+    (log/trace "e1 key to keychain: " (ds/to-keychain (ds/entity-key e1)))
+    (log/trace "keys2 e1 keychain:" (ds/to-keychain e1))
+    (is (ds/ekey? (ds/entity-key e1)))
+    (is (= (ds/entity-key e1)) (ds/entity-key :A/B))
+    )))
+
+(deftest ^:keychain keychain-fail
+  (testing "keys 3: keychain literals: name"
+    (let [ex (try (k/keychain-to-key [:A/B :X])
+                  (catch IllegalArgumentException e e))]
+      (is (= (type ex) IllegalArgumentException))
+      (is (= (.getMessage ex)
+             "not a clojure.lang.Keyword: :X")))
+    ;; FIXME: restructure to verifiy exception occurs, as above
+    (try (k/keychain-to-key [:A/B :Y :D/E])
+         (catch IllegalArgumentException ex
+           (is (= (.getMessage ex)
+                  "not a clojure.lang.Keyword: :Y"))))
+    (try (k/keychain-to-key [:A/B 'Z :D/E])
+         (catch IllegalArgumentException ex
+           (is (= (.getMessage ex)
+                  "not a clojure.lang.Keyword: Z"))))
+    ;; (try (k/keychain-to-key [:A/B "C" :D/E])
+    ;;      (catch java.lang.RuntimeException e
+    ;;        (is (= (.getMessage e)
+    ;;               "Bad child keylink (not a clojure.lang.Keyword): C"))))
+    (try (k/keychain-to-key '(:A/B))
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: (:A/B)"
+               (.getMessage ex)))))
+    (try (k/keychain-to-key '{:a 1})
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: {:a 1}"
+               (.getMessage ex)))))
+    (try (k/keychain-to-key [:A])
+         (catch IllegalArgumentException ex
+           (is (= "missing namespace: :A")
+               (.getMessage ex))))
+    (try (k/keychain-to-key :A)
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: :A"
+                  (.getMessage ex)))))
+    (try (k/keychain-to-key [9])
+         (catch IllegalArgumentException ex
+           (is (=  "not a clojure.lang.Keyword: 9"
+                  (.getMessage ex)))))
+    (try (k/keychain-to-key 9)
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: 9"
+                   (.getMessage ex)))))
+    (try (k/keychain-to-key ['a])
+         (catch IllegalArgumentException ex
+           (is (= "not a clojure.lang.Keyword: a"
+                  (.getMessage ex)))))
+    (try (k/keychain-to-key 'a)
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: a"
+                  (.getMessage ex)))))
+    (try (k/keychain-to-key ["a"])
+         (catch IllegalArgumentException ex
+           (is (= "not a clojure.lang.Keyword: a"
+                  (.getMessage ex)))))
+    (try (k/keychain-to-key "a")
+         (catch IllegalArgumentException ex
+           (is (= "not a vector of keywords: a"
+                  (.getMessage ex)))))
+    ))
+
+;; (deftest ^:keychain identifiers
 ;;   (testing "identifiers from PersistentEntityMaps"
 ;;     (let [e1 (ds/entity-map [:A]{})
 ;;           e2 (ds/entity-map [:A/B]{})
@@ -97,8 +170,8 @@
 
 ;; (deftest ^:keysym keysym2
 ;;   (testing "keymap literals: name"
-;;     (is (ds/ekey? (ds/to-ekey :Employee :asalieri)) true)
-;;     (is (ds/ekey? (ds/to-ekey "Employee" "asalieri")) true)))
+;;     (is (ds/ekey? (ds/entity-key :Employee :asalieri)) true)
+;;     (is (ds/ekey? (ds/entity-key "Employee" "asalieri")) true)))
 
     ;; (is (= (type (dskey/make 'Employee/x0F)) com.google.appengine.api.datastore.Key)))))
 
@@ -109,8 +182,8 @@
           ;; but distinct keychain ancestry; they all have the same
           ;; dogtag [:X/Y], Kind (:X) and Identifier ("Y")
           e1 (ds/entity-map [:X/Y]{})
-          e2 (ds/entity-map [:A/B :X/Y]{})
-          e3 (ds/entity-map [:A/B :C/D :X/Y]{})]
+          e3 (ds/entity-map [:A/B :C/D :X/Y]{})
+          e2 (ds/entity-map [:A/B :X/Y]{})]
       (log/trace "e1 (dogtag - keychain): (" (ds/dogtag e1) "-" (ds/keychain e1) ")")
       (log/trace "e2 (dogtag - keychain): (" (ds/dogtag e2) "-" (ds/keychain e2) ")")
       (log/trace "e3 (dogtag - keychain): (" (ds/dogtag e3) "-" (ds/keychain e3) ")")
@@ -131,7 +204,7 @@
           e1 (ds/entity-map [:X/Y]{})
           e2 (ds/entity-map [:A/B :X/Y]{})
           e3 (ds/entity-map [:A/B :C/D :X/Y]{})]
-      (is (= (ds/keychain (ds/to-ekey :A/B)) [:A/B]))
+      (is (= (ds/keychain (ds/entity-key :A/B)) [:A/B]))
       (is (= (ds/keychain [:A/B :C/D]) [:A/B :C/D]))
       (is (= (ds/keychain e3) [:A/B :C/D :X/Y]))
       (is (not= (ds/keychain e1) (ds/keychain e2) (ds/keychain e3)))
@@ -139,64 +212,44 @@
 
 (deftest ^:keychain keychain1a
   (testing "keychain sym key literals 1a"
-    (log/trace (ds/to-ekey [:Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/to-ekey [:Genus/Felis :Species/Felis_catus]))))
+    (log/trace (ds/entity-key [:Genus/Felis :Species/Felis_catus]))
+    (ds/ekey? (ds/entity-key [:Genus/Felis :Species/Felis_catus]))))
 
 (deftest ^:keychain keychain1b
   (testing "keychain sym key literals 1b"
-    (log/trace (ds/to-ekey [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/to-ekey [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
+    (log/trace (ds/entity-key [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
+    (ds/ekey? (ds/entity-key [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
 
 (deftest ^:keychain keychain1c
   (testing "keychain sym key literals 1c"
-    (log/trace (ds/to-ekey [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/to-ekey [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
+    (log/trace (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
+    (ds/ekey? (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
 
 
 (deftest ^:keychain keychain20
   (testing "keychain string key literals 2"
-    (ds/ekey? (ds/to-ekey [:Subfamily :Felinae :Genus :Felis]))
-    (ds/ekey? (ds/to-ekey ["Subfamily" "Felinae" "Genus" "Felis"]))))
+    (ds/ekey? (ds/entity-key [:Subfamily :Felinae :Genus :Felis]))
+    (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" "Genus" "Felis"]))))
 
 ;; TODO: support string syntax:
 ;; (deftest ^:keychain keychain30
 ;;   (testing "keychain - mixed key literals 30"
-;;     (ds/ekey? (ds/to-ekey [:Subfamily/Felinae :Genus :Felis]))))
-;;     (ds/ekey? (ds/to-ekey ["Subfamily" "Felinae" :Genus/Felis])))))
+;;     (ds/ekey? (ds/entity-key [:Subfamily/Felinae :Genus :Felis]))))
+;;     (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" :Genus/Felis])))))
 
 (deftest ^:keychain keychain3
   (testing "keychain literals 3"
-    (let [chain (ds/to-ekey [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus])]
+    (let [chain (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus])]
       (log/trace chain))))
-
-(deftest ^:keychain keychain20
-  (testing "keychain literals 20"
-    (let [e1 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
-          e2 (ds/entity-map [:Family :Subfamily :Genus :Species] {})
-          e3 (ds/entity-map [:Family :Subfamily :Genus :Species] {})]
-      (log/trace (ds/to-ekey e1) (ds/to-edn e1))
-      (log/trace (ds/to-edn e2))
-      (log/trace (ds/to-edn e3))
-      )))
 
 (deftest ^:keychain proper
   (testing "keychain literals 20"
-    (let [e1 (ds/entity-map?! [:Foo/Bar])]
+    (let [e1 (ds/entity-map [:Foo/Bar] {})]
       (log/trace "e1" (ds/epr e1)))
-    (let [e1 (ds/entity-map?! [:Foo/Bar])]
+    (let [e1 (ds/entity-map [:Foo/Bar] {})]
       (log/trace "e1" (ds/epr e1)))
-    (let [e1 (ds/entity-map?! [:Foo/Bar :Baz/Buz])]
+    (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz] {})]
       (log/trace "e1" (ds/epr e1)))
-    (let [e1 (ds/entity-map?! [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
-      (log/trace "e1" (ds/epr e1)))
-      ))
-
-(deftest ^:keychain improper
-  (testing "keychain literals 20"
-    (let [e1 (ds/entity-map?! [:Foo])]
-      (log/trace "e1" (ds/epr e1)))
-    (let [e1 (ds/entity-map?! [:Foo/Bar :Baz])]
-      (log/trace "e1" (ds/epr e1)))
-    (let [e1 (ds/entity-map?! [:Foo/Bar :Baz/Buz :X] {:a 1 :b 2})]
+    (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
       (log/trace "e1" (ds/epr e1)))
       ))

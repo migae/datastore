@@ -12,6 +12,7 @@
             Map Map$Entry
             Vector]
            ;; [clojure.lang MapEntry]
+           [com.google.appengine.api.blobstore BlobKey]
            [com.google.appengine.api.datastore
             Blob
             DatastoreFailureException
@@ -33,7 +34,7 @@
             ShortBlob
             Text
             Transaction]
-           [com.google.appengine.api.blobstore BlobKey]
+           ;; migae.datastore.ImproperKeylinkException
            ;; [migae.datastore PersistentEntityMap PersistentEntityMapCollIterator])
            )
   (:require [clojure.core :as clj]

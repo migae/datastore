@@ -1,4 +1,4 @@
-(ns migae.co-construction
+(ns migae.ctor-push
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -43,24 +43,28 @@
                                         ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:emap co-ctor-notfound
+(deftest ^:ctor-push ctor-push-notfound
   (testing "co-constructor notfound"
     (try (ds/entity-map* [:A/B])
          (catch EntityNotFoundException e
            (is (= "No entity was found matching the key: A(\"B\")"
                   (.getMessage e)))))))
 
-(deftest ^:emap co-ctor
+(deftest ^:ctor-push ctor-push
   (testing "co-constructor"
-    (let [em1 (ds/entity-map! [:A/B] {:a 1}) ; deep ctor
-          em2 (ds/entity-map* [:A/B])        ; co-ctor
-          em3 (ds/entity-map* [:A/B] {:b 2}) ; FIXME: throw exception if found emap does not match all args
+    (let [em1 (ds/entity-map! [:A/B] {})
+          em2 (ds/entity-map! [:A/B] {:a 1})
+          em3 (ds/entity-map! [:A/B :C/D] {})
+          em4 (ds/entity-map! [:A/B :C/D] {:a 1})
+          em5 (ds/entity-map! [:A/B :C] {:a 1}) ; autogen id
+          em6 (ds/entity-map! [:A/B :C] {})
           ]
       (log/trace "em1:" (ds/epr em1))
       (log/trace "em2:" (ds/epr em2))
       (log/trace "em3:" (ds/epr em3))
-      (is (= (:a em1) 1))         ; previously fetched emap unaffected
-      (is (= (:b em2) nil))
+      (log/trace "em4:" (ds/epr em4))
+      (log/trace "em5:" (ds/epr em5))
+      (log/trace "em6:" (ds/epr em6))
       )))
 
 
