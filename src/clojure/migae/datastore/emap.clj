@@ -23,7 +23,7 @@
 
 (defn entity-map?
   [em]
-  (= (type em) migae.datastore.EntityMap))
+  (= (type em) migae.datastore.PersistentEntityMap))
 
 (defn emap? ;; OBSOLETE - use entity-map?
   [em]
@@ -37,9 +37,9 @@
 ;;   [em]
 ;;   (= (count em) 0))
 
-;; no put - EntityMap only
+;; no put - PersistentEntityMap only
 (defn entity-map
-  "create EntityMap object"
+  "create PersistentEntityMap object"
   [keychain em]
   ;; (log/trace "keychain: " keychain " em: " em)
   (if (clj/empty? keychain)
@@ -49,11 +49,11 @@
           e (Entity. k)]
       (doseq [[k v] em]
         (.setProperty e (subs (str k) 1) (get-val-ds v)))
-      (EntityMap. e))))
+      (PersistentEntityMap. e))))
 
 ;; OBSOLETE - use entity-map for consistency with hash-map, array-map, etc
 (defn emap
-  "create EntityMap object"
+  "create PersistentEntityMap object"
   [keychain em]
   (entity-map keychain em))
   ;; (if (clj/empty? keychain)
@@ -62,7 +62,7 @@
   ;;         e (Entity. k)]
   ;;     (doseq [[k v] em]
   ;;       (.setProperty e (subs (str k) 1) (get-val-ds v)))
-  ;;     (EntityMap. e))))
+  ;;     (PersistentEntityMap. e))))
 
 ;; (defn emap!
 ;;   "Like emap!! but works with partial keychain, so will always create new"
@@ -82,7 +82,7 @@
 ;;               (doseq [[k v] props]
 ;;                 (.setProperty e (subs (str k) 1) (get-val-ds v)))))
 ;;           (.put (ds/datastore) e)
-;;           (EntityMap. e))
+;;           (PersistentEntityMap. e))
 ;;         (throw (IllegalArgumentException. "last element of keychain vector must be name only (i.e. kind keyword), e.g. :Customer")))
 ;;       (throw-bad-keylinks keylinks))))
 
@@ -97,7 +97,7 @@
                   ;; (catch EntityNotFoundException e nil)
                   ;; (catch DatastoreFailureException e (throw e))
                   ;; (catch java.lang.IllegalArgumentException e (throw e)))]
-       (EntityMap. e))))
+       (PersistentEntityMap. e))))
 
 ;; co-constructor
 (defmulti entity-map*
@@ -138,7 +138,7 @@
            (doseq [[k v] em]
              (.setProperty e (subs (str k) 1) (get-val-ds v)))
            (.put (ds/datastore) e)
-           (EntityMap. e))
+           (PersistentEntityMap. e))
          (throw (RuntimeException. (str "key already exists: " keychain)))))))
   ([keychain] ;; create empty entity
    (if (clj/empty? keychain)
@@ -151,7 +151,7 @@
        (if (nil? e) ;; not found
          (let [e (Entity. k)]
            (.put (ds/datastore) e)
-           (EntityMap. e))
+           (PersistentEntityMap. e))
          (throw (RuntimeException. "key already exists: " keychain)))))))
 
 (declare into-ds!)
@@ -177,7 +177,7 @@
          (.setProperty e (subs (str k) 1) (get-val-ds v)))
        (.put (ds/datastore) e)
        ;; (log/trace "created and put entity " e)
-       (EntityMap. e))))
+       (PersistentEntityMap. e))))
      ;; (let [k (apply ekey/keychain-to-key keychain)
      ;;       e (try (.get (ds/datastore) k)
      ;;              (catch EntityNotFoundException e nil)
@@ -190,11 +190,11 @@
      ;;         (.setProperty e (subs (str k) 1) (get-val-ds v)))
      ;;       (.put (ds/datastore) e)
      ;;       ;; (log/trace "created and put entity " e)
-     ;;       (EntityMap. e))
+     ;;       (PersistentEntityMap. e))
      ;;     (do
      ;;       ;; (log/trace "found entity " e)
      ;;       ;; if em content not null throw exception
-     ;;       (EntityMap. e))))))
+     ;;       (PersistentEntityMap. e))))))
   ;; emap!
   ([keychain] ;; erase: replace with empty entity
    (if (clj/empty? keychain)
@@ -202,7 +202,7 @@
      (let [k (apply ekey/keychain-to-key keychain)
            e (Entity. k)]
            (.put (ds/datastore) e)
-           (EntityMap. e)))))
+           (PersistentEntityMap. e)))))
 
      ;; (let [k (apply ekey/keychain-to-key keychain)
      ;;       e (try (.get (ds/datastore) k)
@@ -220,8 +220,8 @@
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
      ;;       (.put (ds/datastore) e)
-     ;;       (EntityMap. e))
-     ;;     (EntityMap. e))))))
+     ;;       (PersistentEntityMap. e))
+     ;;     (PersistentEntityMap. e))))))
 
 (defn- emap-new
   [^Key k content]
@@ -234,14 +234,14 @@
         ;; (log/trace "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
     (.put (ds/datastore) e)
-    (EntityMap. e)))
+    (PersistentEntityMap. e)))
 
 (defn- emap-old
   [^Key k ^Entity e content]
   {:pre [(map? content)]}
   ;; (log/trace "emap old " k content)
   (if (clj/empty? content)
-    (EntityMap. e)
+    (PersistentEntityMap. e)
     (do
       (doseq [[k v] content]
         (let [prop (subs (str k) 1)]        ; FIXME - don't exclude ns!
@@ -263,7 +263,7 @@
                   ;;(log/trace "created new collection prop")
                   ))
               ;;(log/trace "modified entity " e)
-              (EntityMap. e))
+              (PersistentEntityMap. e))
             ;; new property
             (let [val (get-val-ds v)]
               ;; (log/trace "setting val" val (type val))
@@ -271,7 +271,7 @@
               (.setProperty e prop val)))))
       (.put (ds/datastore) e)
       ;; (log/trace "saved entity " e)
-      (EntityMap. e))))
+      (PersistentEntityMap. e))))
 
 (defn- emap-update-empty
   [keychain]
@@ -281,10 +281,10 @@
                (catch DatastoreFailureException e (throw e))
                (catch java.lang.IllegalArgumentException e (throw e)))]
         (if (emap? e)
-          (EntityMap. e)
+          (PersistentEntityMap. e)
           (let [e (Entity. k)]
             (.put (ds/datastore) e)
-            (EntityMap. e)))))
+            (PersistentEntityMap. e)))))
 
 ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
 ;; technique: store them as embedded entities
@@ -313,7 +313,7 @@
     ;; if first link in keychain has no namespace, it cannot be an ancestor node
     (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
           e (Entity. (clj/name (first keychain)))
-          em (EntityMap. e)]
+          em (PersistentEntityMap. e)]
       (try
         (f em)
         (.put (ds/datastore) e)
@@ -341,10 +341,10 @@
             (finally
               (if (.isActive txn)
                 (.rollback txn))))
-          (EntityMap. e))
+          (PersistentEntityMap. e))
         (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
               e (Entity. k)
-              em (EntityMap. e)]
+              em (PersistentEntityMap. e)]
           (try
             (f em)
             (.put (ds/datastore) e)
@@ -416,7 +416,7 @@
 ;;                     ;; (catch EntityNotFoundException ex (throw ex))
 ;;                     ;; (catch DatastoreFailureException ex (throw ex))
 ;;                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
-;;          (EntityMap. e))
+;;          (PersistentEntityMap. e))
 ;;        (throw-bad-keylinks keylinks))))
 
 (defn emap??                            ;FIXME: use a multimethod?
@@ -444,7 +444,7 @@
                  (catch EntityNotFoundException e (throw e))
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
-      (EntityMap. e))))
+      (PersistentEntityMap. e))))
 
 (declare find-definite-necessarily find-indefinite-necessarily
          throw-bad-keylinks)

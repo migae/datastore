@@ -34,7 +34,7 @@
             Text
             Transaction]
            [com.google.appengine.api.blobstore BlobKey]
-           ;; [migae.datastore EntityMap EntityMapCollIterator])
+           ;; [migae.datastore PersistentEntityMap PersistentEntityMapCollIterator])
            )
   (:require [clojure.core :as clj]
             [clojure.walk :as walk]
@@ -87,7 +87,7 @@
 
 ;;(load "datastore/keychain")
 
-(deftype EntityMapIterator [ds-iter]
+(deftype PersistentEntityMapIterator [ds-iter]
   java.util.Iterator
   (hasNext [this]
     (do
@@ -106,9 +106,9 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  EntityMap
+;;  PersistentEntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftype EntityMap [entity]
+(deftype PersistentEntityMap [entity]
 
   java.lang.Iterable
   (iterator [this]
@@ -116,21 +116,21 @@
     (let [props (.getProperties entity) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
-          em-iter (EntityMapIterator. e-iter) ]
+          em-iter (PersistentEntityMapIterator. e-iter) ]
     ;; (log/trace "Iterable res:" em-iter)
     em-iter))
 
-  ;; FIXME: put :^EntityMap in every EntityMap
+  ;; FIXME: put :^PersistentEntityMap in every PersistentEntityMap
   clojure.lang.IMeta
   (meta [_]
     ;; (log/trace "IMeta meta")
     {:migae/key (ekey/to-keychain entity)
-     :type EntityMap})
+     :type PersistentEntityMap})
 
   clojure.lang.IObj
   (withMeta [this md]
     (log/trace "IObj withMeta" md))
- ;; (EntityMap. (with-meta m md)))
+ ;; (PersistentEntityMap. (with-meta m md)))
 
   clojure.lang.IFn
   (invoke [this k]
@@ -207,7 +207,7 @@
       ;;       (.setProperty entity nm val)))
       ;;   ;; (.put (datastore) entity)
       ;;   this)
-      (= (type o) EntityMap)
+      (= (type o) PersistentEntityMap)
       (let [props (.getProperties (.entity o))]
         ;; (log/trace "cons emap to emap")
         (doseq [[k v] props]
@@ -233,12 +233,12 @@
   (empty [this]
     (let [k (.getKey (.entity this))
           e (Entity. k)]
-      (EntityMap. e)))
+      (PersistentEntityMap. e)))
   (equiv [this o]
     (.equals this o))
     ;; (.equals entity (.entity o)))
 
-    ;; (and (isa? (class o) EntityMap)
+    ;; (and (isa? (class o) PersistentEntityMap)
     ;;      (.equiv (augment-contents entity) (.(augment-contents entity) o))))
 
   clojure.lang.IReduce
@@ -248,12 +248,12 @@
   (reduce [this f to-map]
     ;; (log/trace "reduce f to-map: " to-map " from-coll: " (.entity this))
     (cond
-      (= (class to-map) EntityMap)
+      (= (class to-map) PersistentEntityMap)
       (let [k (.getKey (.entity this))
             e (Entity. k)]
         (.setPropertiesFrom e (.entity to-map))
         (.setPropertiesFrom e (.entity this))
-        (EntityMap. e))
+        (PersistentEntityMap. e))
       ;; f = cons, so we can just use the native clj/into
       ;; (let [from-props (.getProperties entity)
       ;;       from-coll (clj/into {} (for [[k v] from-props]
@@ -268,12 +268,12 @@
       ;;                                {prop val})))
       ;;       res (with-meta (clj/into to-coll from-coll)
       ;;             {:migae/key (:migae/key (meta to-map))
-      ;;              :type EntityMap})]
+      ;;              :type PersistentEntityMap})]
       ;;   ;; (log/trace "to-coll: " res (type res))
       ;;   to-map)
       (= (class to-map) clojure.lang.PersistentArrayMap$TransientArrayMap)
       ;; we use a ghastly hack in order to retain metadata
-      ;; FIXME: handle case where to-map is a clj-emap (map with ^:EntityMap metadata)
+      ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentEntityMap metadata)
       (let [from-props (.getProperties entity)
             from-coll (clj/into {} (for [[k v] from-props]
                                      (let [prop (keyword k)
@@ -294,11 +294,11 @@
             (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
         ;; (let [m1 (persistent! to-map)
         ;;       m2 (with-meta m1 {:migae/keychain ekey/to-keychain
-        ;;                         :type EntityMap})
+        ;;                         :type PersistentEntityMap})
         ;;       to-coll (transient m2)]
         ;;   (log/trace "m2: " (meta m2) m2 (class m2))
         ;;   (log/trace "to-coll: " (meta to-coll) to-coll (class to-coll))
-        (EntityMap. to-ent))
+        (PersistentEntityMap. to-ent))
 
       (= (class to-map) clojure.lang.PersistentArrayMap)
       to-map
@@ -328,7 +328,7 @@
                                     val (get-val-clj v)]
                                 {prop val})))
           res (with-meta coll {:migae/keychain kch
-                               :type EntityMap})]
+                               :type PersistentEntityMap})]
       (log/trace "persistent result: " (meta res) res (class res))
       res))
 
@@ -365,7 +365,7 @@
       (with-meta res {:migae/keychain key-chain}))))
   (assocEx [_ k v]
     (log/trace "assocEx")
-    (EntityMap. (.assocEx entity k v)))
+    (PersistentEntityMap. (.assocEx entity k v)))
   (without [this k]                     ; = dissoc!, return new datum with k removed
     (let [prop (clj/name k)]
       (log/trace "without: removing prop " k "->" prop)
@@ -424,14 +424,14 @@
   (valAt [_ k not-found]
     (log/trace "valAt w/notfound: " k)
     (.getProperty entity (str k) not-found)))
-;; end deftype EntityMap
+;; end deftype PersistentEntityMap
 
-(deftype EntityMapCollIterator [ds-iter]
+(deftype PersistentEntityMapCollIterator [ds-iter]
   java.util.Iterator
   (hasNext [this]
     (.hasNext ds-iter))
   (next    [this]
-    (EntityMap. (.next ds-iter)))
+    (PersistentEntityMap. (.next ds-iter)))
   ;; (remove  [this])
   )
 

@@ -16,9 +16,9 @@
   "to-keychain converts a DS Key to a vector of Clojure keywords"
   class)
 
-;; (defmethod to-keychain migae.datastore.EntityMap
-;;   [^EntityMap em]
-;;   (log/trace "to-keychain EntityMap: " em)
+;; (defmethod to-keychain migae.datastore.PersistentEntityMap
+;;   [^PersistentEntityMap em]
+;;   (log/trace "to-keychain PersistentEntityMap: " em)
 ;;   (to-keychain (.getKey (.entity em))))
 
 (defmethod to-keychain nil
@@ -255,8 +255,8 @@
         id (.getId k)]
     (if (nil? nm) id nm)))
 
-;; (defmethod identifier migae.datastore.EntityMap
-;;   [^EntityMap em]
+;; (defmethod identifier migae.datastore.PersistentEntityMap
+;;   [^PersistentEntityMap em]
 ;;   (log/trace "EM identifier" (.entity em))
 ;;   (let [k (.getKey (.entity em))
 ;;         nm (.getName k)

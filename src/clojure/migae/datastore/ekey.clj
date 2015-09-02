@@ -19,7 +19,7 @@
 (defmethod to-keychain Key
   [k]
   (ekey/to-keychain k))
-(defmethod to-keychain migae.datastore.EntityMap
+(defmethod to-keychain migae.datastore.PersistentEntityMap
   [em]
   (ekey/to-keychain (.getKey (.entity em))))
 
@@ -29,7 +29,7 @@
   [k]
   (let [keychain (ekey/to-keychain k)]
     keychain))
-(defmethod keychain migae.datastore.EntityMap
+(defmethod keychain migae.datastore.PersistentEntityMap
   [em]
   (let [keychain (ekey/to-keychain (.getKey (.entity em)))]
     keychain))
@@ -43,7 +43,7 @@
   [k]
   (let [keychain (ekey/to-keychain k)]
     (last keychain)))
-(defmethod dogtag migae.datastore.EntityMap
+(defmethod dogtag migae.datastore.PersistentEntityMap
   [em]
   (let [keychain (ekey/to-keychain (.getKey (.entity em)))]
     (last keychain)))
@@ -58,8 +58,8 @@
 (defmethod to-ekey Key
   [^Key k]
   k)
-(defmethod to-ekey migae.datastore.EntityMap
-  [^migae.datastore.EntityMap e]
+(defmethod to-ekey migae.datastore.PersistentEntityMap
+  [^migae.datastore.PersistentEntityMap e]
   (.getKey (.entity e)))
 (defmethod to-ekey com.google.appengine.api.datastore.Entity
   [^Entity e]
@@ -80,8 +80,8 @@
 (defmethod kind Entity
   [^Entity e]
   (.getKind e))
-(defmethod kind migae.datastore.EntityMap
-  [^migae.datastore.EntityMap em]
+(defmethod kind migae.datastore.PersistentEntityMap
+  [^migae.datastore.PersistentEntityMap em]
   (.getKind (.entity em)))
 (defmethod kind clojure.lang.Keyword
   [^clojure.lang.Keyword kw]
@@ -100,8 +100,8 @@
   (let [nm (.getName k)
         id (.getId k)]
     (if (nil? nm) id (str nm))))
-(defmethod identifier migae.datastore.EntityMap
-  [^migae.datastore.EntityMap em]
+(defmethod identifier migae.datastore.PersistentEntityMap
+  [^migae.datastore.PersistentEntityMap em]
   (let [k (.getKey (.entity em))
         nm (.getName k)
         id (.getId k)]

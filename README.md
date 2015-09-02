@@ -37,7 +37,7 @@ user=> (meta em)
 user=> (type em)
 migae.datastore.EntityMap
 user=> (println (.entity em))
-#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
+\#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
 	a = 1
 >
 ]
@@ -57,7 +57,7 @@ user=> (keys em)
 user=> (vals em)
 (1)
 user=> (ds-reset)
-#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
+\#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
 user=> (ds/entity-map k m)    ;; local constructor
 {:a 1}
 user=> (ds/entity-map! k m)   ;; push constructor - saves to datastore
@@ -73,11 +73,16 @@ user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datas
 If you get `NullPointerException No API environment is registered for
 this thread.` then run `user=> (ds-reset)`.
 
+## testing
+
+See the tests for lots of examples of how to use the library.  Be **be
+forewarned**, the test cases are in flux; some of them are outdated,
+and the api is changing.
 
 ## types
 
 * `migae.datastore.EntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
-* `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).
+* `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).  (**Not yet implemented**)
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 

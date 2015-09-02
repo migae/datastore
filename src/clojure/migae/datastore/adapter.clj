@@ -106,7 +106,7 @@
                   (= (type v) Email) (.getEmail v)
                   (= (type v) EmbeddedEntity) ;; (let [e (Entity. (.getKey v))]
                                               ;;  (.setPropertiesFrom e v)
-                                                (migae.datastore.EntityMap. v) ;; )
+                                                (migae.datastore.PersistentEntityMap. v) ;; )
                   (= (type v) Key) (let [kind (.getKind v)]
                                      (if (= kind "Keyword")
                                        (keyword (.getName v))
