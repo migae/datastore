@@ -108,6 +108,10 @@ We have three ways to construct EntityMap objects:
 
 ### Keys, keychains, keylinks, and dogtags
 
+**_Caveat_**: note the difference between a datastore Key and a
+  clojure key.  The former is a type (class), the latter is a
+  structural role (first element of a mapentry).
+
 A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  This corresponds
 to a datastore Key, which has a Kind of type String and an Identifier,
 which can be either a String name or a long Id.  See
