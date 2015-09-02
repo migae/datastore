@@ -16,6 +16,9 @@ you'll probably want to at least review Google's official
 A demo servlet is in the works.  For now, you can explore the lib by
 repl or by running unit tests
 
+**CAVEAT** Unstable.  If the doco here is off, take a look at the unit
+  tests to see what runs.
+
 Fork/clone the library.  The project is configured to load
 `dev/user.clj` on repl startup.  That file sets up the GAE datastore
 local test environment and defines a few vars to save typing during
