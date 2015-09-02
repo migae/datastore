@@ -155,7 +155,24 @@ user=> (ds/to-ekey :A/b)  ; migae keylink to datastore entity Key (ekey)
 
 ### kinds
 
-In the datastore, kinds are strings; in migae, kinds are keywords.
+In the datastore, every Entity has a "Kind", which is a string.  Kinds
+categories Entity _objects_; they are not classes.  Two objects of the
+same Kind may have absolutely nothing in common except for their Kind.
+
+The datastore supports what I'm calling "kinded construction": you
+specify a Kind in your constructor, and the datastore autogens an Id.
+You can also retrieve entities by Kind; querying for Kind "Foo" will
+return all Entities of Kind "Foo".  You can narrow this by specifying
+an "ancestor key", so only kinded Entities having that key as parent
+will be fetched.
+
+The migae api makes both of these operations simple and transparent.
+To do a kinded construction, just use an improper keychain with the
+push constructor, like so: `(entity-map! [:A] {:a 1})`; to fetch
+Entities by kind, do the same with the pull constructor: `(entity-map*
+[:A])`.  Kinded construction is not supported for the local
+constructor (`entity-map`); the datastore can only generated Ids for
+stored entities.
 
 ```
 (= (kind (entity-map [:Foo/Bar] {:a 1})) :Foo)
