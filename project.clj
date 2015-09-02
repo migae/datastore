@@ -42,8 +42,11 @@
                                               com.sun.jmx/jmxri]]]
 
                  ;; [org.slf4j/slf4j-log4j12 "1.6.6"]
-
+  :repl-options {:welcome (println "migae datastore repl.  (ds-reset) to reinitialize test datastore.")}
   :profiles {:test {:dependencies [[com.google.appengine/appengine-api-stubs "1.9.25"]
+                                   [com.google.appengine/appengine-testing "1.9.25"]]}
+             :dev {:source-paths ["dev" "src/clojure"]
+                   :dependencies [[com.google.appengine/appengine-api-stubs "1.9.25"]
                                    [com.google.appengine/appengine-testing "1.9.25"]]}})
   ;;                                  [ring-zombie "1.0.1"]]}})
 

@@ -11,20 +11,51 @@ repo and run the tests.  Not much documentation at the moment, but
 lots of simple tests (see esp. test/migae.tutorial.clj) that
 demonstrate the semantics.
 
+## getting started
+
+Fork/clone the library.  The project is configured to load
+`dev/user.clj` on repl startup.  That file sets up the GAE datastore
+local test environment and defines a few vars to save typing during
+experimentation.  So from the root directory, fire up a repl and start
+experimenting:
+
+```clojure
+$ lein repl
+nREPL server started on port 52304 on host 127.0.0.1 - nrepl://127.0.0.1:52304
+REPL-y 0.3.5, nREPL 0.2.6
+Clojure 1.7.0
+Java HotSpot(TM) 64-Bit Server VM 1.8.0_45-b14
+migae datastore repl.  (ds-reset) to reinitialize test datastore.
+user=> k   ;; predefined in dev/user.clj
+[:A/B]
+user=> m   ;; predefined in dev/user.clj
+{:a 1}
+user=> em   ;; predefined in dev/user.clj
+{:a 1}
+user=> (type em)
+migae.datastore.EntityMap
+user=> (ds/keychain? k)
+true
+user=> (ds/entity-map? em)   ;; ds loaded by dev/user.clj
+true
+```
+
+
 
 ## types
 
 * `migae.datastore.EntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
 * `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).
 
+These are represented in migae as `entity-map` and `keychain`, respectively.
 
 ## construction
 
 We have three ways to construct EntityMap objects:
 
 * local constructor:  `(entity-map <keychain> <map>)`
-* push constructor:   `(entity-map! <keychain> <map>)`
-* pull constructor:   `(entity-map* <keychain> <map>)`
+* push constructor:   `(entity-map! <keychain> <map>)` - construct locally and push to datastore
+* pull constructor:   `(entity-map* <keychain> <map>)` - pull matching entities from datastore and construct corresponding EntityMap objects locally
 
 
 ```
