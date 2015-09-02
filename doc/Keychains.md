@@ -57,7 +57,7 @@ Key k = new KeyFactory.Builder("Person", "GreatGrandpa")
 we write
 
 ```
-[:Person/GreatGrandpa :Person/Grandpa :Person/Dad :Person/Me]
+(ds/keychain [:Person/GreatGrandpa :Person/Grandpa :Person/Dad :Person/Me])
 ```
 
 You can see that a keychain is just a vector of keywords.  The only
