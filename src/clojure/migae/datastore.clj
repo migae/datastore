@@ -145,7 +145,7 @@
 
   java.util.Map$Entry
   (getKey [this]
-    (log/trace "java.util.Map$Entry getKey ")
+    ;; (log/trace "java.util.Map$Entry getKey ")
     (let [k (.getKey entity)]
       (ekey/to-keychain k)))
   ;; FIXME: just do (ekey/to-keychain entity)??
