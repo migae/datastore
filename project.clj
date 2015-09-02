@@ -4,7 +4,7 @@
   :min-lein-version "2.0.0"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :aot [:all]
+;;  :aot [:all]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]
@@ -34,7 +34,7 @@
                    }
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.reader "0.8.16"]
-                 [org.clojure/tools.logging "0.2.3"]
+                 [org.clojure/tools.logging "0.3.1"]
                  [com.google.appengine/appengine-api-1.0-sdk "1.9.25"]
                  [log4j "1.2.17" :exclusions [javax.mail/mail
                                               javax.jms/jms
