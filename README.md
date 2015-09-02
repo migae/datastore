@@ -3,7 +3,7 @@
 Very much a work in progress.  Works well enough to have some fun
 playing around.  Not packaged on clojars, to experiment, clone the
 repo and run the tests.  Some recent documentation is at
-[Entities](doc/Entities.md), [Keychains](doc/Keychain.md), and
+[Entities](doc/Entities.md), [Keychains](doc/Keychains.md), and
 [Datastore](doc/Datastore.md).  Lots of simple
 [tests](test/clojure/migae) that demonstrate the semantics.
 
@@ -20,7 +20,7 @@ you'll probably want to at least review Google's official
 **WARNING**  Tested only on Mac OS X 10.9.5
 
 A demo servlet is in the works.  For now, you can explore the lib by
-repl or by running unit tests
+repl or by running unit tests.
 
 **CAVEAT** Unstable.  If the doco here is off, take a look at the unit
   tests to see what runs.
@@ -125,7 +125,7 @@ A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  A vector of
 keylinks is a keychain, which corresponds to a datastore Key, which
 has a Kind of type String, an Identifier (either a String name or a
 long Id), and (optionally) a parent Key.  See
-[Keychains](doc/Keychain.md) for more detail.
+[Keychains](doc/Keychains.md) for more detail.
 
 **_Caveat_**: note the difference between a datastore Key and a
   clojure key.  The former is a type (class), the latter is a
