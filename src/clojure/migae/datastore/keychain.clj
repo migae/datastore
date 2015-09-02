@@ -4,7 +4,11 @@
             Key KeyFactory KeyFactory$Builder])
   (:require [clojure.core :as clj]
             [clojure.tools.reader.edn :as edn]
-            [clojure.tools.logging :as log :only [trace debug info]]))
+            [clojure.tools.logging :as log :only [trace debug info]]
+            [migae.datastore.service :as ds]))
+
+;; TODO: implement keychain as a deftype?  so we get
+;; migae.datastore.Keychain rather than clojure.lang.PersistentVector
 
 (declare keychain-to-key identifier)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,6 +47,11 @@
   ;; (log/trace "to-keychain Entity: " e)
   (to-keychain (.getKey e)))
 
+(defmethod to-keychain com.google.appengine.api.datastore.EmbeddedEntity
+  [^com.google.appengine.api.datastore.EmbeddedEntity ee]
+  ;; (log/trace "to-keychain Entity: " e)
+  (to-keychain (.getKey ee)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-child-keylink
   [^KeyFactory$Builder builder chain]
@@ -52,11 +61,11 @@
     (if (nil? sym)
       nil
       (let [k (keychain-to-key sym)]
-        ;; (log/trace "Keychain-To-Key: " sym " -> " k)
+        ;; (log/trace "add-child-keylink Keychain-To-Key: " sym " -> " k)
         (if (keyword? k)
           (let [parent (.getKey builder)
                 e (Entity. (clj/name k) parent) ; k of form :Foo
-                ;; v (.put (datastore) e)          ; should we store this?
+                ;; v (.put (ds/datastore) e)          ; should we store this?
                 k (.getKey e)]
             ;; (log/trace "created entity " e)
             (.addChild builder (.getKind k) (.getId k)))
@@ -98,6 +107,7 @@
 
 (defmethod keychain-to-key [clojure.lang.Keyword nil]
   ([^clojure.lang.Keyword k]
+   "map single keyword to key.  POSSIBLE SIDE EFFECT: if keyword is name only, a new empty entity will be put to the datastore in order to generate a key id."
      {:pre [(= (type k) clojure.lang.Keyword)]}
      ;; (log/trace "keychain-to-key [Keyword nil]" k) (flush)
      (let [kind (clojure.core/namespace k)
@@ -105,11 +115,15 @@
        ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
        (cond
         (nil? kind)
-        k ;; Keyword arg is of form :Foo, interpreted as Kind
-        ;; (let [e (Entity. (str ident))
-        ;;       k (.put (datastore) e)]
-        ;;   (log/trace "created entity with key " k)
-        ;;   k)
+        (if (symbol? ident)
+          (do ;; k ;; Keyword arg is of form :Foo, interpreted as Kind
+            ;; CAVEAT:  side-effect:  puts empty entity to datastore
+            ;; (log/trace "creating key for kind " (str ident))
+            (let [e (Entity. (str ident))
+                  newk (.put (ds/datastore) e)]
+              ;; (log/trace "created entity with key " newk)
+              newk))
+          (throw (RuntimeException. (str "Bad keychain: " k))))
         (integer? ident)
         (KeyFactory/createKey kind ident)
         (symbol? ident)                  ;; edn reader makes symbols
@@ -140,6 +154,15 @@
            root (KeyFactory$Builder. k)]
        (.getKey (doto root (add-child-keylink chain))))))
 
+(defmethod keychain-to-key [clojure.lang.PersistentVector nil]
+  ;; vector of keywords, string pairs, or both
+  ([head & chain]
+     ;; (log/trace "keychain-to-key PersistentVector" head chain)
+     (flush)
+     (let [k (keychain-to-key (first head))
+           root (KeyFactory$Builder. k)]
+       (.getKey (doto root (add-child-keylink (rest head)))))))
+
 (defmethod keychain-to-key [clojure.lang.Keyword clojure.lang.ArraySeq]
   ;; vector of keywords, string pairs, or both
   ([head & chain]
@@ -166,7 +189,7 @@
      (nil? kind)
      k ;; Keyword arg is of form :Foo, interpreted as Kind
      ;; (let [e (Entity. (str ident))
-     ;;       k (.put (datastore) e)]
+     ;;       k (.put (ds/datastore) e)]
      ;;   (log/trace "created entity with key " k)
      ;;   k)
      (integer? ident)
