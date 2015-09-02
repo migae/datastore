@@ -1,15 +1,11 @@
 # migae - clojurizing the appengine datastore
 
-*CAVEAT* late Aug 2015: still working on code and doc; this will give
- you the general idea, that's all.  Some recent documentation is at
- [Entities](doc/Entities.md), [Keychains](doc/Keychain.md), and
- [Datastore](doc/Datastore.md).
-
 Very much a work in progress.  Works well enough to have some fun
 playing around.  Not packaged on clojars, to experiment, clone the
-repo and run the tests.  Not much documentation at the moment, but
-lots of simple tests (see esp. test/migae.tutorial.clj) that
-demonstrate the semantics.
+repo and run the tests.  Some recent documentation is at
+[Entities](doc/Entities.md), [Keychains](doc/Keychain.md), and
+[Datastore](doc/Datastore.md).  Lots of simple
+[tests](test/clojure/migae) that demonstrate the semantics.
 
 ## getting started
 
@@ -126,7 +122,7 @@ The last link in the chain is the _dogtag_, so named because it serves
 as a (quasi-) identifier for its entity-map.  A dogtag is just a
 Clojure keyword with namespace (e.g. :A/B); it corresponds to the
 datastore Key of the underlying datastore Entity.  The Key of an
-Entity does identify it, because it contaiins a link to its parent
+Entity does identify it, because it contains a link to its parent
 key; but a dogtag does not completely identify its entity-map, since
 it contains no link to its predecessor.  In migae, the "key" of an
 entity-map is the entire keychain.  However, the kind and identifier
@@ -137,7 +133,9 @@ not a type.  What makes a keyword a dogtag is its position in a
 keychain.
 
 ```
-(ds/ekey? (ds/to-ekey :A/B)) ; migae keylink to datastore entity Key (ekey)
+user=> (ds/to-ekey :A/b)  ; migae keylink to datastore entity Key (ekey)
+#object[com.google.appengine.api.datastore.Key 0x6c4f881d "A(\"b\")"]
+(ds/ekey? (ds/to-ekey :A/B))
 (= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B])) ;; dogtag is last link in chain :A/B
 (= (ds/keychain (ds/to-ekey :A/B)) [:A/B])
 (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B]))
