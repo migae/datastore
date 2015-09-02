@@ -33,9 +33,9 @@ user=> m   ;; predefined in dev/user.clj
 user=> em   ;; predefined in dev/user.clj
 {:a 1}
 user=> (meta em)
-{:migae/key [:A/B], :type migae.datastore.EntityMap}
+{:migae/key [:A/B], :type migae.datastore.PersistentEntityMap}
 user=> (type em)
-migae.datastore.EntityMap
+migae.datastore.PersistentEntityMap
 user=> (println (.entity em))
 \#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
 	a = 1
@@ -81,18 +81,18 @@ and the api is changing.
 
 ## types
 
-* `migae.datastore.EntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
+* `migae.datastore.PersistentEntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
 * `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).  (**Not yet implemented**)
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 
 ## construction
 
-We have three ways to construct EntityMap objects:
+We have three ways to construct PersistentEntityMap objects:
 
 * local constructor:  `(entity-map <keychain> <map>)`
 * push constructor:   `(entity-map! <keychain> <map>)` - construct locally and push to datastore
-* pull constructor:   `(entity-map* <keychain> <map>)` - pull matching entities from datastore and construct corresponding EntityMap objects locally
+* pull constructor:   `(entity-map* <keychain> <map>)` - pull matching entities from datastore and construct corresponding PersistentEntityMap objects locally
 
 
 ```
