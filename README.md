@@ -13,6 +13,12 @@ you'll probably want to at least review Google's official
 
 ## getting started
 
+**NOTE:** you do not need an App Engine account to explore this
+  library in a development environment.  The gradle build system will
+  download and install (to `~/.gradle`) everything you need.
+
+**WARNING**  Tested only on Mac OS X 10.9.5
+
 A demo servlet is in the works.  For now, you can explore the lib by
 repl or by running unit tests
 
