@@ -6,11 +6,7 @@
 (import '(com.google.appengine.tools.development.testing
           LocalServiceTestHelper
           LocalServiceTestConfig
-          LocalMemcacheServiceTestConfig
-          LocalMemcacheServiceTestConfig$SizeUnit
-          LocalMailServiceTestConfig
-          LocalDatastoreServiceTestConfig
-          LocalUserServiceTestConfig))
+          LocalDatastoreServiceTestConfig))
 
 (require '(migae [datastore :as ds]))
 
