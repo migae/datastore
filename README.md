@@ -71,13 +71,13 @@ user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datas
 ```
 
 If you get `NullPointerException No API environment is registered for
-this thread.` then run `user=> (ds-reset)`.
+this thread.`, then run `user=> (ds-reset)`.
 
 ## testing
 
-See the tests for lots of examples of how to use the library.  Be **be
-forewarned**, the test cases are in flux; some of them are outdated,
-and the api is changing.
+See the [tests](test/clojure/migae) for lots of examples of how to use
+the library.  Be **be forewarned**, the test cases are in flux; some
+of them are outdated, and the api is changing.
 
 ## types
 
@@ -97,25 +97,25 @@ We have three ways to construct PersistentEntityMap objects:
 
 ```
 (def em (entity-map [:A/B C/D] {:a 1 :b 2}))
-(is  (coll? em))
-(is  (map? em))
-(is  (entity-map? em))
-(is (= (key  em) [:A/B :C/D]))
-(is (= (val  em) {:a 1 :b 2}))
-(is (= (keys em) [:a :b]))
-(is (= (vals em) [1 2]))
+(coll? em)
+(map? em)
+(entity-map? em)
+(= (key  em) [:A/B :C/D])
+(= (val  em) {:a 1 :b 2})
+(= (keys em) [:a :b])
+(= (vals em) [1 2])
 ```
 
 ### Keys, keychains, keylinks, and dogtags
-
-**_Caveat_**: note the difference between a datastore Key and a
-  clojure key.  The former is a type (class), the latter is a
-  structural role (first element of a mapentry).
 
 A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  This corresponds
 to a datastore Key, which has a Kind of type String and an Identifier,
 which can be either a String name or a long Id.  See
 [Keychains](doc/Keychain.md) for more detail.
+
+**_Caveat_**: note the difference between a datastore Key and a
+  clojure key.  The former is a type (class), the latter is a
+  structural role (first element of a mapentry).
 
 A proper keychain is a vector of namespaced keywords.  To use numeric
 Ids, include a notational prefix, 'd' for decimal and 'x' for
@@ -137,11 +137,10 @@ keychain.
 
 ```
 (ds/ekey? (ds/to-ekey :A/B)) ; migae keylink to datastore entity Key (ekey)
-(is (= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B]) ;; dogtag is last link in chain :A/B
-(is (= (ds/keychain (ds/to-ekey :A/B)) [:A/B]))
-(is (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B])))
-      (is (= (ds/name e1) (ds/name e2) (ds/name e3)))
-
+(= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B])) ;; dogtag is last link in chain :A/B
+(= (ds/keychain (ds/to-ekey :A/B)) [:A/B])
+(= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B]))
+(= (ds/name e1) (ds/name e2) (ds/name e3))
 ```
 
 ### kinds
@@ -235,6 +234,11 @@ char means "find".
   * if an entity with key `k` does exist, return it (ignoring m argument)
  * if `k` is an improper keychain, then '?!' means "find _some_ entity", so:
   * create and save a new entity with autogenned key id
+
+**WARNING** having used this sort of "?!" stuff a bit I think it too
+  obscure.  better to use keywords like `:force` or the like, or
+  support a `not-found` function parameter.  So `entity-map?!` will be
+  replaced by some version of the pull constructor `entity-map*`.
 
 ## mutation
 
