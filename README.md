@@ -108,9 +108,10 @@ We have three ways to construct PersistentEntityMap objects:
 
 ### Keys, keychains, keylinks, and dogtags
 
-A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  This corresponds
-to a datastore Key, which has a Kind of type String and an Identifier,
-which can be either a String name or a long Id.  See
+A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  A vector of
+keylinks is a keychain, which corresponds to a datastore Key, which
+has a Kind of type String, an Identifier (either a String name or a
+long Id), and (optionally) a parent Key.  See
 [Keychains](doc/Keychain.md) for more detail.
 
 **_Caveat_**: note the difference between a datastore Key and a
@@ -123,7 +124,7 @@ hexadecimal.  E.g. `[:Foo/d11]` or `[:Foo/x0B]`.
 
 The last link in the chain is the _dogtag_, so named because it serves
 as a (quasi-) identifier for its entity-map.  A dogtag is just a
-Clojure keyword with namespace (e.g. [:A/B]); it corresponds to the
+Clojure keyword with namespace (e.g. :A/B); it corresponds to the
 datastore Key of the underlying datastore Entity.  The Key of an
 Entity does identify it, because it contaiins a link to its parent
 key; but a dogtag does not completely identify its entity-map, since
