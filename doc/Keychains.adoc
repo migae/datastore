@@ -1,4 +1,4 @@
-# migae Keychains
+== migae Keychains
 
 A Datastore entity is a pair of a
 link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Key[Key]
@@ -19,6 +19,23 @@ namespaced.  For example: `[:Foo/Bar :Baz/Buz]` is a proper keychain.
 An _improper_ (or _partial_) _keychain_ is like a proper keychain
 except that the last link is not namespaced; for example,
 `[:Foo/Bar :Baz]`.
+
+.Key objects in migae
+****
+*entity-key* is the migae constructor for Datastore Key objects.  Not to be confused with `keychain`.  For example:
+
+    (ds/keychain (ds/entity-map [:A/B] {:a 1}))
+     => [:A/B]
+
+    (ds/entity-key (ds/entity-map [:A/B] {:a 1}))
+     => #object[com.google.appengine.api.datastore.Key 0x1fffc342 "A(\"B\")"]
+
+    (ds/entity-key [:A/B])
+     => #object[com.google.appengine.api.datastore.Key 0x1fffc342 "A(\"B\")"]
+
+    (ds/keychain (ds/entity-key [:A/B]))
+     => [:A/B]
+****
 
 ### anatomy of a Datastore Key
 
