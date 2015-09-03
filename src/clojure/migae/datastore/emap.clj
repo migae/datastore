@@ -97,6 +97,7 @@
   [keychain & valmap]
   (get-ds keychain))
 
+;; FIXME: custom exception
 (defn into-ds
   ([keychain em]
    "non-destructively update datastore; fail if entity already exists"
@@ -105,11 +106,16 @@
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [k (apply ekey/keychain-to-key keychain)
            e (try (.get (ds/datastore) k)
-                  ;; (catch EntityNotFoundException e nil)
-                  (catch DatastoreFailureException e (throw e))
-                  (catch java.lang.IllegalArgumentException e (throw e)))
+                  (catch EntityNotFoundException e nil))
+                  ;; (catch DatastoreFailureException e (throw e))
+                  ;; (catch java.lang.IllegalArgumentException e (throw e)))
            ]
-       (if (nil? e) ;; not found
+       ;; FIXME: test for exception type instead?
+       ;; (case e
+       ;;   PersistentEntityMap (throw (RuntimeException. (str "key already exists: " keychain)))
+       ;;   EntityNotFoundException ...
+       ;;   (throw ...)) ;; default case
+       (if (nil? e) ;; not found, so go ahead and construct
          (let [e (Entity. k)]
            (doseq [[k v] em]
              (.setProperty e (subs (str k) 1) (get-val-ds v)))
@@ -139,10 +145,10 @@
   ([keychain]
    (into-ds! keychain)))
 (defn emap!
-  ([keychain em]
-   (into-ds! keychain em))
   ([keychain]
-   (into-ds! keychain)))
+   (into-ds! keychain))
+  ([keychain em]
+   (into-ds! keychain em)))
 
 (defn put-kinded-emap
   [keychain & data]
