@@ -84,7 +84,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:api emap-predicates
   (testing "emap predicates"
-    (let [e (ds/emap!! [:Foo/bar])]
+    (let [e (ds/entity-map! [:Foo/bar])]
       (log/trace "test: emap-predicates")
       (log/trace "entity: " (.entity e))
       (log/trace "(ds/emap? e): " (ds/emap? e))
@@ -99,7 +99,7 @@
 
 (deftest ^:api clojure-predicates
   (testing "clojure predicates, entity with 1 property"
-    (let [e (ds/emap!! [:Dept/IT] {:a 1})]
+    (let [e (ds/entity-map! [:Dept/IT] {:a 1})]
       (log/trace "test: api-predicates")
       (log/trace "e " e)
       (log/trace "(coll? e) " (coll? e))
@@ -123,7 +123,7 @@
 
 (deftest ^:api emap-1
   (testing "clojure map api: entity with 1 property"
-    (let [e (ds/emap!! [:Dept/IT] {:a 1})]
+    (let [e (ds/entity-map! [:Dept/IT] {:a 1})]
       (log/trace "test: map-entity-1")
       (log/trace "(map? e) " (map? e))
       (log/trace "(e :a) " (e :a))
@@ -175,22 +175,21 @@
 (deftest ^:api emap-add-children
   (testing "clojure map api: adding children by kind"
     (log/trace "test: clojure map api: add children by kind")
-    (let [k (ds/keychain (ds/emap!! [:Study] {:name "Test"}))]
+    (let [k (ds/keychain (ds/entity-map! [:Study] {:name "Test"}))]
       (doseq [mbr test-study-members]
         (let [mmap {:fname (first mbr), :lname (second mbr), :email (last mbr)}
-              m (ds/emap!! (conj k :Participant) mmap)]
+              m (ds/entity-map! (conj k :Participant) mmap)]
           (log/trace "added: " (ds/keychain m) m)))
           )))
 
 (deftest ^:api emap-ancestors
   (testing "clojure map api: ancestors"
-    (log/trace "test: clojure map api: merge")
-    (let [e1 (ds/emap!! [:Dept/IT] {:name "IT Dept"})
+    (let [e1 (ds/entity-map! [:Dept/IT] {:name "IT Dept"})
           k  (ds/keychain e1)
-          emp1 (ds/emap!! [k :Employee] {:lname "Bits" :fname "Joey" :email "bits@foo.org"})
-          emp2 (ds/emap!! [:Dept/IT :Employee] {:lname "Abend" :fname "Janey" :email "abend@foo.org"})
-          emp3 (ds/emap!! [:Dept/IT :Employee] {:lname "Bates" :fname "Bill" :email "bates@foo.org"})
-          employees  (try (ds/emaps?? [k :Employee]) ; ancestory query
+          emp1 (ds/entity-map! (conj k :Employee) {:lname "Bits" :fname "Joey" :email "bits@foo.org"})
+          emp2 (ds/entity-map! [:Dept/IT :Employee] {:lname "Abend" :fname "Janey" :email "abend@foo.org"})
+          emp3 (ds/entity-map! [:Dept/IT :Employee] {:lname "Bates" :fname "Bill" :email "bates@foo.org"})
+          employees  (try (ds/entity-map* (conj k :Employee)) ; ancestory query
                         (catch EntityNotFoundException e (log/trace (.getMessage e))))]
       (is (map? e1))
       (is (ds/emap? e1))
@@ -207,7 +206,7 @@
 
 (deftest ^:api clojure-map-2
   (testing "clojure map api: entity with 2 properties"
-    (let [e (ds/emap!! [:Foo/bar] {:a 1 :b 2})]
+    (let [e (ds/entity-map! [:Foo/bar] {:a 1 :b 2})]
       (log/trace "test: clojure map api")
       (log/trace "entity: " (.entity e))
       (log/trace "e: " e)
@@ -238,7 +237,7 @@
 
 (deftest ^:props emap-embedded-map-1
   (testing "using a map as a property value"
-    (let [e (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})]
+    (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})]
       (log/trace "test: emap-embedded 1")
       (log/trace "e: " e)
       (log/trace "(e :b): " (e :b) (type (e :b)))
@@ -248,7 +247,7 @@
 ;; FIXME:  recursive embedding doesn't work yet
 (deftest ^:props emap-embedded-map-2
   (testing "using a map as a property value - dbl embed"
-    (let [e (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d {:e 4}}})]
+    (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b {:c 3, :d {:e 4}}})]
       (log/trace "test: emap-embedded 2")
       (log/trace "e: " e)
       (log/trace "(e :b): " (e :b))
@@ -257,7 +256,7 @@
 
 (deftest ^:props emap-embedded-vec
   (testing "using a vector as a property value"
-    (let [e (ds/emap!! [:Foo/bar] {:a 1, :b [1 2 3]})]
+    (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b [1 2 3]})]
       (log/trace "test: emap-embedded-vec")
       (log/trace "e: " e)
       (log/trace "entity: " (.entity e))
@@ -267,7 +266,7 @@
 
 (deftest ^:props emap-embedded-set
   (testing "using a set as a property value"
-    (let [e (ds/emap!! [:Foo/bar] {:a 1, :b #{1 2 3}})]
+    (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b #{1 2 3}})]
       (log/trace "test: emap-embedded-set")
       (log/trace "e: " e)
       (log/trace "entity: " (.entity e))
@@ -285,13 +284,13 @@
 
 (deftest ^:api emap-seq
   (testing "emaps are seqable just like clojure maps"
-  (let [e (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d {:e 4, :f 5}}})
+  (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b {:c 3, :d {:e 4, :f 5}}})
         indent 4]
     (seqtest e indent))))
 
 (deftest ^:api apix
   (testing "clojure api: query"
-    (let [e (ds/emap!! [:Foo/d3] {:a 1 :b 2})]
+    (let [e (ds/entity-map! [:Foo/d3] {:a 1 :b 2})]
       (log/trace e)
       (log/trace (.entity e))
       (log/trace (type e))
@@ -303,7 +302,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:meta emap-meta
   (testing "emap meta"
-    (let [e (ds/emap!! [:Foo/d3] {:a 1 :b 2})]
+    (let [e (ds/entity-map! [:Foo/d3] {:a 1 :b 2})]
       (is (ds/emap? e))
       (is (= (type e) migae.datastore.PersistentEntityMap))
       (is (= (type (:migae/key (meta e))) clojure.lang.PersistentVector))
