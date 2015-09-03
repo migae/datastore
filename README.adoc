@@ -3,13 +3,13 @@
 Very much a work in progress.  Works well enough to have some fun
 playing around.  Not packaged on clojars, to experiment, clone the
 repo and run the tests.  Some recent documentation is at
-[Entities](doc/Entities.md), [Keychains](doc/Keychains.md), and
-[Datastore](doc/Datastore.md).  Lots of simple
-[tests](test/clojure/migae) that demonstrate the semantics.
+link:doc/Entities.md[Entities], link:doc/Keychains.md[Keychains] and
+link:doc/Datastore.md[Datastore].  Lots of simple
+link:test/clojure/migae[tests] that demonstrate the semantics.
 
 At this point, until I can get more complete documentation organized,
 you'll probably want to at least review Google's official
-[Datastore documentation](https://cloud.google.com/appengine/docs/java/datastore/).
+link:https://cloud.google.com/appengine/docs/java/datastore/[Datastore documentation].
 
 == getting started
 
@@ -31,7 +31,9 @@ local test environment and defines a few vars to save typing during
 experimentation.  So from the root directory, fire up a repl and start
 experimenting:
 
-```clojure
+[[app-listing]]
+[source,clojure]
+----
 $ lein repl
 nREPL server started on port 52304 on host 127.0.0.1 - nrepl://127.0.0.1:52304
 REPL-y 0.3.5, nREPL 0.2.6
@@ -80,7 +82,7 @@ INFO: Local Datastore initialized:
 {:a 1}
 user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datastore
 {:a 1}
-```
+----
 
 You will sometimes get `NullPointerException No API environment is
 registered for this thread.` (the test env seems to timeout); if so,
@@ -88,14 +90,14 @@ just run `user=> (ds-reset)`.
 
 ## testing
 
-See the [tests](test/clojure/migae) for lots of examples of how to use
+See the link:test/clojure/migae[tests] for lots of examples of how to use
 the library.  Be **be forewarned**, the test cases are in flux; some
 of them are outdated, and the api is changing.
 
 ## types
 
-* `migae.datastore.PersistentEntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See [Entities](doc/Entities.md).
-* `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See [Keychains](doc/Keychains.md).  (**Not yet implemented**)
+* `migae.datastore.PersistentEntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See link:doc/Entities.md[Entities].
+* `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See link:doc/Keychains.md[Keychains].  (**Not yet implemented**)
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 
@@ -125,7 +127,7 @@ A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  A vector of
 keylinks is a keychain, which corresponds to a datastore Key, which
 has a Kind of type String, an Identifier (either a String name or a
 long Id), and (optionally) a parent Key.  See
-[Keychains](doc/Keychains.md) for more detail.
+link:doc/Keychains.md[Keychains] for more detail.
 
 **_Caveat_**: note the difference between a datastore Key and a
   clojure key.  The former is a type (class), the latter is a
@@ -199,7 +201,7 @@ values.  All but the last links in the vector must be namespaced; e.g. `[:A/B :C
 ### field types
 
 The value part of an entity-map is just a map.  The datastore
-restricts the permissible value types; see  [Properties and value types](https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types)
+restricts the permissible value types; see  link:https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types[Properties and value types].
 
 ```
 (entity-map [:Foo/Bar] {:a 1})  ;; java.lang.Long
