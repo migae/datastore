@@ -17,7 +17,7 @@ Conceptually the Datastore can be thought of as a map whose domain is
 a set of Key objects, and whose domain is a collection of maps.  We
 can think of an Entity as a MapEntry, but since all entities have the
 same (key, map) structure, we can also treat an Entity as a Map - see
-[Entities](Entities.md) for more info.  Clojure allows us the express
+link:Entities.adoc[Entities] for more info.  Clojure allows us the express
 this conceptual structure more-or-less directly, in contrast to the
 low-level Java API, which involves lots of classes that tend to
 obscure the structure of the datastore (IMO).
@@ -53,7 +53,7 @@ support _namespaces_, which allows us to partition data in useful
 ways.  The mechanism is pretty simple and transaction-like: datastore
 operations always use the "current" namespace, so to segregate data
 just
-[set the (global) namespace](https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Setting_the_current_namespace)
+link:https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Setting_the_current_namespace[set the (global) namespace]
 before you start working with the datastore.
 
 A Clojurish way to handle this sort of situation is to use a
@@ -72,17 +72,17 @@ expression_.  Namespacing is implemented in the Key and Query
 objects - in effect, a namespace is written into each entity as a
 component of its Key.
 
-See [Using namespaces with the Datastore](https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Using_namespaces_with_the_Datastore)
+See link:https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Using_namespaces_with_the_Datastore[Using namespaces with the Datastore]
 
 = Java low-level APIs
 
-[Datastore API](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/package-summary) summary
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/package-summary[Datastore API] summary
 
-[DatastoreService](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/DatastoreService)
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/DatastoreService[DatastoreService]
 
-[Entity](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Entity)
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Entity[Entity]
 
-[Namespaces](https://cloud.google.com/appengine/docs/java/multitenancy/) (a/k/a Multitenancy)
+link:https://cloud.google.com/appengine/docs/java/multitenancy/[Namespaces] (a/k/a Multitenancy)
 
 ==== old notes
 

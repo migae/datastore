@@ -5,7 +5,7 @@ link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/a
 and a
 link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/PropertyContainer[PropertyContainer].
 The migae api represents these as _keychains_ and _maps_,
-respectively (see link:Entities.md[Entities] for info on the latter).
+respectively (see link:Entities.adoc[Entities] for info on the latter).
 
 A Datastore Key is a peculiar creature.  An object of class
 `com.google.appengine.api.datastore.Key` "looks like" a Key object,
