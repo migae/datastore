@@ -1,4 +1,5 @@
 (ns migae.ctor-pull
+  "Unit tests for pull constructor entity-map*"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -47,11 +48,10 @@
 (use-fixtures :each ds-fixture)
 
 (deftest ^:ctor-pull ctor-pull-notfound
-  (testing "co-constructor notfound"
-    (try (ds/entity-map* [:A/B])
-         (catch EntityNotFoundException e
-           (is (= "No entity was found matching the key: A(\"B\")"
-                  (.getMessage e)))))))
+  (testing "pull constructor: entity not found"
+    (let [ex (try (ds/entity-map* [:Foo/BAR :NOT/FOUND])
+                  (catch EntityNotFoundException e e))]
+      (is (= (type ex) EntityNotFoundException)))))
 
 (deftest ^:ctor-pull ctor-pull
   (testing "pull ctor"
@@ -62,6 +62,13 @@
       (log/trace "em2:" (ds/epr em2))
       (is (= (:a em1) 1))         ; previously fetched emap unaffected
       (is (= (:b em2) nil))
+      )))
+
+(deftest ^:ctor-pull ctor-pull-kinded
+  (testing "pull ctor"
+    (let [ems (ds/entity-map* [:C]) ; fetch emaps of kind :C
+          ]
+      (log/trace "ems:" ems)
       )))
 
 

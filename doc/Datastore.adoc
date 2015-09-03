@@ -1,6 +1,6 @@
-# migae Datastore
+== migae Datastore
 
-### API summary
+=== API summary
 
 * `(into-ds! e)` - destructively save [entity](Entities.md) `e` into the datastore;
   any previously saved version of `e` will be replaced.
@@ -8,7 +8,7 @@
 * `(datastore k)` - retrieve the entity whose keychain is `k`.
 * `(k datastore)` - retrieve the entity whose keychain is `k`.
 
-# overview
+== overview
 
 The GAE datastore is a collection of _Entities_; an Entity extends
 PropertyContainer (i.e. a Map) by adding a Key.
@@ -17,7 +17,7 @@ Conceptually the Datastore can be thought of as a map whose domain is
 a set of Key objects, and whose domain is a collection of maps.  We
 can think of an Entity as a MapEntry, but since all entities have the
 same (key, map) structure, we can also treat an Entity as a Map - see
-[Entities](Entities.md) for more info.  Clojure allows us the express
+link:Entities.adoc[Entities] for more info.  Clojure allows us the express
 this conceptual structure more-or-less directly, in contrast to the
 low-level Java API, which involves lots of classes that tend to
 obscure the structure of the datastore (IMO).
@@ -37,7 +37,7 @@ object; we can just write `(get-ds k)`.  Alternatively, since the
 (migae) datastore is a map, we can write `(datastore k)` or `(k
 datastore)`.
 
-# updating
+= updating
 
 Datastore does not support selective updating of portions of an
 Entity.  The unit of change is the entire Entity; if you want to
@@ -45,7 +45,7 @@ change one field in an entity, you must retrieve the entire Entity,
 change the field in the Entity object, and then save the entire
 Entity.  This will replace the previously stored Entity _in toto_.
 
-# namespaces
+= namespaces
 
 Unlike most database systems, GAE datastore does not allow creation of
 multiple databases: there is only one datastore.  However, it does
@@ -53,7 +53,7 @@ support _namespaces_, which allows us to partition data in useful
 ways.  The mechanism is pretty simple and transaction-like: datastore
 operations always use the "current" namespace, so to segregate data
 just
-[set the (global) namespace](https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Setting_the_current_namespace)
+link:https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Setting_the_current_namespace[set the (global) namespace]
 before you start working with the datastore.
 
 A Clojurish way to handle this sort of situation is to use a
@@ -72,21 +72,21 @@ expression_.  Namespacing is implemented in the Key and Query
 objects - in effect, a namespace is written into each entity as a
 component of its Key.
 
-See [Using namespaces with the Datastore](https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Using_namespaces_with_the_Datastore)
+See link:https://cloud.google.com/appengine/docs/java/multitenancy/multitenancy#Java_Using_namespaces_with_the_Datastore[Using namespaces with the Datastore]
 
-# Java low-level APIs
+= Java low-level APIs
 
-[Datastore API](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/package-summary) summary
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/package-summary[Datastore API] summary
 
-[DatastoreService](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/DatastoreService)
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/DatastoreService[DatastoreService]
 
-[Entity](https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Entity)
+link:https://cloud.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/Entity[Entity]
 
-[Namespaces](https://cloud.google.com/appengine/docs/java/multitenancy/) (a/k/a Multitenancy)
+link:https://cloud.google.com/appengine/docs/java/multitenancy/[Namespaces] (a/k/a Multitenancy)
 
-#### old notes
+==== old notes
 
-## EntityMap
+== EntityMap
 
 See the test tutorial.clj for lots of examples.
 
@@ -112,7 +112,7 @@ expression; emap!! fetches an existing Entity if there is one, the
 adds/overrides its properties using the second arg, then saves the
 result.
 
-### Getting and putting
+=== Getting and putting
 
 We're lazy so currently most if not all operations just go ahead and
 `put` results to the datastore.  Coming up with a more sensible set of

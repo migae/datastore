@@ -165,17 +165,17 @@
 
 ;; pull constructor
 (defmulti entity-map*
-  "Pull constructor.  Retrieve entities with exact, complete
-  match."
+  "Pull constructor.  Retrieve entities with exact, complete match; if
+  no matches, throw exception."
   ;; FIXME:  implement map matching
   ;; FIXME:  throw notfound exception
     (fn [keychain & valmap]
-      (log/trace "keychain: " keychain)
-      (log/trace "type keychain: " (type keychain))
-      (log/trace "valmap: " valmap)
-      (log/trace "type valmap: " (type valmap))
-      (log/trace "first valmap: " (first valmap))
-      (log/trace "type first valmap: " (type (first valmap)))
+      ;; (log/trace "keychain: " keychain)
+      ;; (log/trace "type keychain: " (type keychain))
+      ;; (log/trace "valmap: " valmap)
+      ;; (log/trace "type valmap: " (type valmap))
+      ;; (log/trace "first valmap: " (first valmap))
+      ;; (log/trace "type first valmap: " (type (first valmap)))
       ;; (flush)
       [(type keychain) (type (first valmap))])) ;; (first valmap) should be the val map
 (defmethod entity-map* [clojure.lang.PersistentVector nil]
