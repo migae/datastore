@@ -43,20 +43,33 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:emap emap-fail-1
-  (testing "emap key vector (keychain) must not be empty"
+(deftest ^:ctor ctor-fail-1
+  (testing "keychain must not be empty"
     (try (ds/entity-map [] {})
          (catch IllegalArgumentException e
            (is (= "keychain vector must not be empty"
                   (.getMessage e)))))))
 
-(deftest ^:emap emap-fail-2
-  (testing "emap property content must not be null (but it can be empty)"
+(deftest ^:ctor ctor-fail-2
+  (testing "property map arg must not be null (but it can be empty)"
     (let [em1 (ds/entity-map [:A/B] {})]
       (try (ds/entity-map [:A/B] )
          (catch clojure.lang.ArityException e
            (is (= "Wrong number of args (1) passed to: datastore/entity-map"
                   (.getMessage e))))))))
+
+(deftest ^:ctor ctor-fail-3
+  (testing "local ctor requires proper keychain"
+    (let [em1 (ds/entity-map [:A/B] {}) ;; ok
+          em2 (try (ds/entity-map [:A] {})
+                   (catch java.lang.IllegalArgumentException ex ex))
+          em3 (try (ds/entity-map [:A/B :C] {}))]
+;;                   (catch java.lang.IllegalArgumentException ex ex))]
+      (is (= "missing namespace: :A"
+              (.getMessage em2)))
+      (is (= "missing namespace: :C"
+              (.getMessage em3))))))
+
 
 (deftest ^:emap emap-ctor
   (testing "entity-map ctor"
@@ -125,52 +138,28 @@
              clojure.lang.Keyword))
       )))
 
-(deftest ^:emap emap-kind-ctor1
-  (testing "entity-map kind ctor 1: keylink"
-      (let [m {:a 1}
-            em1 (ds/entity-map [:Foo] m)
-            em2 (ds/entity-map [:Foo] m)]
-        (log/trace "em1" (ds/epr em1))
-        (log/trace "em2" (ds/epr em2))
-        (is (ds/entity-map? em1))
-        )))
-
-(deftest ^:emap emap-kind-ctor2
-  (testing "entity-map kind ctor 2: keychain"
-      (let [m {:a 1}
-            em1 (ds/entity-map [:A/B :Foo] m)
-            em2 (ds/entity-map [:A/B :Foo] m)]
-        (log/trace "em1" (ds/epr em1))
-        (log/trace "em1 kind:" (ds/kind em1))
-        (log/trace "em1 identifier:" (ds/identifier em1))
-        (is (= (ds/kind em1) :Foo))
-        (is (= (ds/kind em1) (ds/kind em2)))
-        (is (= (val em1) (val em2)))
-        (is (not= (ds/identifier em1) (ds/identifier em2)))
-        )))
-
 (deftest ^:emap emap-props-1
-  (testing "emap! with properties"
+  (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus]
-            e1 (ds/emap! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (ds/emap! k)]
+            e1 (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
+            e2 (ds/entity-map! k)]
         (log/trace "e1" e1)
         (log/trace "e1 entity" (.entity e1))
         (log/trace "e2" e2)
         (log/trace "e2 entity" (.entity e2))
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Chibi"))
-        (is (= (:name (ds/emap! k)) "Chibi"))
+        (is (= (:name (ds/entity-map! k)) "Chibi"))
         (should-fail (is (= e1 e2)))
         (is (ds/key= e1 e2))
         )))
 
 (deftest ^:emap emap-fetch
-  (testing "emap! new, update, replace"
+  (testing "entity-map! new, update, replace"
     ;; ignore new if exists
-    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})
-          em2 (ds/emap! [:Species/Felis_catus] {})]
+    (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})
+          em2 (ds/entity-map! [:Species/Felis_catus] {})]
         (is (ds/key= em1 em2))
         (is (= (get em1 :name) "Chibi"))
         (is (= (em1 :name) "Chibi"))
@@ -178,7 +167,7 @@
         (is (= (get em2 :name) "Chibi")))
 
     ;; ! do not override existing
-    (let [em2 (ds/emap! [:Species/Felis_catus] {:name "Booger"})]
+    (let [em2 (ds/entity-map! [:Species/Felis_catus] {:name "Booger"})]
       (log/trace "em2 " em2)
       (is (= (:name em2) "Chibi")))
 
@@ -196,7 +185,7 @@
       (log/trace "em4 " em4)
       (is (= (:name em4) "Max")))
 
-    (let [em5 (ds/emap! [:Species/Felis_catus :Name/Chibi]
+    (let [em5 (ds/entity-map! [:Species/Felis_catus :Name/Chibi]
                        {:name "Chibi" :size "small" :eyes 1})
           em6 (ds/alter!  [:Species/Felis_catus :Name/Booger]
                        {:name "Booger" :size "lg" :eyes 2})]
@@ -206,7 +195,7 @@
 
 (deftest ^:emap emap-fn
   (testing "emap fn"
-    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})]
+    (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
       (log/trace em1))
       ))
 

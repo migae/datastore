@@ -440,6 +440,7 @@
 (load "datastore/adapter")
 (load "datastore/ctor_common")
 (load "datastore/ctor_push")
+(load "datastore/ctor_pull")
 (load "datastore/ekey")
 (load "datastore/dsmap")
 (load "datastore/api")

@@ -21,16 +21,24 @@
     (.put (ds/datastore) e)
     (PersistentEntityMap. e)))
 
-(defn put-proper-emap
-  [keychain & data]
+(defn- put-proper-emap
+  [& {:keys [keychain propmap force] :or {force false,}}]
   ;; precon: keychain has already been validated
   ;; (log/trace "keychain" keychain)
-  ;; (log/trace "data" data)
+  ;; (log/trace "propmap" propmap)
+  ;; (log/trace "force" force)
   (let [k (ekey/keychain-to-key keychain)
-        em (first data)
-        e (Entity. k)]
-    (when (not (empty? em))
-      (doseq [[k v] em]
+        e (if (not force)
+            (do #_(log/trace "not force")
+            (let [ent (try (.get (ds/datastore) k)
+                           (catch EntityNotFoundException ex ex))]
+              (if (= (type ent) Entity) ;; found
+                (throw (RuntimeException. "Key already used"))
+                (Entity. k))))
+            (do #_(log/trace "force push")
+                (Entity. k)))]
+    (when (not (empty? propmap))
+      (doseq [[k v] propmap]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     (.put (ds/datastore) e)
     (PersistentEntityMap. e)))
@@ -39,57 +47,70 @@
 ;; FIXME:  replace emap! with entity-map!
 ;; TODO: support nil data map, e.g. (entity-map! [:A/B])
 (defn entity-map!
-  ([keychain em]
-   (into-ds! keychain em))
-  ([keychain]
-   (into-ds! keychain)))
-(defn emap!
   ([keychain]
    (into-ds! keychain))
   ([keychain em]
-   (into-ds! keychain em)))
+   (into-ds! keychain em))
+  ([force keychain em]
+   (into-ds! force keychain em)))
 
 (defn into-ds!
-;; FIXME: convert to [keychain & em]
+  ;; FIXME: convert to [keychain & em]
   ([keychain em]
-   "Put entity-map to datastore; use :force true to replace existing"
-   ;; (log/trace "emap! 2 args " keychain em)
-   ;; (if (clj/empty? keychain)
-   ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-   (cond
-     (ekey/improper-keychain? keychain)
-     (put-kinded-emap keychain em)
-     (ekey/proper-keychain? keychain)
-     (put-proper-emap keychain em)
-     :else
-     (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
-  ([keychain] ;; erase: replace with empty entity
-   (if (clj/empty? keychain)
-     (throw (IllegalArgumentException. "keychain vector must not be empty"))
-     (let [k (try (apply ekey/keychain-to-key keychain)
-                  (catch java.lang.RuntimeException ex
-                    (log/trace (.getMessage ex)) ex)
-;; FIXME use java.lang.IllegalArgumentException instead of custom exceptions?
-                  (catch IllegalArgumentException ex
-                    ;; (log/trace (.getMessage ex))
-                    ex)
-                  (catch IllegalArgumentException ex
-                    ;; (log/trace (.getMessage ex))
-                    ex)
-                  )]
-       (cond
-         (nil? k) ;; bad keychain?
-         nil
-         (= (type k) IllegalArgumentException)
-         ;;(do (log/trace "invalid keychain: " keychain) k)
-         k
-         (= (type k) IllegalArgumentException)
-         ;;(do (log/trace "partial keychain: " keychain) k)
-         k
-         :else
-         (let [e (Entity. k)]
-           (.put (ds/datastore) e)
-           (PersistentEntityMap. e)))))))
+  "Put entity-map to datastore unless already there; use :force true to replace existing"
+  (log/trace "into-ds! " keychain em)
+  ;; (if (clj/empty? keychain)
+  ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+  (cond
+    (ekey/improper-keychain? keychain)
+    (put-kinded-emap keychain em)
+    (ekey/proper-keychain? keychain)
+    (put-proper-emap :keychain keychain :propmap em)
+    :else
+    (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
+  ([force keychain em]
+  "Forcibly put entity-map to datastore, replacing anything there"
+  ;; (log/trace "force into-ds! " force keychain em)
+  ;; (if (clj/empty? keychain)
+  ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+  (if (not= force :force)
+    (throw (IllegalArgumentException. force)))
+  (cond
+    (ekey/improper-keychain? keychain)
+    (put-kinded-emap keychain em)
+    (ekey/proper-keychain? keychain)
+    (put-proper-emap :keychain keychain :propmap em :force true)
+    :else
+    (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))))
+
+
+;;   ([keychain] ;; erase: replace with empty entity
+;;    (if (clj/empty? keychain)
+;;      (throw (IllegalArgumentException. "keychain vector must not be empty"))
+;;      (let [k (try (apply ekey/keychain-to-key keychain)
+;;                   (catch java.lang.RuntimeException ex
+;;                     (log/trace (.getMessage ex)) ex)
+;; ;; FIXME use java.lang.IllegalArgumentException instead of custom exceptions?
+;;                   (catch IllegalArgumentException ex
+;;                     ;; (log/trace (.getMessage ex))
+;;                     ex)
+;;                   (catch IllegalArgumentException ex
+;;                     ;; (log/trace (.getMessage ex))
+;;                     ex)
+;;                   )]
+;;        (cond
+;;          (nil? k) ;; bad keychain?
+;;          nil
+;;          (= (type k) IllegalArgumentException)
+;;          ;;(do (log/trace "invalid keychain: " keychain) k)
+;;          k
+;;          (= (type k) IllegalArgumentException)
+;;          ;;(do (log/trace "partial keychain: " keychain) k)
+;;          k
+;;          :else
+;;          (let [e (Entity. k)]
+;;            (.put (ds/datastore) e)
+;;            (PersistentEntityMap. e)))))))
 
      ;; (let [k (apply ekey/keychain-to-key keychain)
      ;;       e (try (.get (ds/datastore) k)

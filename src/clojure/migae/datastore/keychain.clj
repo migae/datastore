@@ -18,12 +18,13 @@
 ;; (require '(migae.datastore [keychain :as k]))
 (defn keylink?
   [k]
-  (and (keyword k)
+  ;; (log/trace "keylink? k" k)
+  (and (keyword? k)
        (not (nil? (clj/namespace k)))))
 
 (defn proper-keychain?
   [k]
-  (if (and (not (empty? k)) (vector? k))
+  (if (and  (vector? k) (not (empty? k)))
     (if (every? keylink? k)
       true
       false)
@@ -35,7 +36,7 @@
     (if (every? keylink? (butlast k))
       (let [dogtag (last k)]
         ;; (log/trace "dogtag k" dogtag)
-        (and (keyword dogtag)
+        (and (keyword? dogtag)
              (nil? (clj/namespace dogtag))))
       false)
     false))
@@ -147,14 +148,14 @@
 (defn keychain-to-key
   ;; FIXME: validate keychain only keylinks
   ([keychain]
-;;   (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+  ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
 ;;   (stack/print-cause-trace (throw (RuntimeException. "foo")) 99)
-   (if (vector? keychain)
+   (if (proper-keychain? keychain)
      (let [k (keyword-to-key (first keychain))
            root (KeyFactory$Builder. k)]
        (.getKey (doto root (add-child-keylink (rest keychain)))))
      (throw (IllegalArgumentException.
-             (str "not a vector of keywords: " keychain))))))
+             (str "Invalid keychain: " keychain))))))
 ;; (throw (RuntimeException. (str "Bad keychain (not a vector of keywords): " keychain))))))
 
 

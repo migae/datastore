@@ -43,28 +43,74 @@
                                         ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:ctor-push ctor-push-notfound
-  (testing "co-constructor notfound"
-    (try (ds/entity-map* [:A/B])
-         (catch EntityNotFoundException e
-           (is (= "No entity was found matching the key: A(\"B\")"
-                  (.getMessage e)))))))
+(deftest ^:ctor-push ctor-push-fail
+  (testing "ctor-push fail"
+    (let [em1 (ds/entity-map! [:A/B] {:a 1})
+          em2 (try (ds/entity-map! [:A/B] {:a 2})
+                   (catch java.lang.RuntimeException ex ex))]
+      (is (= (type em2) java.lang.RuntimeException))
+      (is (= "Key already used" (.getMessage em2)))
+      )))
 
-(deftest ^:ctor-push ctor-push
-  (testing "co-constructor"
-    (let [em1 (ds/entity-map! [:A/B] {})
+(deftest ^:ctor-push ctor-push-proper
+  (testing "ctor-push proper keychains"
+    (let [em1 (ds/entity-map! [:A/A] {:x 9})
           em2 (ds/entity-map! [:A/B] {:a 1})
-          em3 (ds/entity-map! [:A/B :C/D] {})
-          em4 (ds/entity-map! [:A/B :C/D] {:a 1})
-          em5 (ds/entity-map! [:A/B :C] {:a 1}) ; autogen id
-          em6 (ds/entity-map! [:A/B :C] {})
+          em3 (ds/entity-map! [:X/Y :A/A] {})
+          em4 (ds/entity-map! [:X/Y :B] {:a 1})
           ]
       (log/trace "em1:" (ds/epr em1))
       (log/trace "em2:" (ds/epr em2))
       (log/trace "em3:" (ds/epr em3))
       (log/trace "em4:" (ds/epr em4))
-      (log/trace "em5:" (ds/epr em5))
-      (log/trace "em6:" (ds/epr em6))
       )))
+
+(deftest ^:ctor-push ctor-push-improper
+  (testing "ctor-push improper keychains"
+   (let [em1 (ds/entity-map! [:A/B :C] {:a 1})
+         em2 (ds/entity-map! [:A/B :C] {})
+          ]
+      (log/trace "em1:" (ds/epr em1))
+      (log/trace "em2:" (ds/epr em2))
+      )))
+
+(deftest ^:ctor-push ctor-push-force
+  (testing "co-constructor"
+    (let [em1  (ds/entity-map! [:A/B] {:a 1})
+          em1a (ds/entity-map* [:A/B] {})
+          em2  (ds/entity-map! :force [:A/B] {:a 2})
+          em2a (ds/entity-map* [:A/B] {})
+          ]
+      (log/trace "em1:" (ds/epr em1))
+      (log/trace "em1a:" (ds/epr em1a))
+      (log/trace "em2:" (ds/epr em2))
+      (log/trace "em2a:" (ds/epr em2a))
+      )))
+
+(deftest ^:ctor-push ctor-kinded-1
+  (testing "entity-map kind ctor 1: keylink"
+      (let [m {:a 1}
+            em1 (ds/entity-map! [:Foo] m)
+            em2 (ds/entity-map! [:Foo] m)]
+        (log/trace "em1" (ds/epr em1))
+        (log/trace "em2" (ds/epr em2))
+        (is (ds/entity-map? em1))
+        )))
+
+(deftest ^:ctor-push ctor-kinded-2
+  (testing "entity-map kind ctor 2: keychain"
+      (let [m {:a 1}
+            em1 (ds/entity-map! [:A/B :Foo] m)
+            em2 (ds/entity-map! [:A/B :Foo] m)]
+        (log/trace "em1" (ds/epr em1))
+        (log/trace "em1 kind:" (ds/kind em1))
+        (log/trace "em1 identifier:" (ds/identifier em1))
+        (is (= (ds/kind em1) :Foo))
+        (is (= (ds/kind em1) (ds/kind em2)))
+        (is (= (val em1) (val em2)))
+        (is (not= (ds/identifier em1) (ds/identifier em2)))
+        )))
+
+
 
 

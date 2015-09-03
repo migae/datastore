@@ -47,7 +47,7 @@
                                         ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:ctor-pull ctor-pull-notfound
+(deftest ^:ctor-pull ctor-pull-fail
   (testing "pull constructor: entity not found"
     (let [ex (try (ds/entity-map* [:Foo/BAR :NOT/FOUND])
                   (catch EntityNotFoundException e e))]

@@ -70,7 +70,7 @@
 (deftest ^:emap emap!
   (testing "entitymap deftype"
     (binding [*print-meta* true]
-      (let [em1 (ds/emap! [:Species/Felis_catus] {})
+      (let [em1 (ds/entity-map! [:Species/Felis_catus] {})
             em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
             em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
             em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
@@ -81,27 +81,27 @@
         ))))
 
 (deftest ^:emap emap-props-1
-  (testing "emap! with properties"
+  (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus]
-            e1 (ds/emap! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (ds/emap! k)]
+            e1 (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
+            e2 (ds/entity-map! k)]
         (log/trace "e1" e1)
         (log/trace "e1 entity" (.entity e1))
         (log/trace "e2" e2)
         (log/trace "e2 entity" (.entity e2))
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Chibi"))
-        (is (= (:name (ds/emap! k)) "Chibi"))
+        (is (= (:name (ds/entity-map! k)) "Chibi"))
         (should-fail (is (= e1 e2)))
         (is (ds/key= e1 e2))
         )))
 
 (deftest ^:emap emap-fetch
-  (testing "emap! new, update, replace"
+  (testing "entity-map! new, update, replace"
     ;; ignore new if exists
-    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})
-          em2 (ds/emap! [:Species/Felis_catus] {})]
+    (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})
+          em2 (ds/entity-map! [:Species/Felis_catus] {})]
         (is (ds/key= em1 em2))
         (is (= (get em1 :name) "Chibi"))
         (is (= (em1 :name) "Chibi"))
@@ -109,7 +109,7 @@
         (is (= (get em2 :name) "Chibi")))
 
     ;; ! do not override existing
-    (let [em2 (ds/emap! [:Species/Felis_catus] {:name "Booger"})]
+    (let [em2 (ds/entity-map! [:Species/Felis_catus] {:name "Booger"})]
       (log/trace "em2 " em2)
       (is (= (:name em2) "Chibi")))
 
@@ -127,7 +127,7 @@
       (log/trace "em4 " em4)
       (is (= (:name em4) "Max")))
 
-    (let [em5 (ds/emap! [:Species/Felis_catus :Name/Chibi]
+    (let [em5 (ds/entity-map! [:Species/Felis_catus :Name/Chibi]
                        {:name "Chibi" :size "small" :eyes 1})
           em6 (ds/alter!  [:Species/Felis_catus :Name/Booger]
                        {:name "Booger" :size "lg" :eyes 2})]
@@ -137,7 +137,7 @@
 
 (deftest ^:emap emap-fn
   (testing "emap fn"
-    (let [em1 (ds/emap! [:Species/Felis_catus] {:name "Chibi"})]
+    (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
       (log/trace em1))
       ))
 

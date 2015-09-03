@@ -97,27 +97,27 @@
                   (catch IllegalArgumentException e e))]
       (is (= (type ex) IllegalArgumentException))
       (is (= (.getMessage ex)
-             "not a clojure.lang.Keyword: :X")))
+             "Invalid keychain: [:A/B :X]")))
     ;; FIXME: restructure to verifiy exception occurs, as above
     (try (k/keychain-to-key [:A/B :Y :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
-                  "not a clojure.lang.Keyword: :Y"))))
+                  "Invalid keychain: [:A/B :Y :D/E]"))))
     (try (k/keychain-to-key [:A/B 'Z :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
-                  "not a clojure.lang.Keyword: Z"))))
-    ;; (try (k/keychain-to-key [:A/B "C" :D/E])
-    ;;      (catch java.lang.RuntimeException e
-    ;;        (is (= (.getMessage e)
-    ;;               "Bad child keylink (not a clojure.lang.Keyword): C"))))
+                  "Invalid keychain: [:A/B Z :D/E]"))))
+    (try (k/keychain-to-key [:A/B "C" :D/E])
+         (catch java.lang.RuntimeException e
+           (is (= (.getMessage e)
+                  "Invalid keychain: [:A/B \"C\" :D/E]"))))
     (try (k/keychain-to-key '(:A/B))
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: (:A/B)"
+           (is (= "Invalid keychain: (:A/B)"
                (.getMessage ex)))))
     (try (k/keychain-to-key '{:a 1})
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: {:a 1}"
+           (is (= "Invalid keychain: {:a 1}"
                (.getMessage ex)))))
     (try (k/keychain-to-key [:A])
          (catch IllegalArgumentException ex
@@ -125,31 +125,31 @@
                (.getMessage ex))))
     (try (k/keychain-to-key :A)
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: :A"
+           (is (= "Invalid keychain: :A"
                   (.getMessage ex)))))
     (try (k/keychain-to-key [9])
          (catch IllegalArgumentException ex
-           (is (=  "not a clojure.lang.Keyword: 9"
+           (is (=  "Invalid keychain: [9]"
                   (.getMessage ex)))))
     (try (k/keychain-to-key 9)
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: 9"
+           (is (= "Invalid keychain: 9"
                    (.getMessage ex)))))
     (try (k/keychain-to-key ['a])
          (catch IllegalArgumentException ex
-           (is (= "not a clojure.lang.Keyword: a"
+           (is (= "Invalid keychain: [a]"
                   (.getMessage ex)))))
     (try (k/keychain-to-key 'a)
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: a"
+           (is (= "Invalid keychain: a"
                   (.getMessage ex)))))
     (try (k/keychain-to-key ["a"])
          (catch IllegalArgumentException ex
-           (is (= "not a clojure.lang.Keyword: a"
+           (is (= "Invalid keychain: [\"a\"]"
                   (.getMessage ex)))))
     (try (k/keychain-to-key "a")
          (catch IllegalArgumentException ex
-           (is (= "not a vector of keywords: a"
+           (is (= "Invalid keychain: a"
                   (.getMessage ex)))))
     ))
 
