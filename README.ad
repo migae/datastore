@@ -1,4 +1,4 @@
-# migae - clojurizing the appengine datastore
+== migae - clojurizing the appengine datastore
 
 Very much a work in progress.  Works well enough to have some fun
 playing around.  Not packaged on clojars, to experiment, clone the
@@ -11,7 +11,7 @@ At this point, until I can get more complete documentation organized,
 you'll probably want to at least review Google's official
 [Datastore documentation](https://cloud.google.com/appengine/docs/java/datastore/).
 
-## getting started
+== getting started
 
 **NOTE:** you do not need an App Engine account to explore this
   library in a development environment.  The gradle build system will
