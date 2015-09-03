@@ -67,23 +67,18 @@
 ;; getter
 (defn get-ds
   [keychain]
-  (log/trace "get-ds " keychain)
+  ;; (log/trace "get-ds " keychain)
    (if (clj/empty? keychain)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
-     (let [k (apply ekey/keychain-to-key keychain)
+     (let [k (ekey/keychain-to-key keychain)
            e (.get (ds/datastore) k)]
-       (log/trace "key: " k)
-       (log/trace "e: " e)
-       ;; throw  EntityNotFoundException
-                  ;; (catch EntityNotFoundException e nil)
-                  ;; (catch DatastoreFailureException e (throw e))
-                  ;; (catch java.lang.IllegalArgumentException e (throw e)))]
        (PersistentEntityMap. e))))
 
-;; co-constructor
+;; FIXME: does we really need a multimethod here?
+;; TODO: support kinded pulls, e.g. (entity-map* [:A])
 (defmulti entity-map*
-  "entity-map co-constructor.  Retrieve entities with exact, complete
-  match; if no matches, throw exception."
+  "Pull constructor.  Retrieve entities with exact, complete match; if
+  no matches, throw exception."
   ;; FIXME:  implement map matching
   ;; FIXME:  throw notfound exception
     (fn [keychain & valmap]
