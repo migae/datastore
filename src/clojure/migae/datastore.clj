@@ -438,7 +438,8 @@
 
 ;;(load "datastore/service")
 (load "datastore/adapter")
-(load "datastore/emap")
+(load "datastore/ctor_common")
+(load "datastore/ctor_push")
 (load "datastore/ekey")
 (load "datastore/dsmap")
 (load "datastore/api")
