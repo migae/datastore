@@ -51,6 +51,81 @@
         (.setProperty e (subs (str k) 1) (get-val-ds v)))
       (PersistentEntityMap. e))))
 
+(defn get-kinded-emap
+  [keychain & data]
+  ;; precon: improper keychain is validated
+  (log/trace "get-kinded-emap " keychain)
+  ;; (log/trace "keychain" keychain)
+  ;; (log/trace "data" data)
+  ;; (let [em (first data)
+  ;;       kind (clj/name (last keychain))
+  ;;       ;; foo (log/trace "kind" kind)
+  ;;       parent-keychain (vec (butlast keychain))
+  ;;       e (if (nil? parent-keychain)
+  ;;           (Entity. kind)
+  ;;           (do #_(log/trace "parent-keychain" parent-keychain)
+  ;;               #_(log/trace "parent-key" (ekey/keychain-to-key parent-keychain))
+  ;;               (Entity. kind  (ekey/keychain-to-key parent-keychain))
+  ;;               ))]
+  ;;   (when (not (empty? em))
+  ;;     (doseq [[k v] (seq em)]
+  ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
+  ;;   (.put (ds/datastore) e)
+  ;;   (PersistentEntityMap. e)))
+  )
+;;  (throw (IllegalArgumentException. (str "kinded keychain" keychain))))
+
+(defn get-proper-emap
+  [keychain & data]
+  ;; precon: keychain has already been validated
+  (log/trace "get-proper-emap" keychain)
+  ;; (log/trace "keychain" keychain)
+  ;; (log/trace "data" data)
+  ;; (let [k (ekey/keychain-to-key keychain)
+  ;;       em (first data)
+  ;;       e (Entity. k)]
+  ;;   (when (not (empty? em))
+  ;;     (doseq [[k v] em]
+  ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
+  ;;   (.put (ds/datastore) e)
+  ;;   (PersistentEntityMap. e)))
+  )
+
+(defn put-kinded-emap
+  [keychain & data]
+  ;; precon: improper keychain is validated
+  ;; (log/trace "keychain" keychain)
+  ;; (log/trace "data" data)
+  (let [em (first data)
+        kind (clj/name (last keychain))
+        ;; foo (log/trace "kind" kind)
+        parent-keychain (vec (butlast keychain))
+        e (if (nil? parent-keychain)
+            (Entity. kind)
+            (do #_(log/trace "parent-keychain" parent-keychain)
+                #_(log/trace "parent-key" (ekey/keychain-to-key parent-keychain))
+                (Entity. kind  (ekey/keychain-to-key parent-keychain))
+                ))]
+    (when (not (empty? em))
+      (doseq [[k v] (seq em)]
+        (.setProperty e (subs (str k) 1) (get-val-ds v))))
+    (.put (ds/datastore) e)
+    (PersistentEntityMap. e)))
+
+(defn put-proper-emap
+  [keychain & data]
+  ;; precon: keychain has already been validated
+  ;; (log/trace "keychain" keychain)
+  ;; (log/trace "data" data)
+  (let [k (ekey/keychain-to-key keychain)
+        em (first data)
+        e (Entity. k)]
+    (when (not (empty? em))
+      (doseq [[k v] em]
+        (.setProperty e (subs (str k) 1) (get-val-ds v))))
+    (.put (ds/datastore) e)
+    (PersistentEntityMap. e)))
+
 ;; OBSOLETE - use entity-map for consistency with hash-map, array-map, etc
 (defn emap
   "create PersistentEntityMap object"
@@ -66,33 +141,41 @@
 
 ;; getter
 (defn get-ds
-  [keychain]
+  [keychain & em]
   (log/trace "get-ds " keychain)
-   (if (clj/empty? keychain)
-     (throw (IllegalArgumentException. "keychain vector must not be empty"))
-     (let [k (apply ekey/keychain-to-key keychain)
-           e (.get (ds/datastore) k)]
-       (log/trace "key: " k)
-       (log/trace "e: " e)
-       ;; throw  EntityNotFoundException
-                  ;; (catch EntityNotFoundException e nil)
-                  ;; (catch DatastoreFailureException e (throw e))
-                  ;; (catch java.lang.IllegalArgumentException e (throw e)))]
-       (PersistentEntityMap. e))))
+   (cond
+     (ekey/improper-keychain? keychain)
+     (get-kinded-emap keychain)
+     (ekey/proper-keychain? keychain)
+     (get-proper-emap keychain)
+     :else
+     (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
 
-;; co-constructor
+   ;; (if (clj/empty? keychain)
+   ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+   ;;   (let [k (ekey/keychain-to-key keychain)
+   ;;         e (.get (ds/datastore) k)]
+   ;;     (log/trace "key: " k)
+   ;;     (log/trace "e: " e)
+   ;;     ;; throw  EntityNotFoundException
+   ;;                ;; (catch EntityNotFoundException e nil)
+   ;;                ;; (catch DatastoreFailureException e (throw e))
+   ;;                ;; (catch java.lang.IllegalArgumentException e (throw e)))]
+   ;;     (PersistentEntityMap. e))))
+
+;; pull constructor
 (defmulti entity-map*
-  "entity-map co-constructor.  Retrieve entities with exact, complete
-  match; if no matches, throw exception."
+  "Pull constructor.  Retrieve entities with exact, complete
+  match."
   ;; FIXME:  implement map matching
   ;; FIXME:  throw notfound exception
     (fn [keychain & valmap]
-      ;; (log/trace "keychain: " keychain)
-      ;; (log/trace "type keychain: " (type keychain))
-      ;; (log/trace "valmap: " valmap)
-      ;; (log/trace "type valmap: " (type valmap))
-      ;; (log/trace "first valmap: " (first valmap))
-      ;; (log/trace "type first valmap: " (type (first valmap)))
+      (log/trace "keychain: " keychain)
+      (log/trace "type keychain: " (type keychain))
+      (log/trace "valmap: " valmap)
+      (log/trace "type valmap: " (type valmap))
+      (log/trace "first valmap: " (first valmap))
+      (log/trace "type first valmap: " (type (first valmap)))
       ;; (flush)
       [(type keychain) (type (first valmap))])) ;; (first valmap) should be the val map
 (defmethod entity-map* [clojure.lang.PersistentVector nil]
@@ -148,42 +231,6 @@
    (into-ds! keychain em))
   ([keychain]
    (into-ds! keychain)))
-
-(defn put-kinded-emap
-  [keychain & data]
-  ;; precon: improper keychain is validated
-  ;; (log/trace "keychain" keychain)
-  ;; (log/trace "data" data)
-  (let [em (first data)
-        kind (clj/name (last keychain))
-        ;; foo (log/trace "kind" kind)
-        parent-keychain (vec (butlast keychain))
-        e (if (nil? parent-keychain)
-            (Entity. kind)
-            (do #_(log/trace "parent-keychain" parent-keychain)
-                #_(log/trace "parent-key" (ekey/keychain-to-key parent-keychain))
-                (Entity. kind  (ekey/keychain-to-key parent-keychain))
-                ))]
-    (when (not (empty? em))
-      (doseq [[k v] (seq em)]
-        (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put (ds/datastore) e)
-    (PersistentEntityMap. e)))
-;;  (throw (IllegalArgumentException. (str "kinded keychain" keychain))))
-
-(defn put-proper-emap
-  [keychain & data]
-  ;; precon: keychain has already been validated
-  ;; (log/trace "keychain" keychain)
-  ;; (log/trace "data" data)
-  (let [k (ekey/keychain-to-key keychain)
-        em (first data)
-        e (Entity. k)]
-    (when (not (empty? em))
-      (doseq [[k v] em]
-        (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put (ds/datastore) e)
-    (PersistentEntityMap. e)))
 
 (defn into-ds!
 ;; FIXME: convert to [keychain & em]
