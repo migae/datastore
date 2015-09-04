@@ -76,7 +76,7 @@
   [keychain & arg2]
   ;; (log/trace "get-ds " keychain arg2)
    (cond
-     (= :pfx keychain)
+     (= :prefix keychain)
      (if (apply ekey/proper-keychain? arg2)
        (get-prefix-matches arg2))
      (empty? keychain)
@@ -134,7 +134,7 @@
   ([arg1 arg2]
    ;; (log/trace "entity-map* 1" arg1 arg2)
    (if (keyword? arg1)
-     ;; mode keyword:  :pfx, :iso, etc.
+     ;; mode keyword:  :prefix, :iso, etc.
      (do ;; (log/trace "mode " arg1 " keychain: " arg2)
          (get-ds arg1 arg2))
      ;; else keychain
@@ -144,7 +144,7 @@
   ([arg1 arg2 arg3]
    (log/trace "entity-map* 3" arg1 arg2 arg3)
    (if (keyword? arg1)
-     ;; mode keyword:  :pfx, :iso, etc.
+     ;; mode keyword:  :prefix, :iso, etc.
      (log/trace "mode " arg1 " keychain: " arg2)
      (throw (RuntimeException. "bad args")))))
 

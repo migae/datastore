@@ -260,20 +260,18 @@ one datastore, we sugar this to `(get-ds k)`.
 Query syntax looks like constructor syntax; the difference is we treat
 the map part as a pattern.
 
-Conventions: terminal '?' means "predicate"; '?' followed by another
-char means "find".
+The pull constructor:
 
-* `(entity-map?! k m)` - find ('?'), necessarily ('!').
- * if `k` is a proper keychain, then:
-  * if no entity with key `k` exists in the datastore, create and store it
-  * if an entity with key `k` does exist, return it (ignoring m argument)
- * if `k` is an improper keychain, then '?!' means "find _some_ entity", so:
-  * create and save a new entity with autogenned key id
+* `(entity-map* [])` -- fetch all entities
+* `(entity-map* [:A/B])` -- fetch unique entity with key :A/B
+* `(entity-map* [:A])` -- fetch all entities with kind :A
+* `(entity-map* [:A/B :C])` -- fetch all entities with kind :C and ancestor :A/B
+* `(entity-map* :pfx [:A/B :C/D])` -- fetch all entities with keychain prefix (i.e. ancestor) [:A/B :C/D]
 
-**WARNING** having used this sort of "?!" stuff a bit I think it too
-  obscure.  better to use keywords like `:force` or the like, or
-  support a `not-found` function parameter.  So `entity-map?!` will be
-  replaced by some version of the pull constructor `entity-map*`.
+[[app-listing]]
+[source,clojure]
+----
+----
 
 ## mutation
 
