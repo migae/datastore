@@ -109,8 +109,9 @@ We have three ways to construct PersistentEntityMap objects:
 * push constructor:   `(entity-map! <keychain> <map>)` - construct locally and push to datastore
 * pull constructor:   `(entity-map* <keychain> <map>)` - pull matching entities from datastore and construct corresponding PersistentEntityMap objects locally
 
-
-```
+[[app-listing]]
+[source,clojure]
+----
 (def em (entity-map [:A/B C/D] {:a 1 :b 2}))
 (coll? em)
 (map? em)
@@ -119,7 +120,7 @@ We have three ways to construct PersistentEntityMap objects:
 (= (val  em) {:a 1 :b 2})
 (= (keys em) [:a :b])
 (= (vals em) [1 2])
-```
+----
 
 ### Keys, keychains, keylinks, and dogtags
 
@@ -151,7 +152,8 @@ Note that a dogtag predicate `(dogtag? x)` doesn't make sense - it's
 not a type.  What makes a keyword a dogtag is its position in a
 keychain.
 
-```
+[source,clojure]
+----
 user=> (ds/to-ekey :A/b)  ; migae keylink to datastore entity Key (ekey)
 #object[com.google.appengine.api.datastore.Key 0x6c4f881d "A(\"b\")"]
 (ds/ekey? (ds/to-ekey :A/B))
@@ -159,7 +161,7 @@ user=> (ds/to-ekey :A/b)  ; migae keylink to datastore entity Key (ekey)
 (= (ds/keychain (ds/to-ekey :A/B)) [:A/B])
 (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B]))
 (= (ds/name e1) (ds/name e2) (ds/name e3))
-```
+----
 
 ### kinds
 
@@ -182,28 +184,33 @@ Entities by kind, do the same with the pull constructor: `(entity-map*
 constructor (`entity-map`); the datastore can only generated Ids for
 stored entities.
 
-```
+[source,clojure]
+----
 (= (kind (entity-map [:Foo/Bar] {:a 1})) :Foo)
 (= (kind (entity-map [:Foo/Bar :X/d3] {:a 1})) :X)
-```
+----
 
 ### autogenned ids
 
 Use a partial ("improper") keychain to have the datastore autogen Id
-values.  All but the last links in the vector must be namespaced; e.g. `[:A/B :C/D :E]`.
+values.  All but the last links in the vector must be namespaced;
+e.g. `[:A/B :C/D :E]`.  Only valid for push ctor, since the datastore
+can only autogen an Id on saved entities.
 
-```
-(def em1 (entity-map [:Foo] m)) ;; kind="Foo", id is autogenned.  SIDE EFFECT: empty entity put to ds
-(def em2 (entity-map [:Foo] m)) ;; em1 and em2 have different key ids
-(def em2 (entity-map [:A/B :C/D Foo] m)) ;; long keychains ok too
-```
+[source,clojure]
+----
+(def em1 (entity-map! [:Foo] m)) ;; kind="Foo", id is autogenned.
+(def em2 (entity-map! [:Foo] m)) ;; em1 and em2 have different key ids
+(def em2 (entity-map! [:A/B :C/D Foo] m)) ;; long keychains ok too
+----
 
 ### field types
 
 The value part of an entity-map is just a map.  The datastore
 restricts the permissible value types; see  link:https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types[Properties and value types].
 
-```
+[source,clojure]
+----
 (entity-map [:Foo/Bar] {:a 1})  ;; java.lang.Long
 (entity-map [:Foo/Bar] {:a 1.0})  ;; java.lang.Double
 (entity-map [:Foo/Bar] {:a true})  ;; java.lang.Boolean
@@ -219,10 +226,11 @@ restricts the permissible value types; see  link:https://cloud.google.com/appeng
                     :b [1 2]
                     :c '(foo bar)
                     :d #{1 'x :y "z"}})
-```
+----
 
 Datastore field types:
-```
+[source,clojure]
+----
 (entity-map [:Foo/bar] {:int 1 ;; BigInt and BigDecimal not supported
                         :float 1.1
                         :bool true
@@ -234,7 +242,7 @@ Datastore field types:
 						;; TODO: EmbeddedEntity (not same as map value)
                         ;; TODO: Blob, ShortBlob, Text, GeoPt, PostalAddress, PhoneNumber, etc.
                         })
-```
+----
 
 TODO: support all datastore property types.
 
@@ -246,12 +254,10 @@ one datastore, we sugar this to `(get-ds k)`.
 
 ### experimental:  co-construction
 
-
-
-
-```
+[source,clojure]
+----
 (entity-map* [:A/B]) ;; "co-constructs" (retrieves) entity with key [:A/B] if it exists, otherwise throws exception
-```
+----
 
 ## queries
 
@@ -314,20 +320,22 @@ This clashes a little bit with Clojure abstractions.  For example,
 `into` replaces stuff.  That's fine, but we also need a way to
 augment, so we'll have to spell that out - call it `onto`?.
 
-```
+[source,clojure]
+----
 (let [e (entity-map [:A/B])
       e2 (into e {:foo "bar"})] ;; std clojure.core/into: replace val at :foo, or add if not present
   (into-ds! e2)) ;; replace e
-```
+----
 
 TODO: augmentation.  Maybe something like:
 
-```
+[source,clojure]
+----
 (let [e1 (entity-map [:A/B] {:foo "bar"})
      (e2 (ds/entity-map! :augment e1 {:foo 27}))] ;; turn {:foo "bar"} into {:foo ["bar" 27]}
      => e2 == (entity-map [:A/B] {:foo ["bar" 27]})
    ...)
-```
+----
 
 Of course, there are various ways to accomplish this sort of thing
 using standard Clojure facilities, so we don't really need to define
