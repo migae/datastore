@@ -262,23 +262,40 @@ the map part as a pattern.
 
 The pull constructor:
 
-* `(entity-map* [])` -- fetch all entities
-* `(entity-map* [:A/B])` -- fetch unique entity with key :A/B
-* `(entity-map* [:A])` -- fetch all entities with kind :A
-* `(entity-map* [:A/B :C])` -- fetch all entities with kind :C and ancestor :A/B
-* `(entity-map* :pfx [:A/B :C/D])` -- fetch all entities with keychain prefix (i.e. ancestor) [:A/B :C/D]
-
 [[app-listing]]
 [source,clojure]
 ----
+ (entity-map* [])        ;; fetch all entities
+ (entity-map* [:A/B])    ;; fetch unique entity with key :A/B
+ (entity-map* [:A])      ;; fetch all entities with kind :A
+ (entity-map* [:A/B :C]) ;; fetch all entities with kind :C and ancestor :A/B
+ (entity-map* :pfx [:A/B :C/D]) ;; fetch all entities with keychain prefix (i.e. ancestor) [:A/B :C/D]
 ----
 
 ## mutation
 
-```
+[[app-listing]]
+[source,clojure]
+----
+(entity-map! [:A/B] {:a 1})  ;; push to datastore; throw exception if already exists
+(entity-map! :force [:A/B] {:a 1})  ;; same, but ignore existing and overwrite
 (into-ds (entity-map [:A/B] {:a 1})) ;; non-destructive: fail if already exists
 (into-ds! (entity-map [:A/B] {:a 1})) ;; destructive: replace existing
-```
+----
+
+TODO.  A hybrid push/pull ctor: pull entity if it exists, otherwise
+construct and push it.  Not sure what keyword is most appropriate.
+For now, ":maybe": maybe push, otherwise pull.  Since this combines
+push and pull, maybe we should combine the decorations:
+`entity-map*!`.  Or maybe not.  Usage expectation: probably would be
+when constructing and pushing entities, rather than searching and
+then, on search failure, deciding to construct and push.
+
+[[app-listing]]
+[source,clojure]
+----
+(entity-map! :maybe [:A/B] {:a 1}) ;; if [:A/B] in ds, return it; otherwise construct and push
+----
 
 Patterns:
 
@@ -298,15 +315,20 @@ This clashes a little bit with Clojure abstractions.  For example,
 augment, so we'll have to spell that out - call it `onto`?.
 
 ```
-(let [e (get-ds [:A/B])
+(let [e (entity-map [:A/B])
       e2 (into e {:foo "bar"})] ;; std clojure.core/into: replace val at :foo, or add if not present
   (into-ds! e2)) ;; replace e
 ```
 
-augmentation:
+TODO: augmentation.  Maybe something like:
 
 ```
-(let [e (get-ds [:A/B])
-     (e2 (ds/augment {:foo 27}))] ;; turn {:foo "bar"} into {:foo ["bar" 27]}
-  (into-ds! e))
+(let [e1 (entity-map [:A/B] {:foo "bar"})
+     (e2 (ds/entity-map! :augment e1 {:foo 27}))] ;; turn {:foo "bar"} into {:foo ["bar" 27]}
+     => e2 == (entity-map [:A/B] {:foo ["bar" 27]})
+   ...)
 ```
+
+Of course, there are various ways to accomplish this sort of thing
+using standard Clojure facilities, so we don't really need to define
+an "augmentation" op.
