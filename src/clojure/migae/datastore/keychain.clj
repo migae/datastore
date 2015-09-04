@@ -40,7 +40,9 @@
              (nil? (clj/namespace dogtag))))
       false)
     false))
-
+(defn keychain?
+  [k]
+  (or (proper-keychain? k) (improper-keychain? k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti to-keychain

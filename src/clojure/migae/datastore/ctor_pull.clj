@@ -3,7 +3,30 @@
 (defn get-kinded-emap
   [keychain & data]
   ;; precon: improper keychain is validated
-  (log/trace "get-kinded-emap " keychain)
+  ;; (log/trace "get-kinded-emap " keychain)
+  (if (> (count keychain) 1)
+    ;; kinded descendant query
+    (let [ancestor-key (ekey/keychain-to-key (vec (butlast keychain)))
+          kind (clj/name (last keychain))
+          q (Query. kind ancestor-key)
+          prepared-query (.prepare (ds/datastore) q)
+          iterator (.asIterator prepared-query)
+          seq (iterator-seq iterator)
+          res (PersistentEntityMapIterator. seq)]
+      ;; (log/trace "seq1: " (type seq))
+      res)
+    ;; kinded query
+    (let [kind (clj/name (last keychain))
+          q (Query. kind)
+          prepared-query (.prepare (ds/datastore) q)
+          iterator (.asIterator prepared-query)
+           seq (iterator-seq iterator)
+          res (PersistentEntityMapIterator. seq)]
+      ;; (log/trace "seq2: " (type seq))
+      res)))
+
+
+
   ;; (log/trace "keychain" keychain)
   ;; (log/trace "data" data)
   ;; (let [em (first data)
@@ -21,8 +44,23 @@
   ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
   ;;   (.put (ds/datastore) e)
   ;;   (PersistentEntityMap. e)))
-  )
-;;  (throw (IllegalArgumentException. (str "kinded keychain" keychain))))
+
+(defn get-prefix-matches
+  [keychain]
+  ;; precon: keychain has already been validated
+  ;; (log/trace "get-prefix-matches" keychain)
+  (let [prefix (apply ekey/keychain-to-key keychain)
+        q (.setAncestor (Query.) prefix)
+        prepared-query (.prepare (ds/datastore) q)
+        iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
+        seq  (iterator-seq iterator)
+        res (PersistentEntityMapIterator. seq)]
+    res))
+
+;;   (let [k (ekey/keychain-to-key keychain)
+;;         e (.get (ds/datastore) k)]
+;; ;;               (catch EntityNotFoundException e nil))]
+;;     (PersistentEntityMap. e)))
 
 (defn get-proper-emap
   [keychain & data]
@@ -33,29 +71,22 @@
 ;;               (catch EntityNotFoundException e nil))]
     (PersistentEntityMap. e)))
 
-  ;; (log/trace "keychain" keychain)
-  ;; (log/trace "data" data)
-  ;; (let [k (ekey/keychain-to-key keychain)
-  ;;       em (first data)
-  ;;       e (Entity. k)]
-  ;;   (when (not (empty? em))
-  ;;     (doseq [[k v] em]
-  ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
-  ;;   (.put (ds/datastore) e)
-  ;;   (PersistentEntityMap. e)))
-
-
 ;; getter
 (defn get-ds
-  [keychain & em]
-  (log/trace "get-ds " keychain)
+  [keychain & arg2]
+  ;; (log/trace "get-ds " keychain arg2)
    (cond
+     (= :pfx keychain)
+     (if (apply ekey/proper-keychain? arg2)
+       (get-prefix-matches arg2))
+     (empty? keychain)
+     (pull-all)
      (ekey/improper-keychain? keychain)
      (get-kinded-emap keychain)
      (ekey/proper-keychain? keychain)
      (get-proper-emap keychain)
      :else
-     (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
+      (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
 
    ;; (if (clj/empty? keychain)
    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
@@ -70,31 +101,57 @@
    ;;     (PersistentEntityMap. e))))
 
 ;; pull constructor
-(defmulti entity-map*
-  "Pull constructor.  Retrieve entities with exact, complete match; if
-  no matches, throw exception."
-  ;; FIXME:  implement map matching
-  ;; FIXME:  throw notfound exception
-    (fn [keychain & valmap]
-      (log/trace "keychain: " keychain)
-      (log/trace "type keychain: " (type keychain))
-      (log/trace "valmap: " valmap)
-      (log/trace "type valmap: " (type valmap))
-      (log/trace "first valmap: " (first valmap))
-      (log/trace "type first valmap: " (type (first valmap)))
-      ;; (flush)
-      [(type keychain) (type (first valmap))])) ;; (first valmap) should be the val map
+;; (entity-map* [:A/B]) -- identity match
+;; (entity-map* :ancestor [:A/B]) -- ancestor filter
+;; (entity-map* :ancestor [:A/B :C]) -- ancestor filter, kinded
+;;      Query q = new Query("Person").setAncestor(ancestorKey);
+;;      https://cloud.google.com/appengine/docs/java/datastore/queries?hl=en#Java_Ancestor_filters,
+;; (entity-map* k m) -- match homomorphisms
+;; (entity-map* :iso k m) -- match isomorphisms
+;; (defmulti entity-map*
+;;   "Pull constructor.  Retrieve matching entities or throw NotFound exception."
+;;   ;; FIXME:  implement map matching
+;;   ;; FIXME:  throw notfound exception
+;;     (fn [keychain & valmap]
+;;       ;; (log/trace "entity-map*")
+;;       ;; (log/trace "keychain: " keychain)
+;;       ;; (log/trace "type keychain: " (type keychain))
+;;       ;; (log/trace "valmap: " valmap)
+;;       ;; (log/trace "type valmap: " (type valmap))
+;;       ;; (log/trace "first valmap: " (first valmap))
+;;       ;; (log/trace "type first valmap: " (type (first valmap)))
+;;       ;; (flush)
+;;       [(type keychain) (type (first valmap))]))
 
-(defmethod entity-map* [clojure.lang.PersistentVector nil]
-  [keychain & args]
-  (log/trace "PersistentEntityMap")
-  (get-ds keychain))
 
-(defmethod entity-map* [clojure.lang.PersistentVector clojure.lang.PersistentArrayMap]
-  [keychain & valmap]
-  (log/trace "PersistentVector")
-  (get-ds keychain))
+(defn entity-map*
+  ;; (defmethod entity-map* [clojure.lang.PersistentVector nil]
+  ([keychain]
+   ;; (log/trace "entity-map* PersistentEntityMap")
+   (get-ds keychain))
 
+  ;; (defmethod entity-map* [clojure.lang.Keyword clojure.lang.PersistentVector]
+  ([arg1 arg2]
+   ;; (log/trace "entity-map* 1" arg1 arg2)
+   (if (keyword? arg1)
+     ;; mode keyword:  :pfx, :iso, etc.
+     (do ;; (log/trace "mode " arg1 " keychain: " arg2)
+         (get-ds arg1 arg2))
+     ;; else keychain
+     (if (ekey/keychain? arg1)
+       (get-ds arg1 arg2))))
+  ;; modal keychain + propmap filters
+  ([arg1 arg2 arg3]
+   (log/trace "entity-map* 3" arg1 arg2 arg3)
+   (if (keyword? arg1)
+     ;; mode keyword:  :pfx, :iso, etc.
+     (log/trace "mode " arg1 " keychain: " arg2)
+     (throw (RuntimeException. "bad args")))))
+
+;; ;; (defmethod entity-map* [clojure.lang.PersistentVector clojure.lang.PersistentArrayMap]
+;;   ([keychain & valmap]
+;;   ;; (log/trace "entity-map* PersistentVector")
+;;   (get-ds keychain))
 
 (defn emap??                            ;FIXME: use a multimethod?
   "return matching emaps"
@@ -188,3 +245,32 @@
 ;;          (PersistentEntityMap. e))
 ;;        (throw-bad-keylinks keylinks))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (defmulti ancestors
+;;   (fn [& {kind :kind key :key name :name id :id}]
+;;     (cond
+;;      name :kindname
+;;      id   :kindid
+;;      kind :kind
+;;      key  :key
+;;      ;; (= (type s) java.lang.String) :kind
+;;      ;; (= (type rest) com.google.appengine.api.datastore.Key) :key
+;;      :else :kindless)))
+
+;; (defmethod ancestors :key
+;;   [& {kind :kind key :key name :name id :id}]
+;;   (Query. key)
+;;   )
+
+;; (defmethod ancestors :kindname
+;;   [& {kind :kind key :key name :name id :id}]
+;;   (let [k (dskey/make {:_kind kind :_name name})]
+;;         (Query. k))
+;;   )
+
+;; (defmethod ancestors :kindid
+;;   [& {kind :kind id :id}]
+;;   (let [k (dskey/make {:_kind kind :_id id})]
+;;         (Query. k))
+;;   )

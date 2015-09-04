@@ -58,7 +58,7 @@
   ;; FIXME: convert to [keychain & em]
   ([keychain em]
   "Put entity-map to datastore unless already there; use :force true to replace existing"
-  (log/trace "into-ds! " keychain em)
+  ;; (log/trace "into-ds! " keychain em)
   ;; (if (clj/empty? keychain)
   ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
   (cond

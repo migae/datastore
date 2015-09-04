@@ -1,33 +1,44 @@
-(ns migae.datastore.query
-  (:refer-clojure :exclude [ancestors count hash keys name])
-  (:import [com.google.appengine.api.datastore
-            Entity
-            Query
-            Query$Filter
-            Query$FilterPredicate
-            Query$FilterOperator
-            Query$CompositeFilter
-            Query$CompositeFilterOperator
-            Query$SortDirection
-            FetchOptions
-            FetchOptions$Builder
-            PreparedQuery
-            KeyFactory
-            Key
-            DatastoreService
-            DatastoreServiceFactory])
-           ;; [org.apache.log4j PatternLayout FileAppender
-           ;;  EnhancedPatternLayout])
-;; [clj-logging-config.log4j])
-  (:require [migae.datastore.service :as dss]
-            [migae.datastore.entity :as dsentity]
-            [migae.datastore.key :as dskey]
-            [clojure.tools.logging :as log :only [trace debug info]]))
+(in-ns 'migae.datastore)
+;;   (:refer-clojure :exclude [ancestors count hash keys name])
+;;   (:import [com.google.appengine.api.datastore
+;;             Entity
+;;             Query
+;;             Query$Filter
+;;             Query$FilterPredicate
+;;             Query$FilterOperator
+;;             Query$CompositeFilter
+;;             Query$CompositeFilterOperator
+;;             Query$SortDirection
+;;             FetchOptions
+;;             FetchOptions$Builder
+;;             PreparedQuery
+;;             KeyFactory
+;;             Key
+;;             DatastoreService
+;;             DatastoreServiceFactory])
+;;            ;; [org.apache.log4j PatternLayout FileAppender
+;;            ;;  EnhancedPatternLayout])
+;; ;; [clj-logging-config.log4j])
+;;   (:require [migae.datastore :as ds]
+;;             ;; [migae.datastore.entity :as dsentity]
+;;             ;; [migae.datastore.key :as dskey]
+;;             [clojure.tools.logging :as log :only [trace debug info]]))
 
 ;; client:  (:require [migae.datastore.query :as dsqry]...
 
 ;; keys-only query
 ;;   Query q = new Query("Person").setKeysOnly();
+(defn pull-all
+  []
+  ;; (log/trace "pull-all")
+  (let [q  (Query.)
+        prepared-query (.prepare (ds/datastore) q)
+        iterator (.asIterator prepared-query)
+        res (PersistentEntityMapIterator. (iterator-seq iterator))
+        ]
+    ;; (log/trace "iter res: " (type res) " count:" (count res))
+    res))
+
 (defn keys-only [kind]
   (let [q  (Query. (clojure.core/name kind))
         foo (log/debug "keys-only q: " q)
@@ -36,8 +47,8 @@
     qq))
 
 ;; ################
-(defn count [preppedqry]
-  (.countEntities preppedqry (FetchOptions$Builder/withDefaults )))
+(defn entity-count [preppedqry]
+  (.countEntities preppedqry (FetchOptions$Builder/withDefaults)))
 
 ;; ################
 (defmulti entities
@@ -61,42 +72,13 @@
   (Query. (clojure.core/name kind))
   )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti ancestors
-  (fn [& {kind :kind key :key name :name id :id}]
-    (cond
-     name :kindname
-     id   :kindid
-     kind :kind
-     key  :key
-     ;; (= (type s) java.lang.String) :kind
-     ;; (= (type rest) com.google.appengine.api.datastore.Key) :key
-     :else :kindless)))
-
-(defmethod ancestors :key
-  [& {kind :kind key :key name :name id :id}]
-  (Query. key)
-  )
-
-(defmethod ancestors :kindname
-  [& {kind :kind key :key name :name id :id}]
-  (let [k (dskey/make {:_kind kind :_name name})]
-        (Query. k))
-  )
-
-(defmethod ancestors :kindid
-  [& {kind :kind id :id}]
-  (let [k (dskey/make {:_kind kind :_id id})]
-        (Query. k))
-  )
-
 (defn predicate
   [property]
   )
 
 (defn prepare
   [query]
-  (.prepare (dss/get-datastore-service) query))
+  (.prepare (ds/datastore) query))
 
 (defn run
   [prepared-query]

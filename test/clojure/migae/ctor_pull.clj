@@ -36,9 +36,15 @@
     (do
       (.setUp helper)
       ;; store some entities
-      (ds/entity-map! [:A/B] {:a 1})
-      (ds/entity-map! [:A/B :C/D] {:a 1})
-      (ds/entity-map! [:A/B :C] {:a 1}) ; autogen id
+      (ds/entity-map! [:A/B] {:em 1 :a "foo"})
+      (ds/entity-map! [:A/B :A/C] {:em 2 :a "bar"})
+      (ds/entity-map! [:A/B :A/D :A/X] {:em 3})
+      (ds/entity-map! [:A/B :A/C :X/Y] {:em 4})
+      (ds/entity-map! [:A/B :C] {:em 5}) ; autogen id
+      (ds/entity-map! [:A/B :A/C :X] {:em 6})
+      (ds/entity-map! [:A/B :A/D :X] {:em 7})
+      (ds/entity-map! [:A/B :A/D :X] {:em 8})
+      (ds/entity-map! [:A/B :A/C :D/E :F/G :X] {:em 9})
       (test-fn)
       (.tearDown helper))))
 ;; (ApiProxy/setEnvironmentForCurrentThread environment)
@@ -64,11 +70,39 @@
       (is (= (:b em2) nil))
       )))
 
+(deftest ^:ctor-pull ctor-pull-all
+  (testing "pull ctor"
+    (let [ems (ds/entity-map* [])]
+      (log/trace "ems count:" (count ems) (type ems))
+      (doseq [em ems]
+        (log/trace "em:" (ds/keychain em) " kind:" (ds/kind em))
+      ))))
+
 (deftest ^:ctor-pull ctor-pull-kinded
   (testing "pull ctor"
-    (let [ems (ds/entity-map* [:C]) ; fetch emaps of kind :C
+    (let [as (ds/entity-map* [:A]) ; fetch emaps of kind :A
+          xs (ds/entity-map* [:X]) ; fetch emaps of kind :X
           ]
-      (log/trace "ems:" ems)
+      (log/trace "as count:" (count as) (type as))
+      (log/trace "xs count:" (count xs) (type xs))
       )))
 
+(deftest ^:ctor-pull ctor-pull-kinded-desc
+  (testing "pull ctor"
+    (let [abxs (ds/entity-map* [:A/B :X]) ; fetch emaps of kind :A with ancestor :A/B
+          abas (ds/entity-map* [:A/B :A])
+          acxs (ds/entity-map* [:A/B :A/C :X])
+          ]
+      (log/trace "abxs count:" (count abxs) (type abxs))
+      (log/trace "abas count:" (count abas) (type abas))
+      (log/trace "acxs count:" (count acxs) (type acxs))
+      )))
 
+(deftest ^:ctor-pull ctor-pull-pfx
+  (testing "keychain prefix ctors return all entities whose keychains start with the prefix"
+    (let [abs (ds/entity-map* :pfx [:A/B])
+          abac (ds/entity-map* :pfx [:A/B :A/C])
+          ]
+      (log/trace "abs count:" (count abs) (type abs))
+      (log/trace "abac count:" (count abac) (type abac))
+      )))
