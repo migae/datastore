@@ -226,10 +226,10 @@
     (ds/ekey? (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
 
 
-(deftest ^:keychain keychain20
-  (testing "keychain string key literals 2"
-    (ds/ekey? (ds/entity-key [:Subfamily :Felinae :Genus :Felis]))
-    (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" "Genus" "Felis"]))))
+;; (deftest ^:keychain keychain20
+;;   (testing "keychain string key literals 2"
+;;     (ds/ekey? (ds/entity-key [:Subfamily :Felinae :Genus :Felis]))
+;;     (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" "Genus" "Felis"]))))
 
 ;; TODO: support string syntax:
 ;; (deftest ^:keychain keychain30
@@ -253,3 +253,9 @@
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
       (log/trace "e1" (ds/print e1)))
       ))
+
+;; (deftest ^:reader reader
+;;   (testing "reader foo"
+;;     (let [e1 #migae/em [:Foo/Bar] {:a 1}]
+;;       (log/trace "e1" (ds/print e1))
+;;       )))
