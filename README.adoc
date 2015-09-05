@@ -307,7 +307,7 @@ can only autogen an Id on saved entities.
 ----
 (def em1 (entity-map! [:Foo] m)) ;; kind="Foo", id is autogenned.
 (def em2 (entity-map! [:Foo] m)) ;; em1 and em2 have different key ids
-(def em2 (entity-map! [:A/B :C/D Foo] m)) ;; long keychains ok too
+(def em2 (entity-map! [:A/B :C/D :Foo] m)) ;; long keychains ok too
 ----
 
 
