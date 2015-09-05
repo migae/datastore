@@ -160,6 +160,14 @@ builds a value of type T; a co-constructor of type T starts from a T
 value and co-builds something else (usually be "eliminating" or
 deconstructing the T value).
 
+Constructors and co-constructors must "harmonize":
+
+[[app-listing]]
+[source,clojure]
+----
+(is (= (ds/keychain (ds/entity-map k m)) k))
+(is (= (ds/entity-map (ds/keychain (ds/entity-map k m)) m)))
+----
 
 == [[[axioms]]structural axioms
 
