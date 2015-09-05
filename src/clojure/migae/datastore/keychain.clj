@@ -52,7 +52,7 @@
 ;; (defmethod to-keychain migae.datastore.PersistentEntityMap
 ;;   [^PersistentEntityMap em]
 ;;   (log/trace "to-keychain PersistentEntityMap: " em)
-;;   (to-keychain (.getKey (.entity em))))
+;;   (to-keychain (.getKey (.content em))))
 
 (defmethod to-keychain nil
   [x]
@@ -314,8 +314,8 @@
 
 ;; (defmethod identifier migae.datastore.PersistentEntityMap
 ;;   [^PersistentEntityMap em]
-;;   (log/trace "EM identifier" (.entity em))
-;;   (let [k (.getKey (.entity em))
+;;   (log/trace "EM identifier" (.content em))
+;;   (let [k (.getKey (.content em))
 ;;         nm (.getName k)
 ;;         id (.getId k)]
 ;;     (if (nil? nm) id nm)))

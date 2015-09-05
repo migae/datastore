@@ -81,7 +81,7 @@
   (keyword (.getKind e)))
 (defmethod kind migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (keyword (.getKind (.entity e))))
+  (keyword (.getKind (.content e))))
 
 (defmulti name class)
 (defmethod name Entity
@@ -89,7 +89,7 @@
   (.getName (.getKey e)))
 (defmethod name migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (.getName (.getKey (.entity e))))
+  (.getName (.getKey (.content e))))
 
 (defmulti id class)
 (defmethod id clojure.lang.PersistentVector
@@ -104,7 +104,7 @@
   (.getId (.getKey e)))
 (defmethod id migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (.getId (.getKey (.entity e))))
+  (.getId (.getKey (.content e))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;;  emaps stuff
@@ -128,7 +128,7 @@
     ;; ]
       ;; (doseq [item s]
       ;;   (log/trace "item" (meta item) item)
-      ;;   (log/trace "item entity" (.entity item)))
+      ;;   (log/trace "item entity" (.content item)))
       ))
 ;; =======
 ;; (defn emap?
@@ -631,7 +631,7 @@
   ;;   ;; ]
   ;;     ;; (doseq [item s]
   ;;     ;;   (log/trace "item" (meta item) item)
-  ;;     ;;   (log/trace "item entity" (.entity item)))
+  ;;     ;;   (log/trace "item entity" (.content item)))
   ;;     ))
 
   ;; )
@@ -966,7 +966,7 @@
 ;;   ;; (log/trace "assoc! " m k v  "&" kvs)
 ;;    (let [txn (.beginTransaction (ds/datastore))
 ;;          coll (if (emap? m)
-;;                 (.entity m)
+;;                 (.content m)
 ;;                 (if (= (class m) Entity)
 ;;                   m
 ;;                   (do (log/trace "HELP: assoc!") (flush))))]
@@ -992,7 +992,7 @@
   {:pre [(nil? (clj/namespace k))]}
    (let [txn (.beginTransaction (ds/datastore))
          coll (if (emap? m)
-                (.entity m)
+                (.content m)
                 (if (= (class m) Entity)
                   m
                   (log/trace "HELP: assoc!!")))]

@@ -67,7 +67,7 @@ user=> (meta em)
 {:migae/key [:A/B], :type migae.datastore.PersistentEntityMap}
 user=> (type em)
 migae.datastore.PersistentEntityMap
-user=> (println (.entity em))
+user=> (println (.content em))  ;; dump underlying Entity
 #object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
 	a = 1
 >
@@ -281,6 +281,17 @@ Datastore field types:
 TODO: support all datastore property types.
 
 == [[metadata]] metadata
+
+Meatadata works:
+
+[source,clojure]
+----
+(meta (with-meta (ds/entity-map [:A/B] {:a 1}) {:foo "metadata here"}))
+ => {:foo "metadata here"}
+----
+
+"Literal syntax" doesn't work: `(meta '^{:metastuff "o boy!"} [:A/B] {:a 2})`. Nope.
+
 
 == [[retrieval]] retrieval
 

@@ -129,11 +129,14 @@
   clojure.lang.IFn
   (invoke [this k]
     {:pre [(keyword? k)]}
-    (log/trace "IFn invoke, arg: " k)
-    (let [prop (.getProperty content (clj/name k))]
-      (if (not (nil? prop))
-        (get-val-clj prop)
-        nil)))
+    (log/trace "IFn.invoke(" k ")")
+    (if (= k :migae/keychain)
+      (ekey/to-keychain content)
+      (let [kw (subs (str k) 1)
+            prop (.getProperty content kw)]
+        (if (not (nil? prop))
+          (get-val-clj prop)
+          nil))))
   ;; Object applyTo(ISeq arglist) ;
   (applyTo [_ arglist]
     (log/trace "IFn.applyTo"))
@@ -479,12 +482,16 @@
   clojure.lang.ILookup
   (valAt [_ k]
     (log/trace "ILookup.valAt" k)
-    (let [prop (clj/name k)]
-      (if-let [v  (.getProperty content prop)]
-        (get-val-clj v)
-        nil)))
+    (if (= k :migae/keychain)
+      (ekey/to-keychain content)
+      (let [prop (get-val-clj (subs (str k) 1))]
+        (log/trace "prop:" prop)
+        (if-let [v  (.getProperty content prop)]
+          (get-val-clj v)
+          nil))))
   (valAt [_ k not-found]
     (log/trace "valAt w/notfound: " k)
+    ;; FIXME: is k a keyword or a string?
     (.getProperty content (str k) not-found)))
 ;; end deftype PersistentEntityMap
 
