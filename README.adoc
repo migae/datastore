@@ -17,6 +17,7 @@ In no particular order:
 * <<testing,testing>>
 * <<types,types>>
 * <<ctors,constructors>>
+* <<coctors,eliminators>>
 * <<axioms,axioms>>
 * <<keys,Keys, keychains, keylinks, dogtags>>
 * <<kinds,kinds>>
@@ -147,6 +148,18 @@ tagged literals?  I can never manage to get them to work, but maybe:
 #entity-map [[:A/B] {:a 1}]
 #emap [[:A/B] {:a 1}]
 ----
+
+== [[coctors]]co-constructors (aka eliminators)
+
+Terminology: `ds/entity-map` is a _constructor_ for the type
+`PersistentEntityMap`; `ds/keychain` is an _eliminator_.  An
+eliminator "undoes" the work of a constructor.  Since it produces a
+result it can also be thought of as a _co-constructor_.  So a
+constructor of type T starts from some (possibly non-T) values and
+builds a value of type T; a co-constructor of type T starts from a T
+value and co-builds something else (usually be "eliminating" or
+deconstructing the T value).
+
 
 == [[[axioms]]structural axioms
 
