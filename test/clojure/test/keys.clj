@@ -1,4 +1,4 @@
-(ns migae.keys
+(ns test.keys
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email
@@ -12,7 +12,9 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy])
+           [com.google.apphosting.api ApiProxy]
+           [com.google.appengine.api.datastore
+            Key KeyFactory KeyFactory$Builder])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
@@ -49,6 +51,65 @@
 
 ;(use-fixtures :once (fn [test-fn] (ds/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
+
+;; ################################################################
+(defn theorem-keys-1
+  [em]
+  (and
+   (is (vector? (ds/keychain em)))
+   (is (every? keyword? (ds/keychain em)))
+   (is (every? namespace (ds/keychain em)))
+   ))
+
+(deftest ^:keys keys-theorem-1
+  (testing "every keychain is a vector of namespaced keywords"
+    (let [k1 [:A/B]
+          m {:a 1}
+          em1 (ds/entity-map k1 m)
+          k2 [:A/B :C/D :E/F]
+          em2 (ds/entity-map k2 m)
+          ]
+      (is (theorem-keys-1 em1) true)
+      (is (theorem-keys-1 em2) true)
+      )))
+
+(defn theorem-keys-2
+  [k m]
+  (and
+   (is (= (ds/keychain (ds/entity-map k m)) k))
+   (is (= (ds/entity-key (ds/entity-map k m)) (ds/entity-key k)))
+   ))
+
+(deftest ^:keys keys-theorem-2
+  (testing "for all k, m: (= (ds/keychain (ds/entity-map k m)) k)  "
+    (let [k [:A/B]
+          m {:a 1}]
+    (is (theorem-keys-2 k m) true)
+    (is (theorem-keys-2 [:A/B :C/D] {:x :y}) true)
+    )))
+
+;; ################################################################
+(deftest ^:keys keys-native
+  (testing "native Keys"
+    (let [k1 (KeyFactory/createKey "A" "B")
+          k2 (ds/entity-key [:A/B])
+          k3 (ds/keychain [:A/B])]
+      (is (= (.getClass k1)
+             com.google.appengine.api.datastore.Key))
+      (is (= (.getClass k2)
+             com.google.appengine.api.datastore.Key))
+      (is (= k1 k2))
+      (is (= (.getKind k1) "A"))
+      (is (= (.getName k1) "B"))
+      (is (= (.getKind k2) "A"))
+      (is (= (.getName k2) "B"))
+      (is (= (.getKind (KeyFactory/createKey "A" "B")) "A")) ;; native kinds are Strings
+      (is (= (ds/kind  (ds/entity-key [:A/B])) :A)) ;; migae kinds are keywords
+      (is (= (.getName k2) "B"))
+      (is (= (ds/kind [:A/B]) :A))
+      (is (= (ds/name [:A/B]) "B"))
+      (is (= (ds/kind (ds/keychain (ds/entity-map [:A/B] {:a 1}))) :A))
+    )))
 
 ;; ################################################################
 (deftest ^:keys keys-1
@@ -253,6 +314,13 @@
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
       (log/trace "e1" (ds/print e1)))
       ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:kinds kinds
+  (testing "kinds"
+    (let [e1 (ds/entity-map [:A/B] {:a 1})]
+      (is (= (ds/kind e1) :A))
+      )))
 
 ;; (deftest ^:reader reader
 ;;   (testing "reader foo"

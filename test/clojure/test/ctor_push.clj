@@ -1,4 +1,4 @@
-(ns migae.ctor-push
+(ns test.ctor-push
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper

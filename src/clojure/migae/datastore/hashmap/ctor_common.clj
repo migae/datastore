@@ -2,7 +2,7 @@
 
 ;; no put - PersistentEntityMap only
 (defn entity-map
-  "PersistentEntityMap local constructor"
+  "create PersistentEntityMap object"
   [keychain em]
   ;; (log/trace "keychain: " keychain " em: " em)
   (if (clj/empty? keychain)
@@ -13,14 +13,6 @@
       (doseq [[k v] em]
         (.setProperty e (subs (str k) 1) (get-val-ds v)))
       (PersistentEntityMap. e nil))))
-
-(defn entity-hashmap
-  "PersistentEntityHashMap local constructor"
-  [keychain em]
-  ;; (log/trace "entity-hashmap ctor: " keychain em)
-  (if (clj/empty? keychain)
-    (throw (IllegalArgumentException. "keychain vector must not be empty"))
-    (PersistentEntityHashMap. keychain em nil)))
 
 ;; OBSOLETE - use entity-map for consistency with hash-map, array-map, etc
 (defn emap

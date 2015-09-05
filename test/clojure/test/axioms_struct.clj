@@ -1,4 +1,4 @@
-(ns migae.axioms-struct
+(ns test.axioms-struct
   "entity-map axioms for structural operations:  conj, into, assoc, etc."
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore

@@ -1,4 +1,4 @@
-(ns migae.ctor-pull
+(ns test.ctor-pull
   "Unit tests for pull constructor entity-map*"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing

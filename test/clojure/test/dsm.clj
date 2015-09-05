@@ -1,4 +1,4 @@
-(ns migae.dsm
+(ns test.dsm
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper

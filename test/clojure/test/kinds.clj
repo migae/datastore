@@ -1,4 +1,4 @@
-(ns migae.kinds
+(ns test.kinds
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email

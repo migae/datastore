@@ -1,4 +1,4 @@
-(ns migae.ctor-local
+(ns test.ctor-local
   "unit tests for local constructor: entity-map"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
@@ -70,7 +70,6 @@
       (is (= "missing namespace: :C"
               (.getMessage em3))))))
 
-
 (deftest ^:emap emap-ctor
   (testing "entity-map ctor"
     (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
@@ -85,6 +84,59 @@
       (is (ds/entity-map? em2))
       (is (ds/entity-map? em3))
       (is (ds/entity-map? em4))
+      )))
+
+(deftest ^:emap hashmap-axioms
+  (testing "entity-hashmap axioms"
+    (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
+          ]
+      (log/trace "em1" (ds/print em1))
+      (log/trace "em1 type:" (type em1))
+      (log/trace "em1 kind:" (ds/kind em1))
+      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      (log/trace "em1 keychain:" (.k em1))
+      (log/trace "em1 keychain type:" (type (.k em1)))
+      (log/trace "em1 content:" (.content em1))
+      (log/trace "em1 content type:" (type (.content em1)))
+      (is (ds/entity-map? em1))
+      )))
+
+(deftest ^:emap emap-axioms
+  (testing "entity-hashmap axioms"
+    (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
+          ]
+      (log/trace "em1" (ds/print em1))
+      (log/trace "em1 type:" (type em1))
+      (log/trace "em1 kind:" (ds/kind em1))
+      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      (log/trace "em1 keychain:" (ds/keychain em1))
+      (log/trace "em1 keychain type:" (type (ds/keychain em1)))
+      (log/trace "em1 key:" (key em1))
+      (log/trace "em1 key type:" (type (key em1)))
+      (log/trace "em1 content:" (val em1))
+      (log/trace "em1 content type:" (type (val em1)))
+      (is (ds/entity-map? em1))
+      )))
+
+(deftest ^:emap hashmap-ctor-2
+  (testing "entity-hashmap ctor"
+    (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
+          em2 (ds/entity-hashmap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+          em3 (ds/entity-hashmap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+          em4 (ds/entity-hashmap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+          ]
+      (log/trace "em1" (ds/print em1))
+      (log/trace "em1 type:" (type em1))
+      (log/trace "em1 kind:" (ds/kind em1))
+      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      (log/trace "em1 keychain:" (.k em1))
+      (log/trace "em1 keychain type:" (type (.k em1)))
+      (log/trace "em1 content:" (.content em1))
+      (log/trace "em1 content type:" (type (.content em1)))
+      (is (ds/entity-map? em1))
+      ;; (is (ds/entity-map? em2))
+      ;; (is (ds/entity-map? em3))
+      ;; (is (ds/entity-map? em4))
       )))
 
 (deftest ^:emap emap-ctor2

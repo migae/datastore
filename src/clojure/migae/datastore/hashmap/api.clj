@@ -1,57 +1,5 @@
 (in-ns 'migae.datastore)
 
-;; (ns migae.datastore.api
-;;   (:refer-clojure :exclude [empty? filter get into key name reduce])
-;;   (:import [java.lang IllegalArgumentException RuntimeException]
-;;            [java.util
-;;             Collection
-;;             Collections
-;;             ;; Collections$UnmodifiableMap
-;;             ;; Collections$UnmodifiableMap$UnmodifiableEntrySet
-;;             ;; Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry
-;;             ArrayList
-;;             HashMap HashSet
-;;             Map Map$Entry
-;;             Vector]
-;;            ;; [clojure.lang MapEntry]
-;;            [com.google.appengine.api.datastore
-;;             Blob
-;;             ;; DatastoreFailureException
-;;             DatastoreService
-;;             ;; DatastoreServiceFactory
-;;             DatastoreServiceConfig
-;;             DatastoreServiceConfig$Builder
-;;             Email
-;;             Entity EmbeddedEntity EntityNotFoundException
-;;             FetchOptions$Builder
-;;             ImplicitTransactionManagementPolicy
-;;             Key KeyFactory KeyFactory$Builder
-;;             Link
-;;             PhoneNumber
-;;             ReadPolicy ReadPolicy$Consistency
-;;             Query Query$SortDirection
-;;             Query$FilterOperator Query$FilterPredicate
-;;             Query$CompositeFilter Query$CompositeFilterOperator
-;;             ShortBlob
-;;             Text
-;;             Transaction]
-;;            [com.google.appengine.api.blobstore BlobKey]
-;;            ;; [migae.datastore PersistentEntityMap PersistentEntityMapCollIterator])
-;;            )
-;;   (:require [clojure.core :as clj]
-;;             [clojure.walk :as walk]
-;;             [clojure.stacktrace :refer [print-stack-trace]]
-;;             [clojure.tools.reader.edn :as edn]
-;;             [migae.datastore :refer :all]
-;;             [migae.datastore.keychain :refer :all]
-;;             ;; [migae.datastore.dsmap :as dsm]
-;;             ;; [migae.datastore.emap :as emap]
-;;             ;; [migae.datastore.entity :as dse]
-;;             ;; [migae.datastore.key :as dskey]
-;;             ;; [migae.datastore.query :as dsqry]
-;;             [migae.infix :as infix]
-;;             [clojure.tools.logging :as log :only [trace debug info]]))
-
 
 ;;(declare epr)
 ;; =======
@@ -98,6 +46,19 @@
       ;;   (log/trace "item" (meta item) item)
       ;;   (log/trace "item entity" (.content item)))
       ))
+;; =======
+;; (defn emap?
+;;   [em]
+;;   (log/trace "emap?" em)
+;;   (= (type em) migae.datastore.PersistentEntityMap))
+
+;; (defn entity?
+;;   [e]
+;;   (= (type e) Entity))
+
+;; (defn empty?
+;;   [em]
+;;   (= (count em) 0))
 
 (defn- throw-bad-keylinks
   [keylinks]
@@ -196,11 +157,11 @@
 
 
 ;; ;; (defn- emap-new
-;; ;;   [^Key k content]
-;; ;;   {:pre [(map? content)]}
-;; ;;   ;; (log/trace "emap-new " k content)
+;; ;;   [^Key k val]
+;; ;;   {:pre [(map? val)]}
+;; ;;   ;; (log/trace "emap-new " k val)
 ;; ;;   (let [e (Entity. k)]
-;; ;;     (doseq [[k v] content]
+;; ;;     (doseq [[k v] val]
 ;; ;;       (let [prop (subs (str k) 1)
 ;; ;;             val (get-val-ds v)]
 ;; ;;         ;; (log/trace "emap-new setting prop: " k prop v val)
@@ -209,13 +170,13 @@
 ;; ;;     (PersistentEntityMap. e nil)))
 
 ;; ;; (defn- emap-old
-;; ;;   [^Key k ^Entity e content]
-;; ;;   {:pre [(map? content)]}
-;; ;;   ;; (log/trace "emap old " k content)
-;; ;;   (if (clj/empty? content)
+;; ;;   [^Key k ^Entity e val]
+;; ;;   {:pre [(map? val)]}
+;; ;;   ;; (log/trace "emap old " k val)
+;; ;;   (if (clj/empty? val)
 ;; ;;     (PersistentEntityMap. e nil)
 ;; ;;     (do
-;; ;;       (doseq [[k v] content]
+;; ;;       (doseq [[k v] val]
 ;; ;;         (let [prop (subs (str k) 1)]        ; FIXME - don't exclude ns!
 ;; ;;           (if (.hasProperty e prop)
 ;; ;;             (let [pval (.getProperty e prop)
@@ -261,8 +222,8 @@
 ;; ;; ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
 ;; ;; ;; technique: store them as embedded entities
 ;; ;; (defn- emap-update-map
-;; ;;   [keylinks content]
-;; ;;   ;; (log/trace "emap-update-map " keychain content)
+;; ;;   [keylinks val]
+;; ;;   ;; (log/trace "emap-update-map " keychain val)
 ;; ;;   (let [k (apply ekey/keychain-to-key keylinks)]
 ;; ;;     ;; (log/trace "emap-update-map key: " k)
 ;; ;;     (let [e (if (keyword? k)
@@ -274,8 +235,8 @@
 ;; ;;                    (catch DatastoreFailureException ex (throw ex))
 ;; ;;                    (catch java.lang.IllegalArgumentException ex (throw ex))))]
 ;; ;;       (if (nil? e)
-;; ;;         (emap-new k content)
-;; ;;         (emap-old k e content) ; even a new one hits this if id autogenned by ekey/keychain-to-key
+;; ;;         (emap-new k val)
+;; ;;         (emap-old k e val) ; even a new one hits this if id autogenned by ekey/keychain-to-key
 ;; ;;         ))))
 
 
@@ -586,7 +547,7 @@
   ;;   ;; ]
   ;;     ;; (doseq [item s]
   ;;     ;;   (log/trace "item" (meta item) item)
-  ;;     ;;   (log/trace "item entity" (.content item)))
+  ;;     ;;   (log/trace "item entity" (.val item)))
   ;;     ))
 
   ;; )
@@ -902,14 +863,14 @@
 ;; =======
 (defn alter!
   "Replace existing entity, or create a new one."
-  [keylinks content]
+  [keylinks val]
   ;; if second arg is a map, treat it ...
   ;; if second arg is a function, ...
   (if (clj/empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (let [k (apply ekey/keychain-to-key keylinks)
           e (Entity. k)]
-      (doseq [[k v] content]
+      (doseq [[k v] val]
         (.setProperty e (subs (str k) 1) v))
       (.put (ds/datastore) e)
       ;; (log/trace "created and put entity " e)
@@ -921,7 +882,7 @@
 ;;   ;; (log/trace "assoc! " m k v  "&" kvs)
 ;;    (let [txn (.beginTransaction (ds/datastore))
 ;;          coll (if (emap? m)
-;;                 (.content m)
+;;                 (.val m)
 ;;                 (if (= (class m) Entity)
 ;;                   m
 ;;                   (do (log/trace "HELP: assoc!") (flush))))]
@@ -947,7 +908,7 @@
   {:pre [(nil? (clj/namespace k))]}
    (let [txn (.beginTransaction (ds/datastore))
          coll (if (emap? m)
-                (.content m)
+                (.val m)
                 (if (= (class m) Entity)
                   m
                   (log/trace "HELP: assoc!!")))]

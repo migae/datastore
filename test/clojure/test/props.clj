@@ -1,4 +1,4 @@
-(ns migae.props
+(ns test.props
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email

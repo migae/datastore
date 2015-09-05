@@ -1,10 +1,8 @@
 (in-ns 'migae.datastore)
 
-;; FIXME: rename:  co-ctors-key?
-
 ;;(load "emap")
 
-(declare keychain? keychain= dogtag)
+(declare keychain? keychain=)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti kind class)
@@ -14,14 +12,10 @@
 (defmethod kind Entity
   [^Entity e]
   (keyword (.getKind e)))
-;; (defmethod kind migae.datastore.IPersistentEntityMap
+;; (defmethod kind migae.datastore.PersistentEntityMap
 ;;   [^migae.datastore.PersistentEntityMap e]
-;;   (log/trace "IPersistentEntityMap.kind")
-;;   (keyword (.getKind (.content e))))
-(defmethod kind migae.datastore.PersistentEntityMap
-  [^migae.datastore.PersistentEntityMap e]
-  ;; (log/trace "PersistentEntityMap.kind")
-  (keyword (.getKind (.content e))))
+;;   (log/trace "PersistentEntityHashMap.kind PersistentEntityMap")
+;;   (keyword (.getKind (.val e))))
 (defmethod kind migae.datastore.PersistentEntityHashMap
   [^migae.datastore.PersistentEntityHashMap e]
   (keyword (clj/namespace (last (.k e)))))
@@ -45,17 +39,14 @@
     (if (nil? nm) id (str nm))))
 (defmethod identifier migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap em]
-  ;; (log/trace "PersistentEntityMap.identifier")
-  (let [k (.getKey (.content em))
+  (let [k (.getKey (.val em))
         nm (.getName k)
         id (.getId k)]
     (if (nil? nm) id (str nm))))
 (defmethod identifier migae.datastore.PersistentEntityHashMap
   [^migae.datastore.PersistentEntityHashMap em]
-  ;; (log/trace "PersistentEntityHashMap.identifier")
-  (let [fob (dogtag (key em))
-        nm (read-string (clj/name fob))]
-    nm))
+  (let [nm (edn/read-string (clj/name (last (.k em))))]
+    (if (number? nm) id (str nm))))
 (defmethod identifier clojure.lang.PersistentVector
   [^clojure.lang.PersistentVector keychain]
   ;; FIXME: validate vector contains only keylinks
@@ -73,7 +64,7 @@
   (clj/name (last keychain)))
 (defmethod name migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap em]
-  (.getName (.getKey (.content em))))
+  (.getName (.getKey (.val em))))
 
 (defmulti id class)
 (defmethod id clojure.lang.PersistentVector
@@ -88,7 +79,7 @@
   (.getId (.getKey e)))
 (defmethod id migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (.getId (.getKey (.content e))))
+  (.getId (.getKey (.val e))))
 
 (defn ekey? [^com.google.appengine.api.datastore.Key k]
   (= (type k) com.google.appengine.api.datastore.Key))
@@ -107,7 +98,7 @@
   (ekey/to-keychain k))
 (defmethod to-keychain migae.datastore.PersistentEntityMap
   [em]
-  (ekey/to-keychain (.getKey (.content em))))
+  (ekey/to-keychain (.getKey (.val em))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti keychain class)
@@ -117,7 +108,7 @@
     keychain))
 (defmethod keychain migae.datastore.PersistentEntityMap
   [em]
-  (let [keychain (ekey/to-keychain (.getKey (.content em)))]
+  (let [keychain (ekey/to-keychain (.getKey (.val em)))]
     keychain))
 (defmethod keychain clojure.lang.PersistentVector
   [keychain]
@@ -131,7 +122,7 @@
     (last keychain)))
 (defmethod dogtag migae.datastore.PersistentEntityMap
   [em]
-  (let [keychain (ekey/to-keychain (.getKey (.content em)))]
+  (let [keychain (ekey/to-keychain (.getKey (.val em)))]
     (last keychain)))
 (defmethod dogtag clojure.lang.PersistentVector
   [keychain]
@@ -146,7 +137,7 @@
   k)
 (defmethod entity-key migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (.getKey (.content e)))
+  (.getKey (.val e)))
 (defmethod entity-key com.google.appengine.api.datastore.Entity
   [^Entity e]
   (.getKey e))
@@ -163,7 +154,7 @@
   [em1 em2]
   (if (emap? em1)
     (if (emap? em2)
-      (.equals (.content em1) (.content em2))
+      (.equals (.val em1) (.val em2))
       (keychain= em1 em2))
     (if (map? em1)
       (keychain= em1 em2)

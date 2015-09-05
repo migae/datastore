@@ -1,4 +1,4 @@
-(ns migae.emap
+(ns test.emaps
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -8,9 +8,7 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy]
-           [com.google.appengine.api.datastore
-            EntityNotFoundException])
+           [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.infix :as infix]
@@ -44,60 +42,6 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;        emap create funcs
-;;  !   throw exception if already exists
-;;  ?-!  ignore em arg if already exists
-;;  ?+!  merge em arg if already exists
-;;  !!  replace if existant (i.e. discard existing)
-
-(deftest ^:emap emap!
-  (testing "create or fetch"
-    (ds/entity-map! [:Foo/Bar])
-    (try (ds/entity-map! [:Foo/Bar])
-         (catch RuntimeException e (do (log/trace "entity already exists"))))
-         ;; (catch EntityNotFoundException e
-         ;;   (throw e)))
-    ;; (is (= (try (ds/emap?? [:A/B 'C/D])
-    ;;                   (catch IllegalArgumentException e
-    ;;                     (log/trace "Exception:" (.getMessage e))
-    ;;                     (.getClass e)))
-    ;;        IllegalArgumentException))
-    ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest ^:emap emap??
-  (testing "emap?!"
-    (try (ds/emap?? [:Foo/Baz])
-         (catch EntityNotFoundException ex))
-    ))
-
-(deftest ^:emaps emap-def
-  (testing "emap!! definite"
-    (let [e1 (ds/emap!! [:Foo/Bar] {:a 1})
-          e2 (ds/emap!! [:Foo/Bar :Baz/Buz] {:b 1})
-          e3 (ds/emap!! [:Foo/Bar :Baz/Buz :X/Y] {:b 1})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
-      (log/trace "e3" (ds/print e3))
-    )))
-
-(deftest ^:emaps emap-indef
-  (testing "emap!! indefinite"
-    (let [e1 (ds/emap!! [:Foo] {:a 1 :b "Foobar"})
-          e2 (ds/emap!! [:Foo/Bar :Baz] {:b 1})
-          e3 (ds/emap!! [:Foo/Bar :Baz/Buz :X] {:a "Foo/Bar Baz/Buz Z"})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
-      (log/trace "e3" (ds/print e3))
-    )))
-
-(deftest ^:emaps emaps-multi
-  (testing "use emaps!! to create multiple PersistentEntityMaps of a kind in one stroke"
-    (ds/emap!! [:Foo] [{:a 1} {:a 2} {:a 3}])
-    (ds/emap!! [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
-    ))
-
 (deftest ^:emap emap1
   (testing "emap key vector must not be empty"
     (try (ds/emap [] {})
@@ -123,46 +67,25 @@
         (is (ds/emap? em4))
         ))))
 
-(deftest ^:emap emap?!
+(deftest ^:emap emap!
   (testing "entitymap deftype"
     (binding [*print-meta* true]
-      (let [em1 (ds/emap!! [:Species/Felis_catus])
+      (let [em1 (ds/entity-map! [:Species/Felis_catus] {})
             em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
             em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
             em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
         (is (ds/emap? em1))
         (is (ds/emap? em2))
         (is (ds/emap? em3))
-        (is (ds/emap? em4)))
-
-      (let [k [:Genus/Felis :Species/Felis_catus]]
-        (log/trace "?!"   (ds/emap?!  k {:name "Chibi" :size "small" :eyes 1}))
-        ;; (try              (ds/emap?!  k {:name "Chibi" :size "small" :eyes 1})
-        ;;      (catch Exception e (log/trace "Exception:" (.getMessage e))))
-
-        ;; =? override maybe
-        (log/trace "=?" (ds/emap=? k  {:name "Chibi" :size "large"}))
-
-        ;; +? - extend maybe
-        (log/trace "+?" (ds/emap+? k  {:name "Chibi" :size "large" :foo "bar"}))
-
-        ;; =! - override necessarily
-        (log/trace "=!" (ds/emap=! k  {:name "Chibi" :size "large"}))
-
-        ;; !!  - replace necessarily i.e. discard old and create new
-        (log/trace "!!" (ds/emap!! k  {:name "Booger" :size "medium"}))
-
-        ;; ?? - find maybe
-        (log/trace "??" (ds/emap?? k))
-        )
-      )))
+        (is (ds/emap? em4))
+        ))))
 
 (deftest ^:emap emap-props-1
   (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus]
             e1 (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (ds/emap?? k)]
+            e2 (ds/entity-map! k)]
         (log/trace "e1" e1)
         (log/trace "e1 entity" (.entity e1))
         (log/trace "e2" e2)
@@ -181,6 +104,8 @@
           em2 (ds/entity-map! [:Species/Felis_catus] {})]
         (is (ds/key= em1 em2))
         (is (= (get em1 :name) "Chibi"))
+        (is (= (em1 :name) "Chibi"))
+        (is (= (:name em1) "Chibi"))
         (is (= (get em2 :name) "Chibi")))
 
     ;; ! do not override existing
@@ -192,6 +117,8 @@
     (let [em3 (ds/emap!! [:Species/Felis_catus] {:name "Booger"})
           em3 (ds/emap!! [:Species/Felis_catus] {:name 4})]
       (log/trace "em3 " em3)
+      (log/trace "em3: " (.entity em3))
+      (log/trace "em3 key: " (:migae/key (meta em3)))
       (is (= (:name em3) ["Chibi", "Booger" 4]))
       (is (= (first (:name em3)) "Chibi")))
 
@@ -225,3 +152,9 @@
 ;;       (log/trace em1)
 ;;       )))
 
+
+(deftest ^:emaps emaps
+  (testing "use emaps!! to create multiple PersistentEntityMaps of a kind in one stroke"
+    (ds/emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}])
+    (ds/emaps!! [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
+    ))

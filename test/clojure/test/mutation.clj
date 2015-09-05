@@ -1,4 +1,4 @@
-(ns migae.mutation
+(ns test.mutation
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper

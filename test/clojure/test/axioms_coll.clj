@@ -1,4 +1,4 @@
-(ns migae.axioms-coll
+(ns test.axioms-coll
   "entity-map collection axioms"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
