@@ -43,7 +43,7 @@
   ;;     (doseq [[k v] (seq em)]
   ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
   ;;   (.put (ds/datastore) e)
-  ;;   (PersistentEntityMap. e)))
+  ;;   (PersistentEntityMap. e nil)))
 
 (defn get-prefix-matches
   [keychain]
@@ -60,7 +60,7 @@
 ;;   (let [k (ekey/keychain-to-key keychain)
 ;;         e (.get (ds/datastore) k)]
 ;; ;;               (catch EntityNotFoundException e nil))]
-;;     (PersistentEntityMap. e)))
+;;     (PersistentEntityMap. e nil)))
 
 (defn get-proper-emap
   [keychain & data]
@@ -69,7 +69,7 @@
   (let [k (ekey/keychain-to-key keychain)
         e (.get (ds/datastore) k)]
 ;;               (catch EntityNotFoundException e nil))]
-    (PersistentEntityMap. e)))
+    (PersistentEntityMap. e nil)))
 
 ;; getter
 (defn get-ds
@@ -98,7 +98,7 @@
    ;;                ;; (catch EntityNotFoundException e nil)
    ;;                ;; (catch DatastoreFailureException e (throw e))
    ;;                ;; (catch java.lang.IllegalArgumentException e (throw e)))]
-   ;;     (PersistentEntityMap. e))))
+   ;;     (PersistentEntityMap. e nil))))
 
 ;; pull constructor
 ;; (entity-map* [:A/B]) -- identity match
@@ -178,7 +178,7 @@
                  (catch EntityNotFoundException e (throw e))
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
-      (PersistentEntityMap. e))))
+      (PersistentEntityMap. e nil))))
 
 (declare find-definite-necessarily find-indefinite-necessarily
          throw-bad-keylinks)
@@ -223,8 +223,8 @@
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
      ;;       (.put (ds/datastore) e)
-     ;;       (PersistentEntityMap. e))
-     ;;     (PersistentEntityMap. e))))))
+     ;;       (PersistentEntityMap. e nil))
+     ;;     (PersistentEntityMap. e nil))))))
 
 
 ;; (defn emap??
@@ -242,7 +242,7 @@
 ;;                     ;; (catch EntityNotFoundException ex (throw ex))
 ;;                     ;; (catch DatastoreFailureException ex (throw ex))
 ;;                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
-;;          (PersistentEntityMap. e))
+;;          (PersistentEntityMap. e nil))
 ;;        (throw-bad-keylinks keylinks))))
 
 

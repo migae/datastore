@@ -98,18 +98,31 @@
 ;;                   => ^{:migae/key [:X/Y]}{:a 1 :b 2}
 ;; replacement:  (into {a: 1} {:a 2}) => {:a 2}
 
-(deftest ^:into emap-into-axiom1
+(deftest ^:into into-axiom-1
   (testing "entity-map into axiom 1: into produces new entity-map"
     (let [em1 (ds/emap [:A/B] {:a/b 1})
           em2 (ds/emap [:C/D] {:c/d 2 :e/f 3})]
       (let [em3 (into em1 em2)]
+        (log/trace "em1:" (ds/print em1))
+        (log/trace "em3:" (ds/print em3))
+        (log/trace "em3:" em3)
+        (log/trace "seq em3:" (seq em3))
+        (log/trace "type em3:" (type em3))
         (is (map? em3))
         (is (ds/emap? em3))
         (is (= (type em3) migae.datastore.PersistentEntityMap))
         (is (= (class em3) migae.datastore.PersistentEntityMap))
-        (is (not= em3 em1))
-        (is (not= em3 em1))
-      ))))
+        (is (not= em1 em2 em3))
+        (is (not= em3 em2)))
+      ;; (let [em3 (into em1 {:a/b 2})]
+      ;;   (log/trace "em1" (ds/print em1))
+      ;;   (is (map? em3))
+      ;;   (is (ds/emap? em3))
+      ;;   (is (= (type em3) migae.datastore.PersistentEntityMap))
+      ;;   (is (= (class em3) migae.datastore.PersistentEntityMap))
+      ;;   (is (not= em3 em1))
+      ;;   (is (not= em3 em2)))
+      )))
 
 (deftest ^:into emap-into-axiom2
   (testing "entity-map into axiom 2: from key replaces to key")
@@ -124,10 +137,10 @@
   (testing "entity-map into axiom 3: from fields replace to fields")
     (let [em1 (ds/emap [:A/B] {:a 1})
           em2 (ds/emap [:X/Y] {:a 2})]
-      ;; (log/trace "em1" (ds/epr em1))
-      ;; (log/trace "em2" (ds/epr em2))
+      ;; (log/trace "em1" (ds/print em1))
+      ;; (log/trace "em2" (ds/print em2))
       (let [em3 (into em1 em2)]
-        ;; (log/trace "(into em1 em2) => " (ds/epr em3))
+        ;; (log/trace "(into em1 em2) => " (ds/print em3))
         (is (ds/key= em3 em2))
         (is (not (ds/key= em3 em1)))
         (is (= (:a em3) (:a em2)))
@@ -138,10 +151,10 @@
   (testing "entity-map into axiom 4: from fields augment to fields")
     (let [em1 (ds/emap [:A/B] {:a 1})
           em2 (ds/emap [:X/Y] {:b 2})]
-      ;; (log/trace "em1" (ds/epr em1))
-      ;; (log/trace "em2" (ds/epr em2))
+      ;; (log/trace "em1" (ds/print em1))
+      ;; (log/trace "em2" (ds/print em2))
       (let [em3 (into em1 em2)]
-        ;; (log/trace "em3" (ds/epr em3))
+        ;; (log/trace "em3" (ds/print em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) (:b em2))))
       ))
@@ -150,7 +163,7 @@
   (testing "entity-map into axiom 5: from obj may be plain clojure map")
     (let [em1 (ds/emap [:A/B] {:a 1})]
       (let [em3 (into em1 {:b 2})]
-        ;; (log/trace "em3" (ds/epr em3))
+        ;; (log/trace "em3" (ds/print em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) 2)))
       ))
@@ -237,7 +250,7 @@
             em (into {} ems)]
         (log/trace "em" em)
         (doseq [em ems]
-          (log/trace "em" (ds/epr em))))
+          (log/trace "em" (ds/print em))))
 
       (let [ems (ds/emaps?? [:A])
             foo (do ;; (log/trace "ems" ems)
@@ -267,7 +280,7 @@
         ;; (should-fail (is (ds/emap? cljmap)))
 
       (let [em2 (merge {:x 9} em1)]
-        (log/trace "em1" (ds/epr em1))
+        (log/trace "em1" (ds/print em1))
         (log/trace "em2" em2 (type em2))
         )
       )))
@@ -278,12 +291,12 @@
     (let [em1 (ds/emap!! [:A/B] {:a 1})
           em2 (ds/emap!! [:X/Y] {:b 2})
           foo (do
-                (log/trace "em1" (ds/epr em1))
-                (log/trace "em2" (ds/epr em2)))
+                (log/trace "em1" (ds/print em1))
+                (log/trace "em2" (ds/print em2)))
           em3 (merge em1 {:foo "bar"} em2)
           ]
-      (log/trace "em1" (ds/epr em1))
-      (log/trace "em3" (ds/epr em3))
+      (log/trace "em1" (ds/print em1))
+      (log/trace "em3" (ds/print em3))
       (is (= em1 em3))
       (is (ds/key= em1 em3))
 
@@ -319,3 +332,39 @@
       ;;                                         :name "Niki" :weight 7))
       ;; (log/trace "emap!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
       )))
+
+(deftest ^:meta meta-axiom-1
+  (testing "entity-maps support metadata")
+    (let [;;em1 (with-meta (ds/emap [:A/B] {:a/b 1})
+            ;;    {:foo "bar"})
+          em2 ^{:x 999}(ds/emap [:C/D] {:a 1})]
+;;      (log/trace "em1:" (ds/print em1))
+      (log/trace "seq em2:" (seq em2))
+      (log/trace "em2:" (ds/print em2))
+      (let [em3 ^{:foo "buz"} em2]
+        (log/trace "em3:" em3)
+        (log/trace "seq em3:" (seq em3))
+        (log/trace "meta em3:" (meta em3)))
+      ))
+
+(deftest ^:meta interfaces
+  (testing "supported interfaces")
+    (let [em1 (ds/emap [:A/B] {:a/b 1})]
+      (is (instance? clojure.lang.Associative em1))
+      (is (instance? clojure.lang.Counted em1))
+      (is (instance? clojure.lang.Seqable em1))
+      (is (instance? clojure.lang.Indexed em1))
+      (is (instance? clojure.lang.IFn em1))
+      (is (instance? clojure.lang.ILookup em1))
+      (is (instance? clojure.lang.IMeta em1))
+      (is (instance? clojure.lang.IObj em1))
+      (is (instance? clojure.lang.IMapEntry em1))
+      (is (instance? clojure.lang.IPersistentCollection em1))
+      (is (instance? clojure.lang.IPersistentMap em1))
+      (is (instance? clojure.lang.IReduce em1))
+      (is (instance? clojure.lang.IReference em1))
+      (is (instance? clojure.lang.ITransientCollection em1))
+      (is (instance? java.util.Map$Entry em1))
+      (is (instance? java.lang.Iterable em1))
+      ))
+

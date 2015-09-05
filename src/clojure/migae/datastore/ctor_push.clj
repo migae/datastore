@@ -19,7 +19,7 @@
       (doseq [[k v] (seq em)]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     (.put (ds/datastore) e)
-    (PersistentEntityMap. e)))
+    (PersistentEntityMap. e nil)))
 
 (defn- put-proper-emap
   [& {:keys [keychain propmap force] :or {force false,}}]
@@ -41,7 +41,7 @@
       (doseq [[k v] propmap]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     (.put (ds/datastore) e)
-    (PersistentEntityMap. e)))
+    (PersistentEntityMap. e nil)))
 
 (declare into-ds!)
 ;; FIXME:  replace emap! with entity-map!
@@ -110,7 +110,7 @@
 ;;          :else
 ;;          (let [e (Entity. k)]
 ;;            (.put (ds/datastore) e)
-;;            (PersistentEntityMap. e)))))))
+;;            (PersistentEntityMap. e nil)))))))
 
      ;; (let [k (apply ekey/keychain-to-key keychain)
      ;;       e (try (.get (ds/datastore) k)
@@ -128,8 +128,8 @@
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
      ;;       (.put (ds/datastore) e)
-     ;;       (PersistentEntityMap. e))
-     ;;     (PersistentEntityMap. e))))))
+     ;;       (PersistentEntityMap. e nil))
+     ;;     (PersistentEntityMap. e nil))))))
 
 (defn- emap-new
   [^Key k content]
@@ -142,14 +142,14 @@
         ;; (log/trace "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
     (.put (ds/datastore) e)
-    (PersistentEntityMap. e)))
+    (PersistentEntityMap. e nil)))
 
 (defn- emap-old
   [^Key k ^Entity e content]
   {:pre [(map? content)]}
   ;; (log/trace "emap old " k content)
   (if (clj/empty? content)
-    (PersistentEntityMap. e)
+    (PersistentEntityMap. e nil)
     (do
       (doseq [[k v] content]
         (let [prop (subs (str k) 1)]        ; FIXME - don't exclude ns!
@@ -171,7 +171,7 @@
                   ;;(log/trace "created new collection prop")
                   ))
               ;;(log/trace "modified entity " e)
-              (PersistentEntityMap. e))
+              (PersistentEntityMap. e nil))
             ;; new property
             (let [val (get-val-ds v)]
               ;; (log/trace "setting val" val (type val))
@@ -179,7 +179,7 @@
               (.setProperty e prop val)))))
       (.put (ds/datastore) e)
       ;; (log/trace "saved entity " e)
-      (PersistentEntityMap. e))))
+      (PersistentEntityMap. e nil))))
 
 (defn- emap-update-empty
   [keychain]
@@ -189,10 +189,10 @@
                (catch DatastoreFailureException e (throw e))
                (catch java.lang.IllegalArgumentException e (throw e)))]
         (if (emap? e)
-          (PersistentEntityMap. e)
+          (PersistentEntityMap. e nil)
           (let [e (Entity. k)]
             (.put (ds/datastore) e)
-            (PersistentEntityMap. e)))))
+            (PersistentEntityMap. e nil)))))
 
 ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
 ;; technique: store them as embedded entities
@@ -221,7 +221,7 @@
     ;; if first link in keychain has no namespace, it cannot be an ancestor node
     (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
           e (Entity. (clj/name (first keychain)))
-          em (PersistentEntityMap. e)]
+          em (PersistentEntityMap. e nil)]
       (try
         (f em)
         (.put (ds/datastore) e)
@@ -249,10 +249,10 @@
             (finally
               (if (.isActive txn)
                 (.rollback txn))))
-          (PersistentEntityMap. e))
+          (PersistentEntityMap. e nil))
         (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
               e (Entity. k)
-              em (PersistentEntityMap. e)]
+              em (PersistentEntityMap. e nil)]
           (try
             (f em)
             (.put (ds/datastore) e)

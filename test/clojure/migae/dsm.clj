@@ -107,20 +107,20 @@
     (let [em1 (ds/emap!! [:A/B] {:a 1})
           em2 (ds/emap!! [:A/C] {:a 1 :b 2})
           em3 (ds/emap!! [:A/B :C/D] {:a 1 :b 2 :c "foo"})]
-      (log/trace "em1:" (ds/epr em1))
+      (log/trace "em1:" (ds/print em1))
       (log/trace "(key em1)" (key em1))
       (log/trace "(val em1)" (val em1))
       (log/trace "(keys em1)" (keys em1))
       (log/trace "(vals em1)" (vals em1))
       (log/trace "")
-      (log/trace "em2:" (ds/epr em2))
+      (log/trace "em2:" (ds/print em2))
       (log/trace "(key em2)" (key em2))
       (log/trace "(val em2)" (val em2))
       (log/trace "(keys em2)" (keys em2))
       (log/trace "(vals em2)" (vals em2))
 
       (log/trace "")
-      (log/trace "em3:" (ds/epr em3))
+      (log/trace "em3:" (ds/print em3))
       (log/trace "type em3:" (type em3))
       (log/trace "class em3:" (class em3))
       (log/trace "(key em3)" (key em3))
@@ -131,7 +131,7 @@
       (let [cm (into {} em3)            ; copy into {} loses metadata!
             cm2 (into ^migae.datastore.PersistentEntityMap {} em3)]
         (log/trace "")
-        (log/trace "cm:" (ds/epr cm))
+        (log/trace "cm:" (ds/print cm))
         (log/trace "meta cm:" (meta cm))
         (log/trace "type cm:" (type cm))
         (log/trace "class cm:" (class cm))

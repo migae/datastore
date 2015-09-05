@@ -59,10 +59,10 @@
           em3 (ds/entity-map! [:X/Y :A/A] {})
           em4 (ds/entity-map! [:X/Y :B] {:a 1})
           ]
-      (log/trace "em1:" (ds/epr em1))
-      (log/trace "em2:" (ds/epr em2))
-      (log/trace "em3:" (ds/epr em3))
-      (log/trace "em4:" (ds/epr em4))
+      (log/trace "em1:" (ds/print em1))
+      (log/trace "em2:" (ds/print em2))
+      (log/trace "em3:" (ds/print em3))
+      (log/trace "em4:" (ds/print em4))
       )))
 
 (deftest ^:ctor-push ctor-push-improper
@@ -70,8 +70,8 @@
    (let [em1 (ds/entity-map! [:A/B :C] {:a 1})
          em2 (ds/entity-map! [:A/B :C] {})
           ]
-      (log/trace "em1:" (ds/epr em1))
-      (log/trace "em2:" (ds/epr em2))
+      (log/trace "em1:" (ds/print em1))
+      (log/trace "em2:" (ds/print em2))
       )))
 
 (deftest ^:ctor-push ctor-push-force
@@ -81,10 +81,10 @@
           em2  (ds/entity-map! :force [:A/B] {:a 2})
           em2a (ds/entity-map* [:A/B] {})
           ]
-      (log/trace "em1:" (ds/epr em1))
-      (log/trace "em1a:" (ds/epr em1a))
-      (log/trace "em2:" (ds/epr em2))
-      (log/trace "em2a:" (ds/epr em2a))
+      (log/trace "em1:" (ds/print em1))
+      (log/trace "em1a:" (ds/print em1a))
+      (log/trace "em2:" (ds/print em2))
+      (log/trace "em2a:" (ds/print em2a))
       )))
 
 (deftest ^:ctor-push ctor-kinded-1
@@ -92,8 +92,8 @@
       (let [m {:a 1}
             em1 (ds/entity-map! [:Foo] m)
             em2 (ds/entity-map! [:Foo] m)]
-        (log/trace "em1" (ds/epr em1))
-        (log/trace "em2" (ds/epr em2))
+        (log/trace "em1" (ds/print em1))
+        (log/trace "em2" (ds/print em2))
         (is (ds/entity-map? em1))
         )))
 
@@ -102,7 +102,7 @@
       (let [m {:a 1}
             em1 (ds/entity-map! [:A/B :Foo] m)
             em2 (ds/entity-map! [:A/B :Foo] m)]
-        (log/trace "em1" (ds/epr em1))
+        (log/trace "em1" (ds/print em1))
         (log/trace "em1 kind:" (ds/kind em1))
         (log/trace "em1 identifier:" (ds/identifier em1))
         (is (= (ds/kind em1) :Foo))

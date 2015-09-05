@@ -245,11 +245,11 @@
 (deftest ^:keychain proper
   (testing "keychain literals 20"
     (let [e1 (ds/entity-map [:Foo/Bar] {})]
-      (log/trace "e1" (ds/epr e1)))
+      (log/trace "e1" (ds/print e1)))
     (let [e1 (ds/entity-map [:Foo/Bar] {})]
-      (log/trace "e1" (ds/epr e1)))
+      (log/trace "e1" (ds/print e1)))
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz] {})]
-      (log/trace "e1" (ds/epr e1)))
+      (log/trace "e1" (ds/print e1)))
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
-      (log/trace "e1" (ds/epr e1)))
+      (log/trace "e1" (ds/print e1)))
       ))

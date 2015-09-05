@@ -1,0 +1,466 @@
+Symbol: clojure.tools.reader.edn
+meta data:{:doc "An EDN reader in clojure", :author "Bronsa"}
+Symbol: clojure.tools.reader.reader-types
+meta data:{:doc "Protocols and default Reader types implementation", :author "Bronsa"}
+Symbol: clojure.tools.reader.impl.utils
+meta data:{:skip-wiki true}
+Symbol: ex
+meta data:{:tag clojure.tools.reader.impl.ExceptionInfo}
+Symbol: ch
+meta data:{:tag Character}
+Symbol: ch
+meta data:{:tag Character}
+Symbol: update!
+meta data:{:private true}
+Symbol: s
+meta data:{:tag String}
+Symbol: s-pos
+meta data:{:unsynchronized-mutable true}
+Symbol: is
+meta data:{:tag InputStream}
+Symbol: buf
+meta data:{:tag "[B"}
+Symbol: buf
+meta data:{:tag "[B", :unsynchronized-mutable true}
+Symbol: buf
+meta data:{:tag "[Ljava.lang.Object;"}
+Symbol: buf-pos
+meta data:{:unsynchronized-mutable true}
+Symbol: line
+meta data:{:unsynchronized-mutable true}
+Symbol: column
+meta data:{:unsynchronized-mutable true}
+Symbol: line-start?
+meta data:{:unsynchronized-mutable true}
+Symbol: prev
+meta data:{:unsynchronized-mutable true}
+Symbol: prev-column
+meta data:{:unsynchronized-mutable true}
+Symbol: rdr
+meta data:{:tag java.io.PushbackReader}
+Symbol: rdr
+meta data:{:tag java.io.PushbackReader}
+Symbol: rdr
+meta data:{:tag LineNumberingPushbackReader}
+Symbol: rdr
+meta data:{:tag LineNumberingPushbackReader}
+PersistentList: (:buffer current-frame)
+meta data:{:line 182, :column 17, :tag StringBuilder}
+Symbol: buffer
+meta data:{:tag StringBuilder}
+Symbol: buffer
+meta data:{:tag StringBuilder}
+Symbol: line
+meta data:{:unsynchronized-mutable true}
+Symbol: column
+meta data:{:unsynchronized-mutable true}
+Symbol: line-start?
+meta data:{:unsynchronized-mutable true}
+Symbol: prev
+meta data:{:unsynchronized-mutable true}
+Symbol: prev-column
+meta data:{:unsynchronized-mutable true}
+Symbol: reader
+meta data:{:tag SourceLoggingPushbackReader}
+Symbol: buffer
+meta data:{:tag StringBuilder}
+Symbol: s
+meta data:{:tag String}
+Symbol: s
+meta data:{:tag String}
+Symbol: is
+meta data:{:tag InputStream}
+Symbol: fn*
+meta data:{:once true}
+Symbol: fn*
+meta data:{:once true}
+Symbol: clojure.tools.reader.impl.commons
+meta data:{:skip-wiki true}
+Symbol: int-pattern
+meta data:{:tag Pattern}
+Symbol: ratio-pattern
+meta data:{:tag Pattern}
+Symbol: float-pattern
+meta data:{:tag Pattern}
+Symbol: m
+meta data:{:tag Matcher}
+Symbol: n
+meta data:{:tag String}
+Symbol: m
+meta data:{:tag Matcher}
+Symbol: numerator
+meta data:{:tag String}
+Symbol: denominator
+meta data:{:tag String}
+Symbol: s
+meta data:{:tag String}
+Symbol: m
+meta data:{:tag Matcher}
+PersistentList: (.group m 1)
+meta data:{:line 84, :column 18, :tag String}
+Symbol: s
+meta data:{:tag String}
+Symbol: token
+meta data:{:tag String}
+Symbol: clojure.tools.reader
+meta data:{:doc "A clojure reader in clojure", :author "Bronsa"}
+Symbol: clojure.tools.reader.default-data-readers
+meta data:{:skip-wiki true}
+Symbol: fail
+meta data:{:private true}
+Symbol: verify
+meta data:{:private true}
+Symbol: s
+meta data:{:tag String}
+Symbol: s
+meta data:{:tag String}
+Symbol: cs
+meta data:{:tag CharSequence}
+Symbol: days-in-month
+meta data:{:private true}
+Symbol: thread-local-utc-date-format
+meta data:{:tag ThreadLocal}
+Symbol: thread-local-utc-date-format
+meta data:{:tag ThreadLocal, :private true}
+Symbol: d
+meta data:{:tag java.util.Date}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: utc-format
+meta data:{:tag java.text.SimpleDateFormat}
+PersistentList: (.format utc-format d)
+meta data:{:line 177, :column 15, :tag String}
+Symbol: d
+meta data:{:tag java.util.Date}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: d
+meta data:{:tag java.util.Date}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: c
+meta data:{:tag java.util.Calendar}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: c
+meta data:{:tag java.util.Calendar}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: c
+meta data:{:tag java.util.Calendar}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: thread-local-utc-timestamp-format
+meta data:{:tag ThreadLocal}
+Symbol: thread-local-utc-timestamp-format
+meta data:{:tag ThreadLocal, :private true}
+Symbol: ts
+meta data:{:tag java.sql.Timestamp}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: utc-format
+meta data:{:tag java.text.SimpleDateFormat}
+PersistentList: (.format utc-format ts)
+meta data:{:line 222, :column 15, :tag String}
+Symbol: ts
+meta data:{:tag java.sql.Timestamp}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: ts
+meta data:{:tag java.sql.Timestamp}
+Symbol: w
+meta data:{:tag java.io.Writer}
+PersistentVector: [years months days hours minutes seconds nanoseconds offset-sign offset-hours offset-minutes]
+meta data:{:tag GregorianCalendar}
+Symbol: w
+meta data:{:tag java.io.Writer}
+Symbol: *read-eval*
+meta data:{:dynamic true}
+Symbol: *data-readers*
+meta data:{:dynamic true}
+Symbol: *default-data-reader-fn*
+meta data:{:dynamic true}
+Symbol: read-token
+meta data:{:tag String}
+Symbol: token
+meta data:{:tag String}
+Symbol: upper-limit
+meta data:{:const true}
+Symbol: upper-limit
+meta data:{:const true, :private true}
+Symbol: lower-limit
+meta data:{:const true}
+Symbol: lower-limit
+meta data:{:const true, :private true}
+Symbol: starting-line-col-info
+meta data:{:private true}
+Symbol: ending-line-col-info
+meta data:{:private true}
+Symbol: read-delimited
+meta data:{:tag PersistentVector}
+Symbol: *alias-map*
+meta data:{:dynamic true}
+Symbol: ns
+meta data:{:tag String}
+Symbol: name
+meta data:{:tag String}
+Symbol: arg-env
+meta data:{:dynamic true}
+Symbol: arg-env
+meta data:{:dynamic true, :private true}
+Symbol: gensym-env
+meta data:{:dynamic true}
+Symbol: gensym-env
+meta data:{:dynamic true, :private true}
+Symbol: resolve-symbol
+meta data:{:dynamic true}
+Symbol: ns
+meta data:{:tag Namespace}
+Symbol: o
+meta data:{:tag Class}
+Symbol: o
+meta data:{:tag Var}
+Symbol: o
+meta data:{:tag Var}
+Symbol: maybe-class
+meta data:{:tag Class}
+PersistentList: (aget all-ctors i)
+meta data:{:line 645, :column 50, :tag Constructor}
+Symbol: *read-eval*
+meta data:{:dynamic true}
+Symbol: *data-readers*
+meta data:{:dynamic true}
+Symbol: *default-data-reader-fn*
+meta data:{:dynamic true}
+Symbol: read-token
+meta data:{:tag String}
+Symbol: token
+meta data:{:tag String}
+Symbol: upper-limit
+meta data:{:const true}
+Symbol: upper-limit
+meta data:{:const true, :private true}
+Symbol: lower-limit
+meta data:{:const true}
+Symbol: lower-limit
+meta data:{:const true, :private true}
+Symbol: read-delimited
+meta data:{:tag PersistentVector}
+Symbol: ns
+meta data:{:tag String}
+Symbol: name
+meta data:{:tag String}
+Symbol: *datastore-service*
+meta data:{:dynamic true}
+Symbol: clojure.tools.logging
+meta data:{:author "Alex Taggart", :doc "Logging macros which delegate to a specific logging implementation. At\n            runtime a specific implementation is selected from, in order, slf4j,\n            Apache commons-logging, log4j, and finally java.util.logging.\n\n            The logging implementation can be expliticly determined by using\n            binding or alter-var-root to change the value of *logger-factory* to\n            another implementation of clojure.tools.logging.impl/LoggerFactory\n            (see also the *-factory functions in the impl namespace)."}
+Symbol: clojure.tools.logging.impl
+meta data:{:author "Alex Taggart", :doc "Protocols used to allow access to logging implementations.\n            This namespace only need be used by those providing logging\n            implementations to be consumed by the core api."}
+Symbol: logger#
+meta data:{:tag org.slf4j.Logger}
+Symbol: logger#
+meta data:{:tag org.slf4j.Logger}
+Symbol: e#
+meta data:{:tag Throwable}
+Symbol: msg#
+meta data:{:tag String}
+PersistentList: (str logger-ns#)
+meta data:{:line 91, :column 48, :tag String}
+Symbol: logger#
+meta data:{:tag org.apache.commons.logging.Log}
+Symbol: logger#
+meta data:{:tag org.apache.commons.logging.Log}
+Symbol: logger#
+meta data:{:tag org.apache.log4j.Logger}
+Symbol: logger#
+meta data:{:tag org.apache.log4j.Logger}
+PersistentList: (str logger-ns#)
+meta data:{:line 173, :column 49, :tag String}
+Symbol: logger#
+meta data:{:tag java.util.logging.Logger}
+Symbol: logger#
+meta data:{:tag java.util.logging.Logger}
+Symbol: e#
+meta data:{:tag Throwable}
+Symbol: level#
+meta data:{:tag java.util.logging.Level}
+Symbol: msg#
+meta data:{:tag String}
+Symbol: *logging-agent*
+meta data:{:doc "The default agent used for performing logging when direct logging is\n  disabled. See log* for details.", :dynamic true}
+Symbol: *tx-agent-levels*
+meta data:{:doc "The set of levels that will require using an agent when logging from within a\n  running transaction. Defaults to #{:info :warn}. See log* for details.", :dynamic true}
+Symbol: *force*
+meta data:{:doc "Overrides the default rules for choosing between logging directly or via an\n  agent. Defaults to nil. See log* for details.", :dynamic true}
+Symbol: *logger-factory*
+meta data:{:dynamic true}
+Symbol: this
+meta data:{:tag java.io.ByteArrayOutputStream}
+Symbol: *logger-factory*
+meta data:{:doc "An instance satisfying the impl/LoggerFactory protocol. Used internally to\n   obtain an impl/Logger. Defaults to the value returned from impl/find-factory.", :dynamic true}
+Symbol: k
+meta data:{:tag Key}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: ee
+meta data:{:tag com.google.appengine.api.datastore.EmbeddedEntity}
+Symbol: builder
+meta data:{:tag KeyFactory$Builder}
+Symbol: k
+meta data:{:tag clojure.lang.Keyword}
+Symbol: k
+meta data:{:tag Key}
+Symbol: migae.infix
+meta data:{:doc "Library for converting infix mathematical formula to prefix expressions", :author "J. Bester"}
+Symbol: k
+meta data:{:tag Key}
+Symbol: k
+meta data:{:tag Key}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: k
+meta data:{:tag com.google.appengine.api.datastore.Key}
+Symbol: k
+meta data:{:tag Key}
+Symbol: e
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: k
+meta data:{:tag clojure.lang.Keyword}
+Symbol: k
+meta data:{:tag Key}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: em
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: kw
+meta data:{:tag clojure.lang.Keyword}
+Symbol: keychain
+meta data:{:tag clojure.lang.PersistentVector}
+Symbol: k
+meta data:{:tag Key}
+Symbol: em
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: keychain
+meta data:{:tag clojure.lang.PersistentVector}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: e
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: e
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: k
+meta data:{:tag Key}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: e
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: kind
+meta data:{:tag clojure.lang.Keyword}
+Symbol: kind
+meta data:{:tag clojure.lang.Keyword}
+Symbol: k
+meta data:{:tag Key}
+Symbol: k
+meta data:{:tag clojure.lang.Keyword}
+Symbol: e
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: e
+meta data:{:tag Entity}
+Symbol: em
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: em
+meta data:{:tag migae.datastore.PersistentEntityMap}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: into-axiom-1
+meta data:{:into true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: emap-into-axiom2
+meta data:{:into true}
+Symbol: emap-into-axiom3
+meta data:{:into true}
+Symbol: emap-into-axiom4
+meta data:{:into true}
+Symbol: emap-into-axiom5
+meta data:{:into true}
+Symbol: emap-into-cljmap
+meta data:{:intoX true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: emap-seq-into
+meta data:{:intoX true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: emap-seq-merge
+meta data:{:merge true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: merge-cljmap-emap
+meta data:{:merge true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: merge-emap-cljmap
+meta data:{:merge true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: emap-assoc
+meta data:{:assoc true}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: meta-axiom-1
+meta data:{:meta true}
+PersistentList: (ds/emap [:C/D] {:a 1})
+meta data:{:line 340, :column 15, :x 999}
+Symbol: em2
+meta data:{:foo "buz"}
+Symbol: migae.axioms-struct
+meta data:{:doc "entity-map axioms for structural operations:  conj, into, assoc, etc."}
+Symbol: interfaces
+meta data:{:meta true}
+
+lein test migae.axioms-struct
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.axioms-struct: seq em2: (nil)
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.axioms-struct: em2: (nil)
+
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.axioms-struct: em3: (nil)
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.datastore: seq result: clojure.lang.PersistentArrayMap {:a 1, :migae/keychain [:C/D]}
+TRACE migae.datastore: ISeq next
+TRACE migae.axioms-struct: seq em3: (nil)
+TRACE migae.datastore: IObj meta [:C/D]
+TRACE migae.axioms-struct: meta em3: nil
+
+Ran 1 tests containing 0 assertions.
+0 failures, 0 errors.

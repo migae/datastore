@@ -49,7 +49,7 @@
           e (Entity. k)]
       (doseq [[k v] em]
         (.setProperty e (subs (str k) 1) (get-val-ds v)))
-      (PersistentEntityMap. e))))
+      (PersistentEntityMap. e nil))))
 
 ;; OBSOLETE - use entity-map for consistency with hash-map, array-map, etc
 (defn emap
@@ -62,7 +62,7 @@
   ;;         e (Entity. k)]
   ;;     (doseq [[k v] em]
   ;;       (.setProperty e (subs (str k) 1) (get-val-ds v)))
-  ;;     (PersistentEntityMap. e))))
+  ;;     (PersistentEntityMap. e nil))))
 
 ;; FIXME: custom exception
 (defn into-ds
@@ -87,7 +87,7 @@
            (doseq [[k v] em]
              (.setProperty e (subs (str k) 1) (get-val-ds v)))
            (.put (ds/datastore) e)
-           (PersistentEntityMap. e))
+           (PersistentEntityMap. e nil))
          (throw (RuntimeException. (str "key already exists: " keychain)))))))
   ([keychain] ;; create empty entity
    (if (clj/empty? keychain)
@@ -100,6 +100,6 @@
        (if (nil? e) ;; not found
          (let [e (Entity. k)]
            (.put (ds/datastore) e)
-           (PersistentEntityMap. e))
+           (PersistentEntityMap. e nil))
          (throw (RuntimeException. "key already exists: " keychain)))))))
 

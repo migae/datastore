@@ -77,7 +77,7 @@
           em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
-      ;; (log/trace "em1" (ds/epr em1))
+      ;; (log/trace "em1" (ds/print em1))
       ;; (log/trace "em1 kind:" (ds/kind em1))
       ;; (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
       ;; (log/trace "em1" (.entity em3))
@@ -101,7 +101,7 @@
   (testing "entity-map empty ctor"
     (let [em1 (ds/entity-map [:A/B] {})
           em2 (ds/entity-map [:A/B] {})]
-      ;; (log/trace "em1" (ds/epr em1))
+      ;; (log/trace "em1" (ds/print em1))
       ;; (log/trace "em1 kind:" (ds/kind em1))
       ;; (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
       ;; (log/trace "em1" (.entity em3))
@@ -115,7 +115,7 @@
           em2 (ds/entity-map [(keyword "Genus" "10")] {:a 1})
           em3 (ds/entity-map [:Genus/xA] {:a 1})
           em4 (ds/entity-map [:Genus/x0A] {:a 1})]
-      ;; (log/trace "em3" (ds/epr em3))
+      ;; (log/trace "em3" (ds/print em3))
       ;; (log/trace "em3 kind:" (ds/kind em3))
       ;; (log/trace "em3 ident:" (ds/identifier em3) " (type: " (type (ds/identifier em3)) ")")
       (is (= (ds/identifier em1)

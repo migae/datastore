@@ -170,7 +170,7 @@
         (doseq [[k v] props]
           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
     (.put (ds/datastore) e)
-    (migae.datastore.PersistentEntityMap. e)))
+    (migae.datastore.PersistentEntityMap. e nil)))
 
 (defn- emap-indefinite!!
   [keylinks & props]
@@ -186,7 +186,7 @@
         (doseq [[k v] propmap]
           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
     (.put (ds/datastore) e)
-    (migae.datastore.PersistentEntityMap. e)))
+    (migae.datastore.PersistentEntityMap. e nil)))
 
 
 (defn- find-definite-necessarily
@@ -206,9 +206,9 @@
                   ;; (log/trace "PROP" p val)
                   (.setProperty newe p val)))))
           (.put (ds/datastore) newe)
-          (migae.datastore.PersistentEntityMap. newe))
+          (migae.datastore.PersistentEntityMap. newe nil))
         ;; entity found:
-        (let [em (migae.datastore.PersistentEntityMap. e)]
+        (let [em (migae.datastore.PersistentEntityMap. e nil)]
           (log/trace "already found" (epr em))
           ;; FIXME: match properties agains propmap?
           em)))
@@ -236,7 +236,7 @@
                 ;; (log/trace "PROP" p val)
                 (.setProperty e p val)))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e)))
+        (migae.datastore.PersistentEntityMap. e nil)))
 ;; (throw-bad-keylinks keylinks)))
 
 
@@ -251,14 +251,14 @@
 ;; ;;         ;; (log/trace "emap-new setting prop: " k prop v val)
 ;; ;;         (.setProperty e prop val)))
 ;; ;;     (.put (ds/datastore) e)
-;; ;;     (PersistentEntityMap. e)))
+;; ;;     (PersistentEntityMap. e nil)))
 
 ;; ;; (defn- emap-old
 ;; ;;   [^Key k ^Entity e content]
 ;; ;;   {:pre [(map? content)]}
 ;; ;;   ;; (log/trace "emap old " k content)
 ;; ;;   (if (clj/empty? content)
-;; ;;     (PersistentEntityMap. e)
+;; ;;     (PersistentEntityMap. e nil)
 ;; ;;     (do
 ;; ;;       (doseq [[k v] content]
 ;; ;;         (let [prop (subs (str k) 1)]        ; FIXME - don't exclude ns!
@@ -280,7 +280,7 @@
 ;; ;;                   ;;(log/trace "created new collection prop")
 ;; ;;                   ))
 ;; ;;               ;;(log/trace "modified entity " e)
-;; ;;               (PersistentEntityMap. e))
+;; ;;               (PersistentEntityMap. e nil))
 ;; ;;             ;; new property
 ;; ;;             (let [val (get-val-ds v)]
 ;; ;;               ;; (log/trace "setting val" val (type val))
@@ -288,7 +288,7 @@
 ;; ;;               (.setProperty e prop val)))))
 ;; ;;       (.put (ds/datastore) e)
 ;; ;;       ;; (log/trace "saved entity " e)
-;; ;;       (PersistentEntityMap. e))))
+;; ;;       (PersistentEntityMap. e nil))))
 
 ;; ;; (defn- emap-update-empty
 ;; ;;   [keylinks]
@@ -298,10 +298,10 @@
 ;; ;;                (catch DatastoreFailureException ex (throw ex))
 ;; ;;                (catch java.lang.IllegalArgumentException ex (throw ex)))]
 ;; ;;         (if (emap? e)
-;; ;;           (PersistentEntityMap. e)
+;; ;;           (PersistentEntityMap. e nil)
 ;; ;;           (let [e (Entity. k)]
 ;; ;;             (.put (ds/datastore) e)
-;; ;;             (PersistentEntityMap. e)))))
+;; ;;             (PersistentEntityMap. e nil)))))
 
 ;; ;; ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
 ;; ;; ;; technique: store them as embedded entities
@@ -331,7 +331,7 @@
 ;;     ;; if first link in keychain has no namespace, it cannot be an ancestor node
 ;;     (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
 ;;           e (Entity. (clj/name (first keylinks)))
-;;           em (PersistentEntityMap. e)]
+;;           em (PersistentEntityMap. e nil)]
 ;;       (try
 ;;         (f em)
 ;;         (.put (ds/datastore) e)
@@ -359,10 +359,10 @@
 ;;             (finally
 ;;               (if (.isActive txn)
 ;;                 (.rollback txn))))
-;;           (PersistentEntityMap. e))
+;;           (PersistentEntityMap. e nil))
 ;;         (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
 ;;               e (Entity. k)
-;;               em (PersistentEntityMap. e)]
+;;               em (PersistentEntityMap. e nil)]
 ;;           (try
 ;;             (f em)
 ;;             (.put (ds/datastore) e)
@@ -383,7 +383,7 @@
 ;;           e (Entity. k)]
 ;;       (doseq [[k v] em]
 ;;         (.setProperty e (subs (str k) 1) (get-val-ds v)))
-;;       (PersistentEntityMap. e))))
+;;       (PersistentEntityMap. e nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Actions and modalities
@@ -423,7 +423,7 @@
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
 (defn emap+?
@@ -448,7 +448,7 @@
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
        (throw-bad-keylinks keylinks)))))
 
 (defn emap=!
@@ -472,7 +472,7 @@
                 (doseq [[k v] props]
                       (.setProperty newe (subs (str k) 1) (get-val-ds v)))))
             (.put (ds/datastore) newe)
-            (migae.datastore.PersistentEntityMap. newe))
+            (migae.datastore.PersistentEntityMap. newe nil))
           (if (not (nil? propmap))
             (let [props (first propmap)]
               (doseq [[k v] props]
@@ -481,7 +481,7 @@
                   (if (not (nil? p))
                     (.setProperty e (subs (str k) 1) (get-val-ds v)))))
               (.put (ds/datastore) e)
-              (migae.datastore.PersistentEntityMap. e)))))
+              (migae.datastore.PersistentEntityMap. e nil)))))
       (throw-bad-keylinks keylinks))))
 
 (defn emap=?
@@ -506,7 +506,7 @@
                 (if (not (nil? p))
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
 (defn emap+=!
@@ -527,7 +527,7 @@
             (doseq [[k v] props]
               (.setProperty e (subs (str k) 1) (get-val-ds v)))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
 (defn emap+=?
@@ -549,7 +549,7 @@
             (doseq [[k v] props]
               (.setProperty e (subs (str k) 1) (get-val-ds v)))))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
 (defn emap-!
@@ -570,7 +570,7 @@
             (doseq [[k v] props]
               (.removeProperty e (subs (str k) 1)))
             (.put (ds/datastore) e)
-            (migae.datastore.PersistentEntityMap. e))))
+            (migae.datastore.PersistentEntityMap. e nil))))
       (throw-bad-keylinks keylinks))))
 
 (defn emap-?
@@ -589,7 +589,7 @@
         (doseq [[k v] props]
           (.removeProperty e (subs (str k) 1)))
         (.put (ds/datastore) e)
-        (migae.datastore.PersistentEntityMap. e))
+        (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
 (defn emap!?
@@ -609,7 +609,7 @@
               (doseq [[k v] props]
                 (.setProperty newe (subs (str k) 1) (get-val-ds v)))))
           (.put (ds/datastore) newe)
-          (migae.datastore.PersistentEntityMap. newe)))
+          (migae.datastore.PersistentEntityMap. newe nil)))
       (throw-bad-keylinks keylinks))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -758,7 +758,7 @@
 ;;                ;; (catch EntityNotFoundException ex (throw ex))
 ;;                ;; (catch Exception ex (throw ex)))]
 ;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
-    (migae.datastore.PersistentEntityMap. e)))
+    (migae.datastore.PersistentEntityMap. e nil)))
 
 (defn- finish-q
   [q]
@@ -936,7 +936,7 @@
             (.get (ds/datastore) k)]
          ;; (catch EntityNotFoundException ex (throw ex))
          ;; (catch Exception ex (throw ex)))]
-    (migae.datastore.PersistentEntityMap. e)))
+    (migae.datastore.PersistentEntityMap. e nil)))
 
 (defmethod emaps?? 'Multikey
   [key-set]
@@ -958,7 +958,7 @@
         (.setProperty e (subs (str k) 1) v))
       (.put (ds/datastore) e)
       ;; (log/trace "created and put entity " e)
-      (PersistentEntityMap. e))))
+      (PersistentEntityMap. e nil))))
 
 ;; (defn assoc!
 ;;   "unsafe assoc with save but no txn for DS Entities"
@@ -1012,7 +1012,7 @@
      (if (emap? coll)
        coll
        (if (= (class coll) Entity)
-         (PersistentEntityMap. coll)
+         (PersistentEntityMap. coll nil)
          (log/trace "EXCEPTION assoc!!")))))
 
 
@@ -1033,7 +1033,7 @@
   ;;                (catch EntityNotFoundException ex (throw ex))
   ;;                (catch DatastoreFailureException ex (throw ex))
   ;;                (catch java.lang.IllegalArgumentException ex (throw ex)))]
-  ;;     (PersistentEntityMap. e))))
+  ;;     (PersistentEntityMap. e nil))))
 
 ;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
 ;; Filter propertyFilter =
@@ -1133,7 +1133,7 @@
 ;;   ;;      (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
 ;;   ;;      (transduce xform clj/conj to from))))
 
-(defn epr
+(defn print
   [^migae.datastore.PersistentEntityMap em]
   (do
     (binding [*print-meta* true]

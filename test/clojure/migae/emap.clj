@@ -77,9 +77,9 @@
     (let [e1 (ds/emap!! [:Foo/Bar] {:a 1})
           e2 (ds/emap!! [:Foo/Bar :Baz/Buz] {:b 1})
           e3 (ds/emap!! [:Foo/Bar :Baz/Buz :X/Y] {:b 1})]
-      (log/trace "e1" (ds/epr e1))
-      (log/trace "e2" (ds/epr e2))
-      (log/trace "e3" (ds/epr e3))
+      (log/trace "e1" (ds/print e1))
+      (log/trace "e2" (ds/print e2))
+      (log/trace "e3" (ds/print e3))
     )))
 
 (deftest ^:emaps emap-indef
@@ -87,9 +87,9 @@
     (let [e1 (ds/emap!! [:Foo] {:a 1 :b "Foobar"})
           e2 (ds/emap!! [:Foo/Bar :Baz] {:b 1})
           e3 (ds/emap!! [:Foo/Bar :Baz/Buz :X] {:a "Foo/Bar Baz/Buz Z"})]
-      (log/trace "e1" (ds/epr e1))
-      (log/trace "e2" (ds/epr e2))
-      (log/trace "e3" (ds/epr e3))
+      (log/trace "e1" (ds/print e1))
+      (log/trace "e2" (ds/print e2))
+      (log/trace "e3" (ds/print e3))
     )))
 
 (deftest ^:emaps emaps-multi

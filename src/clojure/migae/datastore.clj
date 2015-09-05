@@ -1,5 +1,5 @@
 (ns migae.datastore
-  (:refer-clojure :exclude [get into name reduce])
+  (:refer-clojure :exclude [get into name print reduce])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util
             Collection
@@ -88,159 +88,17 @@
 
 ;;(load "datastore/keychain")
 
-(declare ->PersistentEntityMap)
-
-(deftype PersistentEntityMapIterator [query]
-  ;; public class IteratorSeq extends ASeq{
-  ;; public abstract class ASeq extends Obj implements ISeq, Sequential, List, Serializable, IHashEq {
-  ;; ISeq, Sequential, List, Serializable, IHashEq
-  ;; public class SeqIterator implements Iterator{
-  ;; java.util.List
-  ;; Cursor getCursor()
-  ;; java.util.List<Index>	getIndexList()
-
-  ;; clojure.lang.AMapEntry ; extends APersistentVector implements IMapEntry, extends Map.Entry
-  ;; clojure.lang.APersistentVector ; extends AFn
-  ;;     implements IPersistentVector, Iterable, List, RandomAccess, Comparable, Serializable, IHashEq
-
-  ;; clojure.lang.IFn ;extends Callable, Runnable
-
-  ;; clojure.lang.IMapEntry
-  ;; Object key();
-  ;; Object val();
-
-  ;; java.util.Map$Entry
-  ;; boolean	equals(Object o)
-  ;; K	getKey()
-  ;; V	getValue()
-  ;; int	hashCode()
-  ;; V	setValue(V value)
-
-  java.lang.Iterable
-  (iterator [this]
-    (log/trace "Iterable iterator" (.entity this)))
-    ;; (let [props (.getProperties entity) ;; java.util.Map<java.lang.String,java.lang.Object>
-    ;;       entry-set (.entrySet props)
-    ;;       e-iter (.iterator entry-set)
-    ;;       em-iter (PersistentEntityMapIterator. e-iter) ]
-    ;; ;; (log/trace "Iterable res:" em-iter)
-    ;; em-iter))
-
-  java.util.Iterator
-  (hasNext [this]
-    (do
-      (log/trace "PersistentEntityMapIterator Iterator hasNext")))
-      ;; (.hasNext query)))
-  ;; (next    [this]                       ;
-  ;;   (do
-  ;;     (log/trace "PersistentEntityMapIterator Iterator next")))
-  ;;     ;; (let [r (get-next-emap-prop this)
-  ;;     ;;       k (.getKey r)
-  ;;     ;;       v (.getValue r)
-  ;;     ;;       res {(keyword k) v}]
-  ;;     ;;   (log/trace "emap-iter next" res)
-  ;;     ;;   res)))
-
-  clojure.lang.ISeq ;; extends IPersistentCollection, extends Seqable
-  ;;ISeq seq()
-  (seq [this]
-    ;; (log/trace "PersistentEntityMapIterator.ISeq.seq")
-    this)
-  ;;Object first();
-  (first [_]
-    ;; (log/trace "ISeq first of" (type query))
-    (->PersistentEntityMap (first query)))
-  ;;ISeq next();
-  (next [_]
-    (let [res (next query)]
-      ;; (log/trace "ISeq next" (type res))
-      (if (nil? res)
-        nil
-        (PersistentEntityMapIterator. res))))
-  ;;ISeq more();
-  (more [_] (log/trace "ISeq more"))
-  ;;ISeq cons(Object o);
-  (cons [_ obj] (log/trace "ISeq cons"))
-  ;; clojure.lang.IPersistentCollection
-  ;;int count()
-  (count [_]
-    ;; (log/trace "IPersistentCollection count")
-    (count query))
-  ;;IPersistentCollection cons(Object o);
-  ;; (cons [_ obj] (log/trace "IPersistentCollection cons"))
-  ;;IPersistentCollection empty();
-  (empty [_] (log/trace "IPersistentCollection empty"))
-  ;;boolean equiv(Object o);
-  (equiv [_ obj] (log/trace "IPersistentCollection equiv"))
-
-
-  clojure.lang.IPersistentVector ; extends Associative, Sequential, IPersistentStack, Reversible, Indexed
-  ;; int length();
-  (length [_]
-    (log/trace "IPersistentVector length"))
-  ;; IPersistentVector assocN(int i, Object val);
-  (assocN [_ i val]
-    (log/trace "IPersistentVector assocN"))
-  ;; IPersistentVector cons(Object o);
-  ;; (cons [_ obj]
-  ;;   (log/trace "IPersistentVector cons"))
-
-  ;; clojure.lang.IPersistentStack ; extends IPersistentCollection
-  ;; Object peek();
-  (peek [_]
-    (log/trace "IPersistentStack peek"))
-  ;; IPersistentStack pop();
-  (pop [_]
-    (log/trace "IPersistentStack pop"))
-
-  ;; clojure.lang.IPersistentCollection
-  ;; ;;int count()
-  ;; (count [_] (log/trace "IPersistentCollection count"))
-  ;;IPersistentCollection cons(Object o);
-  ;; (cons [_ obj] (log/trace "IPersistentCollection cons"))
-  ;;IPersistentCollection empty();
-  ;; (empty [_] (log/trace "IPersistentCollection empty"))
-  ;; ;;boolean equiv(Object o);
-  ;; (equiv [_ obj] (log/trace "IPersistentCollection equiv"))
-
-  ;; from clojure.lang.Seqable
-    ;; (let [props (.getProperties entity)
-    ;;       kprops (clj/into {}
-    ;;                        (for [[k v] props]
-    ;;                          (do
-    ;;                          ;; (log/trace "v: " v)
-    ;;                          (let [prop (keyword k)
-    ;;                                val (get-val-clj v)]
-    ;;                            ;; (log/trace "prop " prop " val " val)
-    ;;                            {prop val}))))
-    ;;       res (clj/seq kprops)]
-    ;;   ;; (log/trace "seq result:" entity " -> " res)
-    ;;   (flush)
-    ;;   res))
-
-  ;; clojure.lang.IndexedSeq extends ISeq, Sequential, Counted{
-  ;;public int index();
-
-  clojure.lang.Indexed                  ; extends Counted
-  ;; (count [this]                         ; Counted
-  ;;   (log/trace "count"))
-  (nth [this i]                         ; called by get(int index)
-    (log/trace "Indexed nth" i))
-  ;; (next em-iter)) ;; HACK
-  (nth [this i not-found]
-    (log/trace "Indexed nth with not-found" i))
-
-)
+(load "datastore/PersistentEntityMapIterator")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PersistentEntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftype PersistentEntityMap [entity]
+(deftype PersistentEntityMap [content meta]
 
   java.lang.Iterable
   (iterator [this]
-    (log/trace "Iterable iterator" (.entity this))
-    (let [props (.getProperties entity) ;; java.util.Map<java.lang.String,java.lang.Object>
+    (log/trace "Iterable iterator" (.content this))
+    (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
           em-iter (PersistentEntityMapIterator. e-iter) ]
@@ -248,40 +106,52 @@
     em-iter))
 
   ;; FIXME: put :^PersistentEntityMap in every PersistentEntityMap
-  clojure.lang.IMeta
-  (meta [_]
-    ;; (log/trace "IMeta meta")
-    {:migae/key (ekey/to-keychain entity)
-     :type PersistentEntityMap})
-
-  clojure.lang.IObj
+  clojure.lang.IObj ;; extends IMeta
+  (meta [this]      ; IMeta's only method
+    (log/trace "IObj meta" (ekey/to-keychain content))
+    meta)
   (withMeta [this md]
-    (log/trace "IObj withMeta" md))
- ;; (PersistentEntityMap. (with-meta m md)))
+    (log/trace "IObj withMeta" md)
+    (let [em (PersistentEntityMap. (.clone content) md)]
+      ;; (log/trace "entity with meta" em)
+      em))
+
+  clojure.lang.IReference ; extends IMeta; required to support metadata reader syntax?
+    ;; IPersistentMap alterMeta(IFn alter, ISeq args) ;
+  (alterMeta [this alter args]
+    (log/trace "IReference.alterMeta")
+    {:foo 3})
+    ;; IPersistentMap resetMeta(IPersistentMap m);
+  (resetMeta [this m]
+    (log/trace "IReference.resetMeta")
+    {:bar 3})
 
   clojure.lang.IFn
   (invoke [this k]
     {:pre [(keyword? k)]}
-    ;; (log/trace "IFn invoke, arg: " k)
-    (let [prop (.getProperty entity (clj/name k))]
+    (log/trace "IFn invoke, arg: " k)
+    (let [prop (.getProperty content (clj/name k))]
       (if (not (nil? prop))
         (get-val-clj prop)
         nil)))
-  ;; (applyTo [_ arglist])
-  ;; (invokePrim [_ ??] )
+  ;; Object applyTo(ISeq arglist) ;
+  (applyTo [_ arglist]
+    (log/trace "IFn.applyTo"))
+  ;; (invokePrim [_ ??]
+  ;;   (log/trace "IFn.invokePrim"))
 
   java.util.Map$Entry
   (getKey [this]
-    ;; (log/trace "java.util.Map$Entry getKey ")
-    (let [k (.getKey entity)]
+    (log/trace "java.util.Map$Entry getKey ")
+    (let [k (.getKey content)]
       (ekey/to-keychain k)))
-  ;; FIXME: just do (ekey/to-keychain entity)??
+  ;; FIXME: just do (ekey/to-keychain content)??
       ;;     kind (.getKind k)
       ;;     nm (.getName k)]
       ;; [(keyword kind (if nm nm (.getId k)))]))
   (getValue [_]
-    ;; (log/trace "java.util.Map$Entry getVal")
-    (props-to-map (.getProperties entity)))
+    (log/trace "java.util.Map$Entry getVal")
+    (props-to-map (.getProperties content)))
   ;; (equals [_]
   ;;   )
   ;; (hashCode [_]
@@ -304,91 +174,41 @@
 
   ;; clojure.lang.Counted
   ;; (count [_]
-  ;;   (.size (.getProperties entity)))
+  ;;   (.size (.getProperties content)))
 
-
-  clojure.lang.IPersistentCollection
-  (count [_]
-    ;; (log/trace "count")
-    (.size (.getProperties entity)))
-  (cons [this o] ;; o should be a MapEntry?
-    ;; (log/trace "cons: " o (type o))
-    (cond
-      (nil? o)
-      this
-      (= (type o) clojure.lang.MapEntry)
-      (do
-        ;; (log/trace "cons clj map entry to emap")
-        (.setProperty entity (subs (str (first o)) 1) (get-val-ds (second o)))
-        ;; (.put (datastore) entity)
-        this)
-      (= (type o) clojure.lang.PersistentArrayMap)
-      o
-      ;; (do
-      ;;   ;; (log/trace "cons clj map to emap")
-      ;;   (doseq [[k v] o]
-      ;;     (let [nm (subs (str k) 1)
-      ;;           val (get-val-ds v)]
-      ;;       ;; (log/trace "cons key: " nm (type nm))
-      ;;       ;; (log/trace "cons val: " val (type val))
-      ;;       (.setProperty entity nm val)))
-      ;;   ;; (.put (datastore) entity)
-      ;;   this)
-      (= (type o) PersistentEntityMap)
-      (let [props (.getProperties (.entity o))]
-        ;; (log/trace "cons emap to emap")
-        (doseq [[k v] props]
-          (.setProperty entity (subs (str k) 1) (get-val-ds v)))
-        ;; (.put (datastore) entity)
-        this)
-      ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
-      (= (type o) java.util.Map$Entry)
-      (do
-        ;; (log/trace "cons entity prop to emap")
-        (.setProperty entity (.getKey o) (.getValue o))
-        ;; (.put (datastore) entity)
-        this)
-      :else (log/trace "cons HELP?" o (type o))))
-      ;; (do
-      ;;   (doseq [item o]
-      ;;     (do (log/trace "item " item)
-      ;;         (doseq [[k v] item]
-      ;;           (do (log/trace "k/v: " k v)
-      ;;               (.setProperty entity (clj/name k) v)))))
-      ;;   (.put (datastore) entity)
-      ;;   this)))
-  (empty [this]
-    (let [k (.getKey (.entity this))
-          e (Entity. k)]
-      (PersistentEntityMap. e)))
-  (equiv [this o]
-    (.equals this o))
-    ;; (.equals entity (.entity o)))
-
-    ;; (and (isa? (class o) PersistentEntityMap)
-    ;;      (.equiv (augment-contents entity) (.(augment-contents entity) o))))
 
   clojure.lang.IReduce
   (reduce [this f]
     (log/trace "HELP! reduce") (flush)
     this)
   (reduce [this f to-map]
-    ;; (log/trace "reduce f to-map: " to-map " from-coll: " (.entity this))
+    ;; called by "print" stuff
+    ;; (log/trace "IReduce.reduce:" (class to-map) (type to-map))
     (cond
+      (= (class to-map) clojure.lang.PersistentArrayMap)
+      (do
+        (log/trace "to-map:  PersistentArrayMap")
+        )
+      (= (class to-map) clojure.lang.PersistentVector)
+      (do
+        (log/trace "to-map:  clojure.lang.PersistentVector")
+        )
       (= (class to-map) PersistentEntityMap)
-      (let [k (.getKey (.entity this))
-            e (Entity. k)]
-        (.setPropertiesFrom e (.entity to-map))
-        (.setPropertiesFrom e (.entity this))
-        (PersistentEntityMap. e))
+      (do
+        ;; (log/trace "to-map:  PersistentEntityMap")
+        (let [k (.getKey content)
+              e (Entity. k)]
+          (.setPropertiesFrom e (.content to-map))
+          (.setPropertiesFrom e content)
+          (PersistentEntityMap. e nil)))
       ;; f = cons, so we can just use the native clj/into
-      ;; (let [from-props (.getProperties entity)
+      ;; (let [from-props (.getProperties content)
       ;;       from-coll (clj/into {} (for [[k v] from-props]
       ;;                                (let [prop (keyword k)
       ;;                                      val (get-val-clj v)]
       ;;                                  {prop val})))
-      ;;       foo (.setPropertiesFrom (.entity to-map) (.entity this))
-      ;;       to-props (.getProperties (.entity to-map))
+      ;;       foo (.setPropertiesFrom (.content to-map) (.content this))
+      ;;       to-props (.getProperties (.content to-map))
       ;;       to-coll (clj/into {} (for [[k v] to-props]
       ;;                              (let [prop (keyword k)
       ;;                                    val (get-val-clj v)]
@@ -399,39 +219,150 @@
       ;;   ;; (log/trace "to-coll: " res (type res))
       ;;   to-map)
       (= (class to-map) clojure.lang.PersistentArrayMap$TransientArrayMap)
-      ;; we use a ghastly hack in order to retain metadata
-      ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentEntityMap metadata)
-      (let [from-props (.getProperties entity)
-            from-coll (clj/into {} (for [[k v] from-props]
-                                     (let [prop (keyword k)
-                                           val (get-val-clj v)]
-                                       {prop val})))
-            to-ent (Entity. (.getKey entity))
-            ;; to-coll (clj/into {} (for [[k v] to-props]
-            ;;                        (let [prop (keyword k)
-            ;;                              val (get-val-clj v)]
-            ;;                          {prop val})))
-            to-keychain (if (nil? (:migae/keychain (meta to-map)))
-                          (ekey/to-keychain entity)
-                          (:migae/keychain (meta to-map)))]
-        (doseq [[k v] from-coll]
-          (assoc! to-map k v))
-        (let [p (persistent! to-map)]
-          (doseq [[k v] p]
-            (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
-        ;; (let [m1 (persistent! to-map)
-        ;;       m2 (with-meta m1 {:migae/keychain ekey/to-keychain
-        ;;                         :type PersistentEntityMap})
-        ;;       to-coll (transient m2)]
-        ;;   (log/trace "m2: " (meta m2) m2 (class m2))
-        ;;   (log/trace "to-coll: " (meta to-coll) to-coll (class to-coll))
-        (PersistentEntityMap. to-ent))
-
-      (= (class to-map) clojure.lang.PersistentArrayMap)
-      to-map
+      (do
+        (log/trace "to-map:  PersistentArrayMap$TransientArrayMap")
+        ;; we use a ghastly hack in order to retain metadata
+        ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentEntityMap metadata)
+        (let [from-props (.getProperties content)
+              from-coll (clj/into {} (for [[k v] from-props]
+                                       (let [prop (keyword k)
+                                             val (get-val-clj v)]
+                                         {prop val})))
+              to-ent (Entity. (.getKey content))
+              ;; to-coll (clj/into {} (for [[k v] to-props]
+              ;;                        (let [prop (keyword k)
+              ;;                              val (get-val-clj v)]
+              ;;                          {prop val})))
+              to-keychain (if (nil? (:migae/keychain (meta to-map)))
+                            (ekey/to-keychain content)
+                            (:migae/keychain (meta to-map)))]
+          (doseq [[k v] from-coll]
+            (assoc! to-map k v))
+          (let [p (persistent! to-map)]
+            (doseq [[k v] p]
+              (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
+          ;; (let [m1 (persistent! to-map)
+          ;;       m2 (with-meta m1 {:migae/keychain ekey/to-keychain
+          ;;                         :type PersistentEntityMap})
+          ;;       to-coll (transient m2)]
+          ;;   (log/trace "m2: " (meta m2) m2 (class m2))
+          ;;   (log/trace "to-coll: " (meta to-coll) to-coll (class to-coll))
+          (PersistentEntityMap. to-ent nil)))
       :else (log/trace "HELP! reduce!" (class to-map)))
       )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; why implement ISeq?  An emap is a map!  But its field names are
+  ;; strings, so they have a natural order.
+;; FIXME:  bad idea.  undo this.
+  ;; clojure.lang.ISeq ;; extends IPersistentCollection, extends Seqable
+  ;;;; Seqable interface
+  ;; ISeq Seqable.seq()
+  ;; (seq [this]
+  ;;   ;; seq is called by: into, merge, "print", e.g. (log/trace em)
+  ;;   ;; (log/trace "seq" (.hashCode this) (.getKey content))
+  ;;   (let [props (.getProperties content)
+  ;;         kprops (clj/into {}
+  ;;                          (for [[k v] props]
+  ;;                            (do
+  ;;                            ;; (log/trace "v: " v)
+  ;;                            (let [prop (keyword k)
+  ;;                                  val (get-val-clj v)]
+  ;;                              ;; (log/trace "prop " prop " val " val)
+  ;;                              {prop val}))))
+  ;;         k (ekey/to-keychain content)
+  ;;         res (clj/into kprops {:migae/keychain k})]
+  ;;     (log/trace "seq result:" (type res) res)
+  ;;     ;;(seq res)))
+  ;;     this))
+  ;;   ;;;; IPersistentCollection interface
+  (cons [this o] ;; o should be a MapEntry?
+    ;; this is called on:  (into em {:a }); not called on (into em1 em2)
+    (log/trace "IPersistentCollection.cons: " o (type o))
+    (cond
+      (nil? o)
+      (do
+        (log/trace "nil object")
+        this)
+      (= (type o) clojure.lang.MapEntry)
+      (do
+        ;; (log/trace "cons clojure.lang.MapEntry" o " to emap" this)
+        (let [new-entity (.clone content)]
+          (.setProperty new-entity (subs (str (first o)) 1) (get-val-ds (second o)))
+          (PersistentEntityMap. new-entity nil)))
+      (= (type o) clojure.lang.PersistentArrayMap)
+      (do
+        (log/trace "cons PersistentArrayMap to emap")
+        o)
+      ;; (do
+      ;;   ;; (log/trace "cons clj map to emap")
+      ;;   (doseq [[k v] o]
+      ;;     (let [nm (subs (str k) 1)
+      ;;           val (get-val-ds v)]
+      ;;       ;; (log/trace "cons key: " nm (type nm))
+      ;;       ;; (log/trace "cons val: " val (type val))
+      ;;       (.setProperty entity nm val)))
+      ;;   ;; (.put (datastore) content)
+      ;;   this)
+      (= (type o) PersistentEntityMap)
+      (do
+        (log/trace "cons PersistentEntityMap to emap")
+        (let [props (.getProperties (.content o))]
+          ;; (log/trace "cons emap to emap")
+          (doseq [[k v] props]
+            (.setProperty content (subs (str k) 1) (get-val-ds v)))
+          ;; (.put (datastore) content)
+          this))
+      ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
+      (= (type o) java.util.Map$Entry)
+      (do
+        (log/trace "cons java.util.Map$Entry to emap")
+        (.setProperty content (.getKey o) (.getValue o))
+        ;; (.put (datastore) content)
+        this)
+      :else (log/trace "cons HELP?" o (type o))))
+      ;; (do
+      ;;   (doseq [item o]
+      ;;     (do (log/trace "item " item)
+      ;;         (doseq [[k v] item]
+      ;;           (do (log/trace "k/v: " k v)
+      ;;               (.setProperty content (clj/name k) v)))))
+      ;;   (.put (datastore) content)
+      ;;   this)))
+  ;; (empty [this] - overridden by ISeq
+
+    ;; (and (isa? (class o) PersistentEntityMap)
+    ;;      (.equiv (augment-contents content) (.(augment-contents content) o))))
+  ;;int count();
+  (count [_]
+    (log/trace "ISeq count")
+    (.size (.getProperties content)))
+  ;;IPersistentCollection IPersistentCollection.cons(Object o) - overridden by ISeq.cons
+  ;;IPersistentCollection IPersistentCollection.empty()
+  (empty [this]
+    (let [k (.getKey (.content this))
+          e (Entity. k)]
+      (PersistentEntityMap. e nil)))
+  (equiv [this o]
+    (.equals this o))
+    ;; (.equals content (.content o)))
+  ;;;; ISeq interface
+  ;;Object first();
+  ;; (first [this]
+  ;;   (log/trace "ISeq first")
+  ;;   ;;    (->PersistentEntityMap (first query)))
+  ;;   this)
+  ;; ;;ISeq next();
+  ;; (next [this]
+  ;;   (log/trace "ISeq next")
+  ;;   ;; (let [res (next content)]
+  ;;   ;;   (if (nil? res)
+  ;;   ;;     nil
+  ;;   ;;     (PersistentEntityMap. res))))
+  ;;   nil)
+  ;; ;;ISeq more();
+  ;; (more [_] (log/trace "ISeq more"))
+  ;; ;;ISeq cons(Object o);
 
   clojure.lang.ITransientCollection
   (conj [this args]
@@ -443,13 +374,13 @@
                   (if (string? v) v
                       (edn/read-string v)))]
       ;; (log/trace "ITransientCollection conj: " args item k v)
-      (.setProperty entity k v)
+      (.setProperty content k v)
       this))
   (persistent [this]
     (log/trace "ITransientCollection persistent")
     ;; (try (/ 1 0) (catch Exception e (print-stack-trace e)))
-    (let [props (.getProperties entity)
-          kch (ekey/to-keychain entity)
+    (let [props (.getProperties content)
+          kch (ekey/to-keychain content)
           coll (clj/into {} (for [[k v] props]
                               (let [prop (keyword k)
                                     val (get-val-clj v)]
@@ -464,24 +395,24 @@
   ;; (assoc [this k v]                     ; both assoc! and assoc (?)
   ;;   (let [prop (clj/name k)]
   ;;     (log/trace "ITransientMap assoc: setting prop " k "->" prop v)
-  ;;     (.setProperty entity prop v)
+  ;;     (.setProperty content prop v)
   ;;     this))
   ;; (without [this k]                     ; = dissoc!, return new datum with k removed
   ;;   (let [prop (clj/name k)]
   ;;     (log/trace "without: removing prop " k "->" prop)
-  ;;     (.removeProperty entity prop)
+  ;;     (.removeProperty content prop)
   ;;     this))
   ;; (persistent [this]                    ; persistent!
   ;;     (log/trace "ITransientMap persistent")
   ;;   )
 
-  clojure.lang.IPersistentMap
+  clojure.lang.IPersistentMap ; extends Iterable, Associative, Counted
   (assoc [this k v]
     (let [prop (subs (str k) 1)]
       (log/trace "IPersistentMap assoc: " k v "(" prop v ")")
-      ;; (.setProperty entity prop v)
+      ;; (.setProperty content prop v)
       ;; this))
-      (let [to-props (.getProperties entity)
+      (let [to-props (.getProperties content)
             to-coll (clj/into {} (for [[k v] to-props]
                                      (let [prop (keyword k)
                                            val (get-val-clj v)]
@@ -492,34 +423,36 @@
       (with-meta res {:migae/keychain key-chain}))))
   (assocEx [_ k v]
     (log/trace "assocEx")
-    (PersistentEntityMap. (.assocEx entity k v)))
+    (PersistentEntityMap. (.assocEx content k v) nil))
   (without [this k]                     ; = dissoc!, return new datum with k removed
     (let [prop (clj/name k)]
       (log/trace "without: removing prop " k "->" prop)
-      (.removeProperty entity prop)
+      (.removeProperty content prop)
       this))
 
   clojure.lang.Associative
   (containsKey [_ k]
-    ;; (log/trace "containsKey " k)
+    (do (log/trace "Associative.containsKey " k)
     (let [prop (clj/name k)
-          r    (.hasProperty entity prop)]
-      r))
+          r    (.hasProperty content prop)]
+      r)))
   (entryAt [this k]
-    (let [val (.getProperty entity (clj/name k))
+    (do (log/trace "Associative.entryAt " k)
+    (let [val (.getProperty content (clj/name k))
           entry (clojure.lang.MapEntry. k val)]
       ;; (log/trace "entryAt " k val entry)
-      entry))
+      entry)))
 
   ;; clojure.lang.IObj
   ;; (withMeta [_ m])
   ;; (meta [_])
 
   clojure.lang.Seqable
+  ;; ISeq seq(); overriden by ISeq
   (seq [this]
     ;; seq is called by: into, merge, "print", e.g. (log/trace em)
-    ;; (log/trace "seq" (.hashCode this) (.getKey entity))
-    (let [props (.getProperties entity)
+    ;; (log/trace "seq" (.hashCode this) (.getKey content))
+    (let [props (.getProperties content)
           kprops (clj/into {}
                            (for [[k v] props]
                              (do
@@ -528,10 +461,11 @@
                                    val (get-val-clj v)]
                                ;; (log/trace "prop " prop " val " val)
                                {prop val}))))
-          res (clj/seq kprops)]
-      ;; (log/trace "seq result:" entity " -> " res)
-      (flush)
-      res))
+          k (ekey/to-keychain content)
+          res (clj/into kprops {:migae/keychain k})]
+      (log/trace "seq result:" (type res) res)
+      (seq res)))
+;;      this))
 
   clojure.lang.Indexed                  ; extends Counted
   ;; (count [this]                         ; Counted
@@ -544,13 +478,14 @@
 
   clojure.lang.ILookup
   (valAt [_ k]
+    (log/trace "ILookup.valAt" k)
     (let [prop (clj/name k)]
-      (if-let [v  (.getProperty entity prop)]
+      (if-let [v  (.getProperty content prop)]
         (get-val-clj v)
         nil)))
   (valAt [_ k not-found]
     (log/trace "valAt w/notfound: " k)
-    (.getProperty entity (str k) not-found)))
+    (.getProperty content (str k) not-found)))
 ;; end deftype PersistentEntityMap
 
 (deftype PersistentEntityMapCollIterator [query]
@@ -560,12 +495,13 @@
     (.hasNext query))
   (next    [this]
     (log/trace "PersistentEntityMapCollIterator next")
-    (PersistentEntityMap. (.next query)))
+    (PersistentEntityMap. (.next query) nil))
   ;; (remove  [this])
   )
 
 ;; load order matters!
 ;;(load "datastore/service")
+(load "datastore/PersistentEntityMapIterator")
 (load "datastore/adapter")
 (load "datastore/ctor_common")
 (load "datastore/ctor_push")
