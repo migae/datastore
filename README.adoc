@@ -16,7 +16,7 @@ In no particular order:
 * <<start,getting started>>
 * <<testing,testing>>
 * <<types,types>>
-* <<ctors,construction>>
+* <<ctors,constructors>>
 * <<axioms,axioms>>
 * <<keys,Keys, keychains, keylinks, dogtags>>
 * <<kinds,kinds>>
@@ -118,7 +118,7 @@ of them are outdated, and the api is changing.
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 
-== [[ctors]]construction
+== [[ctors]]constructors
 
 We have three ways to construct PersistentEntityMap objects:
 
@@ -136,6 +136,16 @@ Push: by default the push ctor `entity-map!` first checks to see if an entity wi
 (entity-map! [:A] {:a 1 :b 2})          ;; kinded ctor (see below)
 (entity-map! [:A/B :C] {:a 1 :b 2})          ;; kinded ctor (see below)
 (entity-map! :force [:A/B] {:a 9 :b 10}) ;; force replacement
+----
+==== [[reader]] reader syntax
+
+tagged literals?  I can never manage to get them to work, but maybe:
+
+[[app-listing]]
+[source,clojure]
+----
+#entity-map [[:A/B] {:a 1}]
+#emap [[:A/B] {:a 1}]
 ----
 
 == [[[axioms]]structural axioms
@@ -155,7 +165,8 @@ Push: by default the push ctor `entity-map!` first checks to see if an entity wi
 ----
 etc.  More to come.
 
-== [[keys]] Keys, keychains, keylinks, and dogtags
+
+== [[keys]] keys, keychains, keylinks, and dogtags
 
 A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  A vector of
 keylinks is a keychain, which corresponds to a datastore Key, which
