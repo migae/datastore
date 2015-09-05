@@ -16,8 +16,7 @@ In no particular order:
 * <<start,getting started>>
 * <<testing,testing>>
 * <<types,types>>
-* <<ctors,constructors>>
-* <<coctors,eliminators>>
+* <<ctors,constructors and co-constructors>>
 * <<axioms,axioms>>
 * <<keys,Keys, keychains, keylinks, dogtags>>
 * <<kinds,kinds>>
@@ -119,7 +118,26 @@ of them are outdated, and the api is changing.
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 
-== [[ctors]]constructors
+== [[ctors]]constructors and co-constructors
+
+A _constructor_ of type T starts from some (possibly non-T) values and
+builds a value of type T; dually, a _co-constructor_ of type T starts
+from a T value and "co-builds" something else (which may be another T
+value).  In producing its result, a co-constructor depends on the work
+of a constructor, which provides it with the "raw materials" from
+which its result must be (co-) constructed.  What I am calling a
+co-constructor is often thought of as "undoing" or "eliminating" the
+work of a constructor, or "deconstructing" a constructed value; for
+this reason it is often called an _eliminator_; other terms include
+_projection function_, etc.  "Co-constructor" and "eliminator" as
+terms just represent different perspectives on the same thing.  In
+fact it will often be most intuitive to use "eliminator": one
+constructs a value of type T, and then eliminates it.
+
+For example, `ds/entity-map` is a constructor for the type
+`PersistentEntityMap`; `ds/keychain` is an eliminator/co-constructor.
+
+=== constructors
 
 We have three ways to construct PersistentEntityMap objects:
 
@@ -149,16 +167,7 @@ tagged literals?  I can never manage to get them to work, but maybe:
 #emap [[:A/B] {:a 1}]
 ----
 
-== [[coctors]]co-constructors (aka eliminators)
-
-Terminology: `ds/entity-map` is a _constructor_ for the type
-`PersistentEntityMap`; `ds/keychain` is an _eliminator_.  An
-eliminator "undoes" the work of a constructor.  Since it produces a
-result it can also be thought of as a _co-constructor_.  So a
-constructor of type T starts from some (possibly non-T) values and
-builds a value of type T; a co-constructor of type T starts from a T
-value and co-builds something else (usually be "eliminating" or
-deconstructing the T value).
+=== co-constructors (aka eliminators)
 
 Constructors and co-constructors must "harmonize":
 
