@@ -290,7 +290,7 @@ Meatadata works:
  => {:foo "metadata here"}
 ----
 
-"Literal syntax" doesn't work: `(meta '^{:metastuff "o boy!"} [:A/B] {:a 2})`. Nope.
+"Literal syntax" doesn't work: `(meta '^{:metastuff "o boy!"} (entity-map [:A/B] {:a 2}))`. Nope.
 
 
 == [[retrieval]] retrieval
