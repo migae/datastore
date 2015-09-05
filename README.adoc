@@ -128,14 +128,56 @@ of a constructor, which provides it with the "raw materials" from
 which its result must be (co-) constructed.  What I am calling a
 co-constructor is often thought of as "undoing" or "eliminating" the
 work of a constructor, or "deconstructing" a constructed value; for
-this reason it is often called an _eliminator_; other terms include
-_projection function_, etc.  "Co-constructor" and "eliminator" as
-terms just represent different perspectives on the same thing.  In
-fact it will often be most intuitive to use "eliminator": one
-constructs a value of type T, and then eliminates it.
+this reason in logic and Type Theory it is often called an
+_eliminator_, or sometimes a _projection function_; in Object-Oriented
+parlance, co-constructor corresponds to "gettter".
+
+"Co-constructor" and "eliminator" as terms just represent different
+perspectives on the same thing.  In fact it will often be most
+intuitive to use "eliminator": one constructs a value of type T, and
+then eliminates it.
 
 For example, `ds/entity-map` is a constructor for the type
 `PersistentEntityMap`; `ds/keychain` is an eliminator/co-constructor.
+
+Native Java class definitions do not always support ctors and
+co-ctors; sometimes so-called "Factory" classes are used to
+instantiate objects.  For example, class `Key`
+(`com.google.appengine.api.datastore.Key`) has no constructors; to
+create a key, one uses the `createKey` method of class `KeyFactory`.
+The migae datastore library hides this complexity by providing
+corresponding constructors and co-constructors:
+
+[source,clojure]
+----
+(= (ds/entity-key [:A/B]) (KeyFactory/createKey "A" "B"))
+(= (.getKind (KeyFactory/createKey "A" "B")) "A") ;; native kinds are Strings
+(= (ds/kind  (ds/entity-key [:A/B]) :A)) ;; migae kinds are keywords
+(let [k (KeyFactory/createKey "A" "B")]
+     (= (ds/kind k) (keyword (.getKind k))))
+----
+
+The migae operators also work on entity-maps:
+[source,clojure]
+----
+(= (ds/kind  (ds/entity-key [:A/B]) :A)) ;; migae kinds are keywords
+(let [k (KeyFactory/createKey "A" "B")]
+     (= (ds/kind k) (keyword (.getKind k))))
+----
+
+.TODO: documentation
+****
+*Key interface:*
+
+* ctors:
+** ds/entity-key
+** ds/keychain
+* co-ctors
+** ds/kind
+** ds/identifier
+** ds/name
+** ds/id
+****
 
 === constructors
 
