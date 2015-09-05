@@ -17,7 +17,7 @@ In no particular order:
 * <<testing,testing>>
 * <<types,types>>
 * <<ctors,constructors and co-constructors>>
-* <<axioms,axioms>>
+* <<axioms,structural axioms>>
 * <<keys,Keys, keychains, keylinks, dogtags>>
 * <<kinds,kinds>>
 * <<autogen,autogenned ids>>
@@ -165,21 +165,10 @@ The migae operators also work on entity-maps:
      (= (ds/kind k) (keyword (.getKind k))))
 ----
 
-.TODO: documentation
-****
-*Key interface:*
+See below, <<keys,Keys, keychains, keylinks, dogtags>> for more
+information on the Key API.
 
-* ctors:
-** ds/entity-key
-** ds/keychain
-* co-ctors
-** ds/kind
-** ds/identifier
-** ds/name
-** ds/id
-****
-
-=== constructors
+=== PersistentEntityMap ctors
 
 We have three ways to construct PersistentEntityMap objects:
 
@@ -220,7 +209,7 @@ Constructors and co-constructors must "harmonize":
 (is (= (ds/entity-map (ds/keychain (ds/entity-map k m)) m)))
 ----
 
-== [[[axioms]]structural axioms
+== [[axioms]] structural axioms
 
 [[app-listing]]
 [source,clojure]
@@ -320,6 +309,21 @@ can only autogen an Id on saved entities.
 (def em2 (entity-map! [:Foo] m)) ;; em1 and em2 have different key ids
 (def em2 (entity-map! [:A/B :C/D Foo] m)) ;; long keychains ok too
 ----
+
+
+.TODO: documentation
+****
+*Key interface:*
+
+* ctors:
+** ds/entity-key
+** ds/keychain
+* co-ctors
+** ds/kind
+** ds/identifier
+** ds/name
+** ds/id
+****
 
 == [[fields]] field types
 
