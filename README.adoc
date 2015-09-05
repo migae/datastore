@@ -11,7 +11,24 @@ At this point, until I can get more complete documentation organized,
 you'll probably want to at least review Google's official
 link:https://cloud.google.com/appengine/docs/java/datastore/[Datastore documentation].
 
-== getting started
+In no particular order:
+
+* <<start,getting started>>
+* <<testing,testing>>
+* <<types,types>>
+* <<ctors,construction>>
+* <<axioms,axioms>>
+* <<keys,Keys, keychains, keylinks, dogtags>>
+* <<kinds,kinds>>
+* <<autogen,autogenned ids>>
+* <<fields,field types>>
+* <<metadata,metadata>>
+* <<retrieval,retrieval>>
+* <<co-ctors,co-construction>>
+* <<queries,queries>>
+* <<mutation,mutation>>
+
+== [[start]]getting started
 
 **NOTE:** you do not need an App Engine account to explore this
   library in a development environment.  The gradle build system will
@@ -88,20 +105,20 @@ You will sometimes get `NullPointerException No API environment is
 registered for this thread.` (the test env seems to timeout); if so,
 just run `user=> (ds-reset)`.
 
-=== testing
+== [[testing]]testing
 
 See the link:test/clojure/migae[tests] for lots of examples of how to use
 the library.  Be **be forewarned**, the test cases are in flux; some
 of them are outdated, and the api is changing.
 
-=== types
+== [[types]]types
 
 * `migae.datastore.PersistentEntityMap` - migae representation of underlying `com.google.appengine.api.datastore.Entity`.  Implements IPersistentCollection, IPersistentMap, IMapEntry, etc.  See link:doc/Entities.adoc[Entities].
 * `migae.datastore.Keychain`  - migae representation of underlying `com.google.appengine.api.datastore.Key`.  A vector of Clojure keywords.  See link:doc/Keychains.adoc[Keychains].  (**Not yet implemented**)
 
 These are represented in migae as `entity-map` and `keychain`, respectively.
 
-=== construction
+== [[ctors]]construction
 
 We have three ways to construct PersistentEntityMap objects:
 
@@ -121,7 +138,7 @@ Push: by default the push ctor `entity-map!` first checks to see if an entity wi
 (entity-map! :force [:A/B] {:a 9 :b 10}) ;; force replacement
 ----
 
-=== structural axioms
+== [[[axioms]]structural axioms
 
 [[app-listing]]
 [source,clojure]
@@ -138,7 +155,7 @@ Push: by default the push ctor `entity-map!` first checks to see if an entity wi
 ----
 etc.  More to come.
 
-===# Keys, keychains, keylinks, and dogtags
+== [[keys]] Keys, keychains, keylinks, and dogtags
 
 A keylink is a namespaced keyword, e.g. `:Foo/Bar`.  A vector of
 keylinks is a keychain, which corresponds to a datastore Key, which
@@ -179,7 +196,7 @@ user=> (ds/to-ekey :A/b)  ; migae keylink to datastore entity Key (ekey)
 (= (ds/name e1) (ds/name e2) (ds/name e3))
 ----
 
-===# kinds
+== [[kinds]] kinds
 
 In the datastore, every Entity has a "Kind", which is a string.  A
 Kind is effectively a tag that you attach to an Entity in order to
@@ -207,7 +224,7 @@ stored entities.
 (= (kind (entity-map [:Foo/Bar :X/d3] {:a 1})) :X)
 ----
 
-===# autogenned ids
+== [[autogen]] autogenned ids
 
 Use a partial ("improper") keychain to have the datastore autogen Id
 values.  All but the last links in the vector must be namespaced;
@@ -221,7 +238,7 @@ can only autogen an Id on saved entities.
 (def em2 (entity-map! [:A/B :C/D Foo] m)) ;; long keychains ok too
 ----
 
-===# field types
+== [[fields]] field types
 
 The value part of an entity-map is just a map.  The datastore
 restricts the permissible value types; see  link:https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types[Properties and value types].
@@ -263,22 +280,22 @@ Datastore field types:
 
 TODO: support all datastore property types.
 
-=== metadata
+== [[metadata]] metadata
 
-=== retrieval
+== [[retrieval]] retrieval
 
 We treat the datastore as just another map: `(get datastore k)`
 retrieves the entity-map whose keychain is `k`.  Since there is only
 one datastore, we sugar this to `(get-ds k)`.
 
-===# experimental:  co-construction
+== [[co-ctors]] experimental:  co-construction
 
 [source,clojure]
 ----
 (entity-map* [:A/B]) ;; "co-constructs" (retrieves) entity with key [:A/B] if it exists, otherwise throws exception
 ----
 
-=== queries
+== [[queries]] queries
 
 **NB**: these query patterns are experimental and very likely to change.
 
@@ -297,7 +314,7 @@ The pull constructor:
  (entity-map* :pfx [:A/B :C/D]) ;; fetch all entities with keychain prefix (i.e. ancestor) [:A/B :C/D]
 ----
 
-=== mutation
+== [[mutation]] mutation
 
 [[app-listing]]
 [source,clojure]
