@@ -1,5 +1,5 @@
-(ns test.axioms-coll
-  "entity-map collection axioms"
+(ns test.theory-collections
+  "theory of entity-map collections"
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email
@@ -55,24 +55,6 @@
 ;(use-fixtures :once (fn [test-fn] (ds/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:coll emap-axiom1
-  (testing "emap axiom 1: an entity-map is a map"
-    (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
-      ;; (log/trace "e1 " (ds/print e1))
-      (is (coll? e1))
-      (is (map? e1))
-      (is (ds/emap? e1))
-      (is (= (keys e1) '(:a :b)))
-      (is (= (vals e1) '(1 2)))
-      )))
-
-(deftest ^:coll emap-axiom2
-  (testing "emap axiom 2: an entity-map is seqable"
-    (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
-      (is (not (seq? e1)))
-      (is (seq? (seq e1)))
-      )))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   collections api axioms
 
@@ -111,46 +93,89 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   merge theorems
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest ^:merge emap-seq-merge
-  (testing "clojure map api: merge map with an emap-seq"
-    (do ;; construct elements of kind :A
-      (ds/entity-map! [:A] {:a 1})
-      (ds/entity-map! [:A] {:b 2})
-      (ds/entity-map! [:A] {:c 3})
-      (ds/entity-map! [:A] {:d 4})
-      (ds/entity-map! [:A] {:d 4})           ; a dup
-      ;; now do a Kind query, yielding an emap-seq
-      (let [ems (ds/emaps?? [:A])
-            foo (do (log/trace "ems" ems)
-                    (log/trace "(type ems)" (type ems))
-                    (log/trace "(class ems)" (class ems))
-                    (is (seq? ems))
-                    (is (= (count ems) 5))
-                    )
-            ;; em (merge {} ems)]
-            em (into {} ems)]
-        (log/trace "em" em)
-        (doseq [em ems]
-          (log/trace "em" (ds/print em))))
+(deftest ^:merge merge-print
+  (testing "merge print")
+  (let [em1 (ds/entity-map [:A/B] {:a 1})
+        em2 (ds/entity-map [:A/B] {:b 2})
+        em3 (ds/entity-map [:A/B] {:a 2})
+        em4 (ds/entity-map [:X/Y] {:x 9})]
+    (log/trace "em1: " (ds/print-str em1))
+    (log/trace "em2: " (ds/print-str em2))
+    (log/trace "em3: " (ds/print-str em3))
+    (log/trace "merge em1 em2: " (ds/print-str (merge em1 em2)))
+    (log/trace "merge em1 em3: " (ds/print-str (merge em1 em3)))
+    (log/trace "merge em1 em4: " (ds/print-str (merge em1 em4)))
+    (log/trace "merge em1 {:x 9}: " (ds/print-str (merge em1 {:x 9})))
+    (log/trace "merge {}  em1: " (ds/print-str (merge {} em1)))
+    ))
 
-      (let [ems (ds/emaps?? [:A])
-            foo (do ;; (log/trace "ems" ems)
-                    (is (= (count ems) 5))
-                    )
-            ;;em1 {:as (merge {} ems)}
-            em2 {:bs ems}
-            em3 {:cs (merge (into #{} ems) {:x 9})}
-            ]
-        ;;(log/trace "em1" em1 (type em1))
-        (log/trace "em2" em2 (type em2))
-        (log/trace "em3" em3 (type em3))
-        (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
-        )))
+(deftest ^:merge merge-1
+  (testing "merge 1: merge m1 m2 adds m2 content to m1 content"
+    (is (= (ds/keychain (merge (ds/entity-map [:A/B] {:a 1})
+                               (ds/entity-map [:A/B] {:b 2})))
+           [:A/B]))
+    (is (= (ds/print-str (merge (ds/entity-map [:A/B] {:a 1})
+                                (ds/entity-map [:A/B] {:b 2})))
+           (ds/print-str (ds/entity-map [:A/B] {:a 1 :b 2}))))
+    ))
+
+(deftest ^:merge merge-2
+  (testing "merge 2: from fld content overrides to fld content"
+    (is (= (ds/print-str (merge (ds/entity-map [:A/B] {:a 1})
+                                (ds/entity-map [:A/B] {:a 2})))
+           (ds/print-str (ds/entity-map [:A/B] {:a 2}))))
+    (is (= (keys (merge (ds/entity-map [:A/B] {:a 1})
+                        (ds/entity-map [:A/B] {:a 2})))
+           '(:a)))
+      ))
+
+(deftest ^:merge merge-3
+  (testing "merge 2: emaps"
+    (is (= (ds/keychain (merge (ds/entity-map [:A/B] {:a 1})
+                               (ds/entity-map [:X/Y] {:b 1})))
+           [:A/B])
+      )))
+
+;; (deftest ^:merge emap-merge-4
+;;   (testing "merge map with an emap-seq"
+;;     (do ;; construct elements of kind :A
+;;       (ds/entity-map [:A] {:a 1})
+;;       (ds/entity-map [:A] {:b 2})
+;;       (ds/entity-map [:A] {:c 3})
+;;       (ds/entity-map [:A] {:d 4})
+;;       (ds/entity-map [:A] {:d 4})           ; a dup
+;;       ;; now do a Kind query, yielding an emap-seq
+;;       (let [ems (ds/emaps?? [:A])
+;;             foo (do (log/trace "ems" ems)
+;;                     (log/trace "(type ems)" (type ems))
+;;                     (log/trace "(class ems)" (class ems))
+;;                     (is (seq? ems))
+;;                     (is (= (count ems) 5))
+;;                     )
+;;             ;; em (merge {} ems)]
+;;             em (into {} ems)]
+;;         (log/trace "em" em)
+;;         (doseq [em ems]
+;;           (log/trace "em" (ds/print em))))
+
+;;       (let [ems (ds/emaps?? [:A])
+;;             foo (do ;; (log/trace "ems" ems)
+;;                     (is (= (count ems) 5))
+;;                     )
+;;             ;;em1 {:as (merge {} ems)}
+;;             em2 {:bs ems}
+;;             em3 {:cs (merge (into #{} ems) {:x 9})}
+;;             ]
+;;         ;;(log/trace "em1" em1 (type em1))
+;;         (log/trace "em2" em2 (type em2))
+;;         (log/trace "em3" em3 (type em3))
+;;         (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
+;;         )))
 
 (deftest ^:merge merge-cljmap-emap
   (testing "clojure map api: merge entity-map to clj-map"
     (log/trace "test: clojure map api: merge-cljmap-emap")
-    (let [em1 (ds/entity-map! [:A/B] {:a 1 :b 2})]
+    (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2})]
       ;; (log/trace "em1" em1)
       (let [cljmap (merge {} em1)]
         (log/trace "em1" em1 (class em1)))
@@ -180,12 +205,12 @@
       (log/trace "em1" (ds/print em1))
       (log/trace "em3" (ds/keychain em3) (ds/print em3))
       (log/trace "em3 type:" (type em3))
-      (is (not (= em1 em3)))
+      (is (= em1 em3))
 ;;      (is (ds/key= em1 em3))
 
       (let [em4 (merge em3 {:d 27})]
         (log/trace "em4" em4)
-        (is (not= em3 em4)))
+        (is (= em3 em4)))
 
       (let [em5 (merge em3 {:c #{{:d 3}}})]
         (log/trace "em5" em5)
