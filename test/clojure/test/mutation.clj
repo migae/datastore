@@ -49,30 +49,32 @@
            (is (= "No entity was found matching the key: A(\"B\")"
                   (.getMessage e)))))))
 
-(deftest ^:emap into-ds-1
-  (testing "into-ds 1: non-destructive save"
-    (let [em1 (ds/into-ds [:A/B] {:a 1})]
-      (try (ds/into-ds [:A/B] {:b 2})
-           (catch java.lang.RuntimeException e
-             (is (= "key already exists: [:A/B]"
-                    (.getMessage e))))))))
+;; FIXME:  keep into-ds! and into-ds internal?  only expose entity-map ctors?
 
-(deftest ^:emap into-ds!
-  (testing "into-ds!: destructive save"
-    (let [em1 (ds/into-ds! [:A/B] {:a 1 :b 2})
-          em1a (ds/get-ds [:A/B])]
-        (log/trace "em1:" (ds/print em1))
-        (log/trace "em1a:" (ds/print em1a))
-      (is (= (:a em1) 1))
-      (let [em2 (ds/into-ds! [:A/B] {:c 3})
-            em2b (ds/entity-map* [:A/B]) ;; co-constructor
-            em2a (ds/get-ds [:A/B])]     ;; getter
-        (log/trace "em2:" (ds/print em2))
-        (log/trace "em2a:" (ds/print em2a))
-        (is (= (:a em1) 1))             ; previously fetched emap unaffected
-        (is (= (:a em1a) 1))
-        (is (= (:b em2) nil))
-        (is (= (:a em2a) nil))
-        (is (= (:b em2a) nil))
-        (is (= (:c em2a) 3))
-      ))))
+;; (deftest ^:emap into-ds-1
+;;   (testing "into-ds 1: non-destructive save"
+;;     (let [em1 (ds/into-ds [:A/B] {:a 1})]
+;;       (try (ds/into-ds [:A/B] {:b 2})
+;;            (catch java.lang.RuntimeException e
+;;              (is (= "key already exists: [:A/B]"
+;;                     (.getMessage e))))))))
+
+;; (deftest ^:emap into-ds!
+;;   (testing "into-ds!: destructive save"
+;;     (let [em1 (ds/into-ds! [:A/B] {:a 1 :b 2})
+;;           em1a (ds/get-ds [:A/B])]
+;;         (log/trace "em1:" (ds/print em1))
+;;         (log/trace "em1a:" (ds/print em1a))
+;;       (is (= (:a em1) 1))
+;;       (let [em2 (ds/into-ds! [:A/B] {:c 3})
+;;             em2b (ds/entity-map* [:A/B]) ;; co-constructor
+;;             em2a (ds/get-ds [:A/B])]     ;; getter
+;;         (log/trace "em2:" (ds/print em2))
+;;         (log/trace "em2a:" (ds/print em2a))
+;;         (is (= (:a em1) 1))             ; previously fetched emap unaffected
+;;         (is (= (:a em1a) 1))
+;;         (is (= (:b em2) nil))
+;;         (is (= (:a em2a) nil))
+;;         (is (= (:b em2a) nil))
+;;         (is (= (:c em2a) 3))
+;;       ))))
