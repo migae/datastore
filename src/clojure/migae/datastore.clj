@@ -70,6 +70,7 @@
 (load "datastore/PersistentEntityMapIterator")
 (load "datastore/PersistentEntityMap")
 (load "datastore/PersistentEntityHashMap")
+(load "datastore/utils")
 (load "datastore/ctor_common")
 (load "datastore/hashmap/adapter")
 (load "datastore/predicates")

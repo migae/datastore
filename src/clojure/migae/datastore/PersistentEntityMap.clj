@@ -42,7 +42,7 @@
   ;; invoke, applyTo
   (invoke [this k]  ; -> Object
     {:pre [(keyword? k)]}
-    (log/trace "IFn.invoke(" k ")")
+    ;; (log/trace "IFn.invoke(" k ")")
     (if (= k :migae/keychain)
       (ekey/to-keychain content)
       (let [kw (subs (str k) 1)
@@ -132,16 +132,16 @@
   ;;;; extends ILookup
   ;; valAt(Object key), valAt(Object key, Object notFound)
   (valAt [_ k]  ; -> Object
-    (log/trace "ILookup.valAt" k)
+    ;; (log/trace "ILookup.valAt" k)
     (if (= k :migae/keychain)
       (ekey/to-keychain content)
       (let [prop (get-val-clj (subs (str k) 1))]
-        (log/trace "prop:" prop)
+        ;; (log/trace "prop:" prop)
         (if-let [v  (.getProperty content prop)]
           (get-val-clj v)
           nil))))
   (valAt [_ k not-found]  ; -> Object
-    (log/trace "valAt w/notfound: " k)
+    ;; (log/trace "valAt w/notfound: " k)
     ;; FIXME: is k a keyword or a string?
     (.getProperty content (str k) not-found))
 
@@ -278,9 +278,9 @@
               ;;                        (let [prop (keyword k)
               ;;                              val (get-val-clj v)]
               ;;                          {prop val})))
-              to-keychain (if (nil? (:migae/keychain (meta to-map)))
+              to-keychain (if (nil? (:migae/keychain to-map))
                             (ekey/to-keychain content)
-                            (:migae/keychain (meta to-map)))]
+                            (:migae/keychain to-map))]
           (doseq [[k v] from-coll]
             (assoc! to-map k v))
           (let [p (persistent! to-map)]
@@ -335,7 +335,7 @@
                                 {prop val})))
           res (with-meta coll {:migae/keychain kch
                                :type PersistentEntityMap})]
-      (log/trace "persistent result: " (meta res) res (class res))
+      (log/trace "persistent result: " res (class res))
       res))
 
 

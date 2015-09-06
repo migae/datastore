@@ -135,7 +135,7 @@
     (if (= k :migae/keychain)
       (ekey/to-keychain content)
       (let [prop (get-val-clj (subs (str k) 1))]
-        (log/trace "prop:" prop)
+        ;; (log/trace "prop:" prop)
         (if-let [v  (.getProperty content prop)]
           (get-val-clj v)
           nil))))

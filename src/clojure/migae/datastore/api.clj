@@ -374,7 +374,7 @@
           (let [props (first propmap)]
             (doseq [[k v] props]
               (let [p (.getProperty e (subs (str k) 1))]
-                (log/trace "prop" k v)
+                ;; (log/trace "prop" k v)
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
@@ -399,7 +399,7 @@
           (let [props (first propmap)]
             (doseq [[k v] props]
               (let [p (.getProperty e (subs (str k) 1))]
-                (log/trace "prop" k v)
+                ;; (log/trace "prop" k v)
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
@@ -432,7 +432,7 @@
             (let [props (first propmap)]
               (doseq [[k v] props]
                 (let [p (.getProperty e (subs (str k) 1))]
-                  (log/trace "prop" k v)
+                  ;; (log/trace "prop" k v)
                   (if (not (nil? p))
                     (.setProperty e (subs (str k) 1) (get-val-ds v)))))
               (.put (ds/datastore) e)
@@ -457,7 +457,7 @@
           (let [props (first propmap)]
             (doseq [[k v] props]
               (let [p (.getProperty e (subs (str k) 1))]
-                (log/trace "prop" k v)
+                ;; (log/trace "prop" k v)
                 (if (not (nil? p))
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
         (.put (ds/datastore) e)
@@ -1087,14 +1087,3 @@
 ;;   ;;    (if (instance? clojure.lang.IEditableCollection to)
 ;;   ;;      (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
 ;;   ;;      (transduce xform clj/conj to from))))
-
-(defn print
-  [^migae.datastore.PersistentEntityMap em]
-  (do
-    (binding [*print-meta* true]
-      (prn-str em))))
-
-(defn eprn
-  [^migae.datastore.PersistentEntityMap em]
-  (binding [*print-meta* true]
-    (prn-str em)))

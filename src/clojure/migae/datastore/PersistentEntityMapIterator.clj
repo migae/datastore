@@ -3,30 +3,6 @@
 (declare ->PersistentEntityMap)
 
 (deftype PersistentEntityMapIterator [query]
-  ;; public class IteratorSeq extends ASeq{
-  ;; public abstract class ASeq extends Obj implements ISeq, Sequential, List, Serializable, IHashEq {
-  ;; ISeq, Sequential, List, Serializable, IHashEq
-  ;; public class SeqIterator implements Iterator{
-  ;; java.util.List
-  ;; Cursor getCursor()
-  ;; java.util.List<Index>	getIndexList()
-
-  ;; clojure.lang.AMapEntry ; extends APersistentVector implements IMapEntry, extends Map.Entry
-  ;; clojure.lang.APersistentVector ; extends AFn
-  ;;     implements IPersistentVector, Iterable, List, RandomAccess, Comparable, Serializable, IHashEq
-
-  ;; clojure.lang.IFn ;extends Callable, Runnable
-
-  ;; clojure.lang.IMapEntry
-  ;; Object key();
-  ;; Object val();
-
-  ;; java.util.Map$Entry
-  ;; boolean	equals(Object o)
-  ;; K	getKey()
-  ;; V	getValue()
-  ;; int	hashCode()
-  ;; V	setValue(V value)
 
   java.lang.Iterable
   (iterator [this]
@@ -53,39 +29,43 @@
   ;;     ;;   (log/trace "emap-iter next" res)
   ;;     ;;   res)))
 
-  clojure.lang.ISeq ;; extends IPersistentCollection, extends Seqable
-  ;;;; Seqable interface
-  (seq [this]  ; specified in Seqable
-    (log/trace "PersistentEntityMapIterator.ISeq.seq")
-    this)
-  ;;;; IPersistentCollection interface
-  ;;int count();
-  (count [_]
-    ;; (log/trace "ISeq count")
-    (count query))
-  ;;IPersistentCollection IPersistentCollection.cons(Object o) - overridden by ISeq.cons
-  ;;IPersistentCollection IPersistentCollection.empty()
-  (empty [_] (log/trace "ISeq empty"))
-  ;;boolean IPersistentCollection.equiv(Object o);
-  (equiv [_ obj] (log/trace "ISeq equiv"))
-  ;;;; ISeq interface
-  ;;Object first();
-  (first [_]
-    (log/trace "ISeq first of" (type query))
-    (->PersistentEntityMap (first query)))
-  ;;ISeq next();
-  (next [_]
+  clojure.lang.ISeq ;; < IPersistentCollection (< Seqable)
+  (^Object
+    first [_]
+    ;; (log/trace "ISeq first of" (type query))
+    (let [r  (first query)
+          rm (->PersistentEntityMap r nil)]
+      ;; (log/trace "rm:" rm)
+      rm))
+  (^ISeq
+    next [_]
     (let [res (next query)]
-      (log/trace "ISeq next" (type res))
+      ;; (log/trace "ISeq next" (type res))
       (if (nil? res)
         nil
         (PersistentEntityMapIterator. res))))
-  ;;ISeq more();
-  (more [_] (log/trace "ISeq more"))
-  ;;ISeq cons(Object o);
-  (cons [_ obj] (log/trace "ISeq cons"))
-  ;; clojure.lang.IPersistentCollection
-  ;;int count()
+  (^ISeq
+    more [_] (log/trace "ISeq more"))
+  (^ISeq
+    cons [_ ^Object obj]
+    (log/trace "ISeq cons"))
+  ;;;; Seqable interface
+  (^ISeq
+    seq [this]  ; specified in Seqable
+    ;; (log/trace "PersistentEntityMapIterator.ISeq.seq")
+    this)
+  ;;;; IPersistentCollection interface
+  (^int
+    count [_]
+    ;; (log/trace "PersistentEntityMapIterator.count")
+    (count query))
+  ;; cons - overridden by ISeq
+  (^IPersistentCollection
+    empty [_]
+    (log/trace "PersistentEntityMapIterator.empty"))
+  (^boolean
+    equiv [_ ^Object obj]
+    (log/trace "PersistentEntityMapIterator.equiv"))
 
   clojure.lang.IPersistentVector ; extends Associative, Sequential, IPersistentStack, Reversible, Indexed
   ;; int length();

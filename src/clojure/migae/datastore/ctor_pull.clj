@@ -65,7 +65,7 @@
 (defn get-proper-emap
   [keychain & data]
   ;; precon: keychain has already been validated
-  (log/trace "get-proper-emap" keychain)
+  ;; (log/trace "get-proper-emap" keychain)
   (let [k (ekey/keychain-to-key keychain)
         e (.get (ds/datastore) k)]
 ;;               (catch EntityNotFoundException e nil))]

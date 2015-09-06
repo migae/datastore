@@ -151,7 +151,7 @@
   ;; FIXME: validate keychain only keylinks
   ([keychain]
   ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
-;;   (stack/print-cause-trace (throw (RuntimeException. "foo")) 99)
+  ;; (stack/print-cause-trace (throw (RuntimeException. "foo")) 99)
    (if (proper-keychain? keychain)
      (let [k (keyword-to-key (first keychain))
            root (KeyFactory$Builder. k)]
