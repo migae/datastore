@@ -89,10 +89,10 @@
 
 (deftest ^:keychain improper
   (testing "keychain literals 20"
-    (let [e1 (ds/entity-map! [:Foo])]
-      (log/trace "e1" (type e1) (.getMessage e1)))
+    (let [e1 (ds/entity-map! [:Foo] {})]
+      ;; (log/trace "e1" (type e1) (.getMessage e1)))
     ;; (let [e1 (ds/entity-map [:Foo/Bar :Baz] {})]
     ;;   (log/trace "e1" (ds/print e1)))
     ;; (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X] {:a 1 :b 2})]
     ;;   (log/trace "e1" (ds/print e1)))
-      ))
+      )))
