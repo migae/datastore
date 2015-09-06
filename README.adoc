@@ -500,3 +500,6 @@ $ lein repl  ;; runs dev/user.clj
 (ds-reset)   ;; reinitialize appengine datastore local test env
 (clojure.test/test-var #'test.ctor-local/hashmap-axioms)
 ----
+
+You can also use leiningen to run tests, but the repl is faster by
+orders of magnitude.
