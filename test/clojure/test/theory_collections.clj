@@ -105,6 +105,96 @@
   (testing "empty axiom 3: not-empty works on empty emaps"
     (let [e1 (ds/entity-map [:A/B] {})]
       (is (nil? (not-empty e1)))
-      (is (ds/emap? e2)) ;; FIXME:  entity-map?
+      (is (ds/emap? e1)) ;; FIXME:  entity-map?
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   merge theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:merge emap-seq-merge
+  (testing "clojure map api: merge map with an emap-seq"
+    (do ;; construct elements of kind :A
+      (ds/entity-map! [:A] {:a 1})
+      (ds/entity-map! [:A] {:b 2})
+      (ds/entity-map! [:A] {:c 3})
+      (ds/entity-map! [:A] {:d 4})
+      (ds/entity-map! [:A] {:d 4})           ; a dup
+      ;; now do a Kind query, yielding an emap-seq
+      (let [ems (ds/emaps?? [:A])
+            foo (do (log/trace "ems" ems)
+                    (log/trace "(type ems)" (type ems))
+                    (log/trace "(class ems)" (class ems))
+                    (is (seq? ems))
+                    (is (= (count ems) 5))
+                    )
+            ;; em (merge {} ems)]
+            em (into {} ems)]
+        (log/trace "em" em)
+        (doseq [em ems]
+          (log/trace "em" (ds/print em))))
+
+      (let [ems (ds/emaps?? [:A])
+            foo (do ;; (log/trace "ems" ems)
+                    (is (= (count ems) 5))
+                    )
+            ;;em1 {:as (merge {} ems)}
+            em2 {:bs ems}
+            em3 {:cs (merge (into #{} ems) {:x 9})}
+            ]
+        ;;(log/trace "em1" em1 (type em1))
+        (log/trace "em2" em2 (type em2))
+        (log/trace "em3" em3 (type em3))
+        (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
+        )))
+
+(deftest ^:merge merge-cljmap-emap
+  (testing "clojure map api: merge entity-map to clj-map"
+    (log/trace "test: clojure map api: merge-cljmap-emap")
+    (let [em1 (ds/entity-map! [:A/B] {:a 1 :b 2})]
+      ;; (log/trace "em1" em1)
+      (let [cljmap (merge {} em1)]
+        (log/trace "em1" em1 (class em1)))
+        ;; (log/trace "cljmap" cljmap (class cljmap))
+        ;; (is (map? em1))
+        ;; (is (ds/emap? em1))
+        ;; (is (map? cljmap))
+        ;; (should-fail (is (ds/emap? cljmap)))
+
+      (let [em2 (merge {:x 9} em1)]
+        (log/trace "em1" (ds/print em1))
+        (log/trace "em2" em2 (type em2))
+        )
+      )))
+
+(deftest ^:merge merge-emap-cljmap
+  (testing "clojure map api: merge entity-map to clj-map"
+    (log/trace "test: clojure map api: merge-cljmap-emap")
+    (let [em1 (ds/entity-map [:A/B] {:a 1})
+          em2 (ds/entity-map [:X/Y] {:b 2 :c 7})
+          foo (do
+                (log/trace "em1" (ds/print em1))
+                (log/trace "em2" (ds/print em2)))
+          ;; FIXME:  merge is broken
+          em3 (merge em2 {:foo "bar"}  em1)
+          ]
+      (log/trace "em1" (ds/print em1))
+      (log/trace "em3" (ds/keychain em3) (ds/print em3))
+      (log/trace "em3 type:" (type em3))
+      (is (not (= em1 em3)))
+;;      (is (ds/key= em1 em3))
+
+      (let [em4 (merge em3 {:d 27})]
+        (log/trace "em4" em4)
+        (is (not= em3 em4)))
+
+      (let [em5 (merge em3 {:c #{{:d 3}}})]
+        (log/trace "em5" em5)
+        )
+
+      ;; what if we want into to generate a new Entity?
+      ;; (let [em4a (into! em3 {:c 3})]
+      ;;   (log/trace "em4a" em4a)
+      ;;   ;; entity-map into mutates in place
+      ;;   (is (= em3 em4a)))
       )))
 
