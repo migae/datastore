@@ -490,14 +490,15 @@ dev/user.clj:
 [source,clojure]
 ----
 $ lein repl  ;; runs dev/user.clj
-(refresh)  ;; reloads changed test code only
-(clojure.test/run-tests 'test.ctor-local)
+(refresh-all)   ;; reload everything
+(clojure.test/run-tests 'test.ctor-local)  ;; run all tests in test/ctor_local.clj
+;;; edit test/ctor_local.clj ...
+(refresh)  ;; reload changed test/ctor_local.clj only
 (ds-reset)   ;; reinitialize appengine datastore local test env
 (clojure.test/test-var #'test.ctor-local/hashmap-axioms)
-;;; edit lib source
+;;; edit migae datastore lib source
 (refresh-all)    ;; reloads everything
-;; local datastore test env times out relatively rapidly, so...
-(ds-reset)   ;; reinitialize appengine datastore local test env
+(ds-reset)   ;; local datastore test env times out relatively rapidly, so reinitialize it
 (clojure.test/test-var #'test.ctor-local/hashmap-axioms)
 ----
 
