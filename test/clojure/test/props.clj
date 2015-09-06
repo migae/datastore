@@ -51,26 +51,26 @@
 
 (deftest ^:props props1
   (testing "properties 1"
-    (let [int_ (ds/entity-map [:Foo] {:a 1})
-          float_ (ds/entity-map [:Foo] {:a 1.0})
-          string_ (ds/entity-map [:Foo] {:a "Hello"})
-          bool_ (ds/entity-map [:Foo] {:a true})
+    (let [int_ (ds/entity-map! [:Foo] {:a 1})
+          float_ (ds/entity-map! [:Foo] {:a 1.0})
+          string_ (ds/entity-map! [:Foo] {:a "Hello"})
+          bool_ (ds/entity-map! [:Foo] {:a true})
 
           ;; keywords
-          map_ (ds/emap [:Foo] {:a {:b :c}})
-          vec_ (ds/emap [:Foo] {:a [:b :c]})
-          lst_ (ds/emap [:Foo] {:a '(:b :c)})
-          set_ (ds/emap [:Foo] {:a #{:b :c}})
+          map_ (ds/entity-map! [:Foo] {:a {:b :c}})
+          vec_ (ds/entity-map! [:Foo] {:a [:b :c]})
+          lst_ (ds/entity-map! [:Foo] {:a '(:b :c)})
+          set_ (ds/entity-map! [:Foo] {:a #{:b :c}})
 
           ;; symbols
-          map2 (ds/emap [:Foo] {:a {'b 'c}})
-          vec2 (ds/emap [:Foo] {:a ['b 'c]})
-          lst2 (ds/emap [:Foo] {:a '(b c)})
-          set2 (ds/emap [:Foo] {:a #{'b 'c}})
+          map2 (ds/entity-map! [:Foo] {:a {'b 'c}})
+          vec2 (ds/entity-map! [:Foo] {:a ['b 'c]})
+          lst2 (ds/entity-map! [:Foo] {:a '(b c)})
+          set2 (ds/entity-map! [:Foo] {:a #{'b 'c}})
           ;; FIXME: make nested quote work
-          ;; lst2 (ds/emap [:Foo] {:x '('b 'c)})
+          ;; lst2 (ds/entity-map! [:Foo] {:x '('b 'c)})
 
-          mix1 (ds/emap [:Foo] {:a {:b :c}
+          mix1 (ds/entity-map! [:Foo] {:a {:b :c}
                                   :b [1 2]
                                   :c '(foo bar)
                                   :d #{1 'x :y "z"}})
