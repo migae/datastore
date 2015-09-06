@@ -103,14 +103,14 @@
   [keylinks]
   (throw (IllegalArgumentException.
           (str "Every element of keylink vector "
-               (pr-str keylinks)
+               (clj/pr-str keylinks)
                " must be a keyword with namespace and name (e.g. :Foo/Bar)"))))
 
 (defn- throw-bad-keykind
   [keylinks]
   (throw (IllegalArgumentException.
           (str "Last element of keylink vector "
-               (pr-str keylinks)
+               (clj/pr-str keylinks)
                " must be a definite (e.g. :Foo/Bar) or indefinite (e.g. :Foo) keylink"))))
 
 (defn- emap-definite!!

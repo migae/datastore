@@ -25,6 +25,14 @@
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  map api
+;; hash-map, sorted-map, sorted-map-by
+;; assoc, dissoc, select-keys, merge, merge-with, zipmap
+;; get, contains?, find, keys, vals, map?
+;; key, val
+
+
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]
      (binding [clojure.test/report #(reset! report-type# (:type %))]
@@ -89,6 +97,92 @@
       (is (nil? (not-empty e1)))
       (is (ds/emap? e1)) ;; FIXME:  entity-map?
       )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   contains theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:contains contains-1
+  (testing "entity-map contains?"
+    (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2})]
+      (log/trace "em1" (pr-str em1))
+      (is (contains? em1 :a))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   find theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:find find-1
+  (testing "entity-map find"
+    (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2 :c 3 :d 4})]
+      (log/trace "em1" (pr-str em1))
+      (log/trace (find em1 :b))
+      (is (= (find (ds/entity-map [:A/B] {:a 1 :b 2 :c 3 :d 4}) :b) [:b 2]))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   get theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:get get-1
+  (testing "entity-map get"
+    (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2 :c 3 :d 4})]
+      (log/trace "em1" (pr-str em1))
+      (log/trace (get em1 :b))
+      (is (= (get (ds/entity-map [:A/B] {:a 1 :b 2 :c 3 :d 4}) :b) 2))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   select-key theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:selkeys select-keys-1
+  (testing "entity-map select-keys"
+    (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2 :c 3 :d 4})]
+      (log/trace "em1" (pr-str em1))
+      (log/trace (select-keys em1 [:a :c]))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   seq theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   conj theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:conj conj-1
+  (testing "entity-map conj"
+    (let [em1 (ds/entity-map [:Species/Felis_catus :Cat/Booger] {:name "Booger" :sex "F"})
+          em2 (conj em1 {:weight 5})]
+      (binding [*print-meta* true]
+        (log/trace "em1" (pr-str em1))
+        (log/trace "em1 type/class:" (type em1) (class em1))
+        (log/trace "em2" (pr-str em2)))
+        (log/trace "em2 type/class:" (type em2) (class em2))
+      ;; (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
+      ;; (log/trace "assoc! literal " (ds/assoc! (ds/entity-map! [:Species/Felis_catus :Cat/Booger]{})
+      ;;                                         :name "Niki" :weight 7))
+      ;; (log/trace "emap!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
+                          )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   assoc theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:assoc assoc-1
+  (testing "entity-map assoc"
+    (let [em1 (ds/entity-map [:Species/Felis_catus :Cat/Booger] {:sex "F"})
+          em2 (assoc em1 :weight 5)]
+      (binding [*print-meta* true]
+        (log/trace "em1" (pr-str em1))
+        (log/trace "em1 type/class:" (type em1) (class em1))
+        (log/trace "em2" (pr-str em2)))
+        (log/trace "em2 type/class:" (type em2) (class em2))
+      ;; (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
+      ;; (log/trace "assoc! literal " (ds/assoc! (ds/entity-map! [:Species/Felis_catus :Cat/Booger]{})
+      ;;                                         :name "Niki" :weight 7))
+      ;; (log/trace "emap!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   assoc theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   merge theorems
@@ -221,5 +315,21 @@
       ;;   (log/trace "em4a" em4a)
       ;;   ;; entity-map into mutates in place
       ;;   (is (= em3 em4a)))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   zipmap theorems
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:zipmap zipmap-1
+  (testing "entity-map zipmap"
+    (let [em1 (ds/entity-map [:A/B]
+                             (zipmap [:a :b :c :d]
+                                     [1 2 3 4]))]
+      (log/trace "em1" (pr-str em1))
+      (log/trace (get em1 :b))
+      (is (= (get (ds/entity-map [:A/B]
+                                 (zipmap [:a :b :c :d]
+                                         [1 2 3 4]))
+                  :b) 2))
       )))
 

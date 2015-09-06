@@ -30,10 +30,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (gen-interface
  :name migae.datastore.IPersistentEntityMap
- :extends [java.util.Map$Entry
+ :extends [;; java.util.Map$Entry
            clojure.lang.Indexed                  ; extends Counted
            clojure.lang.IFn
-           clojure.lang.IMapEntry
+           ;; clojure.lang.IMapEntry
            clojure.lang.IObj ;; extends IMeta
            clojure.lang.IPersistentMap
            ;; < Iterable, (Associative < (IPersistentCollection < Seqable, ILookup), Counted

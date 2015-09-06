@@ -1,5 +1,5 @@
 (ns migae.datastore
-  (:refer-clojure :exclude [get into name print reduce])
+  (:refer-clojure :exclude [get into name print println print-str pr-str reduce])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util
             Collection

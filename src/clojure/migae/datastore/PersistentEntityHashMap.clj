@@ -29,21 +29,21 @@
     em-iter))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   java.util.Map$Entry
-  (getKey [this]
-    ;; (log/trace "PersistentEntityHashMap getKey ")
-    k)
-  (getValue [_]
-    ;; (log/trace "HashMap getValue")
-    content)
-  (equals [_ o]
-    (log/trace "HashMap equals")
-    )
-  (hashCode [_]
-    (log/trace "HashMap hashCode")
-    )
-  (setValue [_ v]
-    (log/trace "HashMap setValue")
-    )
+  ;; (getKey [this]
+  ;;   ;; (log/trace "PersistentEntityHashMap getKey ")
+  ;;   k)
+  ;; (getValue [_]
+  ;;   ;; (log/trace "HashMap getValue")
+  ;;   content)
+  ;; (equals [_ o]
+  ;;   (log/trace "HashMap equals")
+  ;;   )
+  ;; (hashCode [_]
+  ;;   (log/trace "HashMap hashCode")
+  ;;   )
+  ;; (setValue [_ v]
+  ;;   (log/trace "HashMap setValue")
+  ;;   )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   clojure.lang.IFn
   ;; invoke, applyTo
@@ -63,12 +63,12 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   clojure.lang.IMapEntry
   ;; key, val
-  (clj/key [this]  ; -> Object
-    (log/trace "IMapEntry key")
-    )
-  (val [this]  ; -> Object
-    (log/trace "PersistentEntityHashMap.IMapEntry val")
-    content)
+  ;; (clj/key [this]  ; -> Object
+  ;;   (log/trace "IMapEntry key")
+  ;;   )
+  ;; (val [this]  ; -> Object
+  ;;   (log/trace "PersistentEntityHashMap.IMapEntry val")
+  ;;   content)
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   clojure.lang.IObj ;; extends IMeta
   ;; withMeta; meta

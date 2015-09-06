@@ -42,6 +42,24 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
+(deftest ^:coll emap-axiom1
+  (testing "emap axiom 1: an entity-map is a map"
+    (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
+      ;; (log/trace "e1 " (ds/print e1))
+      (is (coll? e1))
+      (is (map? e1))
+      (is (ds/emap? e1))
+      (is (= (keys e1) '(:a :b)))
+      (is (= (vals e1) '(1 2)))
+      )))
+
+(deftest ^:coll emap-axiom2
+  (testing "emap axiom 2: an entity-map is seqable"
+    (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
+      (is (not (seq? e1)))
+      (is (seq? (seq e1)))
+      )))
+
 (deftest ^:emap emap1
   (testing "emap key vector must not be empty"
     (try (ds/emap [] {})

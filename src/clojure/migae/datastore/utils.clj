@@ -1,17 +1,21 @@
 (in-ns 'migae.datastore)
 
 (defn print
-  [^migae.datastore.PersistentEntityMap em]
-  (do
-    (binding [*print-meta* true]
-      (prn-str em))))
-
-(defn eprn
-  [^migae.datastore.PersistentEntityMap em]
+  [em]
   (binding [*print-meta* true]
-    (prn-str em)))
+    (prn em)))
+
+(defn print-str
+  [em]
+  (binding [*print-meta* true]
+    (clj/pr-str em)))
+
+(defn println
+  [^migae.datastore.IPersistentEntityMap em]
+  (binding [*print-meta* true]
+    (prn em)))
 
 (defn dump
   [msg datum data]
   (binding [*print-meta* true]
-    (log/trace msg (pr-str datum) (pr-str data))))
+    (log/trace msg (pr datum) (pr data))))

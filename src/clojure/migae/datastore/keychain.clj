@@ -2,6 +2,7 @@
   (:import [com.google.appengine.api.datastore
             Entity
             Key KeyFactory KeyFactory$Builder]
+           [migae.datastore IPersistentEntityMap]
            )
   (:require [clojure.core :as clj]
             [clojure.stacktrace :as stack]
@@ -49,11 +50,6 @@
   "to-keychain converts a DS Key to a vector of Clojure keywords"
   class)
 
-;; (defmethod to-keychain migae.datastore.PersistentEntityMap
-;;   [^PersistentEntityMap em]
-;;   (log/trace "to-keychain PersistentEntityMap: " em)
-;;   (to-keychain (.getKey (.content em))))
-
 (defmethod to-keychain nil
   [x]
   nil)
@@ -79,6 +75,11 @@
   [^Entity e]
   ;; (log/trace "to-keychain Entity: " e)
   (to-keychain (.getKey e)))
+
+(defmethod to-keychain migae.datastore.IPersistentEntityMap
+  [^IPersistentEntityMap e]
+  (log/trace "to-keychain IPersistentEntityMap: " e)
+  (to-keychain (.getKey (.content e))))
 
 (defmethod to-keychain com.google.appengine.api.datastore.EmbeddedEntity
   [^com.google.appengine.api.datastore.EmbeddedEntity ee]
