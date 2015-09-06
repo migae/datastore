@@ -27,6 +27,7 @@ In no particular order:
 * <<co-ctors,co-construction>>
 * <<queries,queries>>
 * <<mutation,mutation>>
+* <<testing,testing>>
 
 == [[start]]getting started
 
@@ -104,12 +105,6 @@ user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datas
 You will sometimes get `NullPointerException No API environment is
 registered for this thread.` (the test env seems to timeout); if so,
 just run `user=> (ds-reset)`.
-
-== [[testing]]testing
-
-See the link:test/clojure/migae[tests] for lots of examples of how to use
-the library.  Be **be forewarned**, the test cases are in flux; some
-of them are outdated, and the api is changing.
 
 == [[types]]types
 
@@ -474,3 +469,34 @@ TODO: augmentation.  Maybe something like:
 Of course, there are various ways to accomplish this sort of thing
 using standard Clojure facilities, so we don't really need to define
 an "augmentation" op.
+
+
+== [[testing]] testing
+
+See the link:/test/clojure/tests[tests] for lots of examples of how to use
+the library.  Be **be forewarned**, the test cases are in flux; some
+of them are outdated, and the api is changing.
+
+There are lots of ways to set up a dev/test environement.  Here's how
+I've been testing using the repl.  I use `dev/user.clj` to
+initialize/configure my repl.
+
+dev/user.clj:
+----
+(require '[clojure.test :refer [run-tests test-var]])  ;; :all
+(require '[clojure.tools.namespace.repl :refer [refresh refresh-all]])
+----
+
+[source,clojure]
+----
+$ lein repl  ;; runs dev/user.clj
+(refresh)  ;; reloads changed test code only
+(clojure.test/run-tests 'test.ctor-local)
+(ds-reset)   ;; reinitialize appengine datastore local test env
+(clojure.test/test-var #'test.ctor-local/hashmap-axioms)
+;;; edit lib source
+(refresh-all)    ;; reloads everything
+;; local datastore test env times out relatively rapidly, so...
+(ds-reset)   ;; reinitialize appengine datastore local test env
+(clojure.test/test-var #'test.ctor-local/hashmap-axioms)
+----
