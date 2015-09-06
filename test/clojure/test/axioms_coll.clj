@@ -103,9 +103,8 @@
 
 (deftest ^:coll empty-axiom3
   (testing "empty axiom 3: not-empty works on empty emaps"
-    (let [e1 (ds/entity-map [:A/B] {})
-          e2 (not-empty e1)]
-      (is (nil? e2))
-      (is (ds/emap? e2))
+    (let [e1 (ds/entity-map [:A/B] {})]
+      (is (nil? (not-empty e1)))
+      (is (ds/emap? e2)) ;; FIXME:  entity-map?
       )))
 
