@@ -36,7 +36,7 @@
     (do
       (.setUp helper)
       ;; store some entities
-      (ds/entity-map! [:A/B] {:em 1 :a "foo"})
+      (ds/entity-map! [:A/B] {:em 1 :a 2})
       (ds/entity-map! [:A/B :A/C] {:em 2 :a "bar"})
       (ds/entity-map! [:A/B :A/D :A/X] {:em 3})
       (ds/entity-map! [:A/B :A/C :X/Y] {:em 4})
@@ -50,8 +50,8 @@
 ;; (ApiProxy/setEnvironmentForCurrentThread environment)
 ;; (ApiProxy/setDelegate delegate))))
 
-                                        ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
-(use-fixtures :each ds-fixture)
+;;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
+(use-fixtures :once ds-fixture)
 
 (deftest ^:ctor-pull ctor-pull-fail
   (testing "pull constructor: entity not found"
@@ -62,18 +62,19 @@
 (deftest ^:ctor-pull ctor-pull
   (testing "pull ctor"
     (let [em1 (ds/entity-map* [:A/B])        ; co-ctor
-          em2 (ds/entity-map* [:A/B :C/D])
+          em2 (ds/entity-map* [:A/B :A/C])
           ]
       (log/trace "em1:" (ds/print em1))
       (log/trace "em2:" (ds/print em2))
-      (is (= (:a em1) 1))         ; previously fetched emap unaffected
+      (is (= (:a em1) 2))         ; previously fetched emap unaffected
       (is (= (:b em2) nil))
       )))
 
 (deftest ^:ctor-pull ctor-pull-all
   (testing "pull ctor"
     (let [ems (ds/entity-map* [])]
-      (log/trace "ems count:" (count ems) (type ems))
+      (log/trace "ems count:" (count ems))
+      (log/trace "ems type:" (type ems))
       (doseq [em ems]
         (log/trace "em:" (ds/keychain em) " kind:" (ds/kind em))
       ))))

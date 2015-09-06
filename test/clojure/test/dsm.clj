@@ -104,9 +104,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:ds kvw-mapentry
   (testing "entity as key-valued map entry"
-    (let [em1 (ds/emap!! [:A/B] {:a 1})
-          em2 (ds/emap!! [:A/C] {:a 1 :b 2})
-          em3 (ds/emap!! [:A/B :C/D] {:a 1 :b 2 :c "foo"})]
+    (let [em1 (ds/entity-map! [:A/B] {:a 1})
+          em2 (ds/entity-map! [:A/C] {:a 1 :b 2})
+          em3 (ds/entity-map! [:A/B :C/D] {:a 1 :b 2 :c "foo"})]
       (log/trace "em1:" (ds/print em1))
       (log/trace "(key em1)" (key em1))
       (log/trace "(val em1)" (val em1))
@@ -129,23 +129,30 @@
       (log/trace "(vals em3)" (pr-str (vals em3)))
 
       (let [cm (into {} em3)            ; copy into {} loses metadata!
-            cm2 (into ^migae.datastore.PersistentEntityMap {} em3)]
+            cm2 (into (ds/entity-map [:A/B] {}) em3)
+                 ;; ^migae.datastore.PersistentEntityMap {} em3)
+            ]
         (log/trace "")
         (log/trace "cm:" (ds/print cm))
         (log/trace "meta cm:" (meta cm))
         (log/trace "type cm:" (type cm))
         (log/trace "class cm:" (class cm))
-        (log/trace "(key cm): " (key cm))
-        ;; (log/trace "(val cm)" (pr-str (val cm)))
         (log/trace "(keys cm)" (keys cm))
-        (log/trace "(vals cm)" (pr-str (vals cm))))
-      )))
+        (log/trace "(vals cm)" (pr-str (vals cm)))
+
+        (log/trace "type cm2:" (type cm2))
+        (log/trace "class cm2:" (class cm2))
+        (log/trace "(key cm2): " (key cm2))
+        (log/trace "(val cm2)" (pr-str (val cm2)))
+        (log/trace "(keys cm2): " (keys cm2))
+        (log/trace "(vals cm2)" (pr-str (vals cm2)))
+      ))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (deftest ^:ds mapentry
 ;;   (testing "entity as mapentry"
-;;     (let [e (ds/emap!! [:Foo/Bar] {:a 1})]
+;;     (let [e (ds/entity-map!! [:Foo/Bar] {:a 1})]
 ;;       (log/trace "contains? [:Foo/Bar]" (contains? @ds/DSMap [:Foo/Bar]))
 ;;       (log/trace "contains? [:Foo/Baz]" (contains? @ds/DSMap [:Foo/Baz]))
 ;;     )))

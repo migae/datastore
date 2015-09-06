@@ -32,11 +32,6 @@
      (testing "should fail"
        (is (= @report-type# :fail )))))
 
-(defn dump
-  [msg datum & data]
-  (binding [*print-meta* true]
-    (log/trace msg (pr-str datum) (pr-str data))))
-
 ;  (:require [migae.migae-datastore.PersistentEntityMap])
   ;; (:use clojure.test
   ;;       [migae.migae-datastore :as ds]))

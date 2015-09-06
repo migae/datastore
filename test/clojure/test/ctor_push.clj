@@ -102,9 +102,9 @@
       (let [m {:a 1}
             em1 (ds/entity-map! [:A/B :Foo] m)
             em2 (ds/entity-map! [:A/B :Foo] m)]
-        (log/trace "em1" (ds/print em1))
-        (log/trace "em1 kind:" (ds/kind em1))
-        (log/trace "em1 identifier:" (ds/identifier em1))
+        ;; (log/trace "em1" (ds/print em1))
+        ;; (log/trace "em1 kind:" (ds/kind em1))
+        ;; (log/trace "em1 identifier:" (ds/identifier em1))
         (is (= (ds/kind em1) :Foo))
         (is (= (ds/kind em1) (ds/kind em2)))
         (is (= (val em1) (val em2)))
