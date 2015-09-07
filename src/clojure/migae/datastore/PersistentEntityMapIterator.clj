@@ -46,8 +46,9 @@
         (PersistentEntityMapIterator. res))))
   (^ISeq
     more [_] (log/trace "ISeq more"))
-  (^ISeq
-    cons [_ ^Object obj]
+  (^ISeq ;; clojure.lang.IPersistentVector
+    cons  ;; -> ^ISeq ;;
+    [this ^Object obj]
     (log/trace "ISeq cons"))
   ;;;; Seqable interface
   (^ISeq

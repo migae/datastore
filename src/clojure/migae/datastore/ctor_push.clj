@@ -46,6 +46,7 @@
 (declare into-ds!)
 ;; FIXME:  replace emap! with entity-map!
 ;; TODO: support nil data map, e.g. (entity-map! [:A/B])
+
 (defn entity-map!
   ([keychain]
    (into-ds! keychain))
@@ -68,20 +69,37 @@
     (put-proper-emap :keychain keychain :propmap em)
     :else
     (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
-  ([force keychain em]
-  "Forcibly put entity-map to datastore, replacing anything there"
+  ([mode keychain em]
+  "Modally put entity-map to datastore.  Modes: :force, :multi"
   ;; (log/trace "force into-ds! " force keychain em)
   ;; (if (clj/empty? keychain)
   ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-  (if (not= force :force)
-    (throw (IllegalArgumentException. force)))
+  ;; (if (not= force :force)
+  ;;   (throw (IllegalArgumentException. force)))
   (cond
-    (ekey/improper-keychain? keychain)
-    (put-kinded-emap keychain em)
-    (ekey/proper-keychain? keychain)
-    (put-proper-emap :keychain keychain :propmap em :force true)
+    (= mode :force)
+    (cond
+      (ekey/improper-keychain? keychain)
+      (put-kinded-emap keychain em)
+      (ekey/proper-keychain? keychain)
+      (put-proper-emap :keychain keychain :propmap em :force true)
+      :else
+      (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
+    (= mode :multi)
+    (do
+      ;; (log/trace "entity-map! :multi processing...")
+      (if (ekey/improper-keychain? keychain)
+        (if (vector? em)
+          (do
+            (for [emap em]
+              (do
+                ;; (log/trace "ctoring em" (print-str emap))
+                (entity-map! keychain emap))))
+          (throw (IllegalArgumentException. ":multi ctor requires vector of maps")))
+        (throw (IllegalArgumentException. ":multi ctor requires improper keychain"))))
     :else
-    (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))))
+      (throw (IllegalArgumentException. (str "Invalid mode keyword:" force))))
+    ))
 
 
 ;;   ([keychain] ;; erase: replace with empty entity

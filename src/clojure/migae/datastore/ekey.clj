@@ -53,7 +53,7 @@
 (defmethod identifier migae.datastore.PersistentEntityHashMap
   [^migae.datastore.PersistentEntityHashMap em]
   ;; (log/trace "PersistentEntityHashMap.identifier")
-  (let [fob (dogtag (key em))
+  (let [fob (dogtag (.k em))
         nm (read-string (clj/name fob))]
     nm))
 (defmethod identifier clojure.lang.PersistentVector

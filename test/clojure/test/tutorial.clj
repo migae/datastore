@@ -84,15 +84,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:api emap-predicates
   (testing "emap predicates"
-    (let [e (ds/entity-map! [:Foo/bar])]
+    (let [e (ds/entity-map! [:Foo/bar] {})]
       (log/trace "test: emap-predicates")
-      (log/trace "entity: " (.entity e))
+      (log/trace "entity: " (.content e))
       (log/trace "(ds/emap? e): " (ds/emap? e))
-      (log/trace "(ds/entity? (.entity e)): " (ds/entity? (.entity e)))
+      (log/trace "(ds/entity? (.content e)): " (ds/entity? (.content e)))
       (log/trace "(empty? e): " (empty? e))
       (log/trace "(ds/keychain? (ds/keychain e)): " (ds/keychain? (ds/keychain e)))
       (is (ds/emap? e))
-      (is (ds/entity? (.entity e)))
+      (is (ds/entity? (.content e)))
       (is (ds/keychain? (ds/keychain e)))
       (is (empty? e))
       )))
@@ -208,7 +208,7 @@
   (testing "clojure map api: entity with 2 properties"
     (let [e (ds/entity-map! [:Foo/bar] {:a 1 :b 2})]
       (log/trace "test: clojure map api")
-      (log/trace "entity: " (.entity e))
+      (log/trace "entity: " (.content e))
       (log/trace "e: " e)
       (log/trace "e type: " (type e))
       (log/trace "(e :a) " (e :a))
@@ -259,7 +259,7 @@
     (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b [1 2 3]})]
       (log/trace "test: emap-embedded-vec")
       (log/trace "e: " e)
-      (log/trace "entity: " (.entity e))
+      (log/trace "entity: " (.content e))
       (log/trace "(e :b): " (e :b))
       (log/trace "(e :b): " (e :b))
       (log/trace "(seq e): " (seq e)))))
@@ -269,7 +269,7 @@
     (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b #{1 2 3}})]
       (log/trace "test: emap-embedded-set")
       (log/trace "e: " e)
-      (log/trace "entity: " (.entity e))
+      (log/trace "entity: " (.content e))
       (log/trace "(e :b) dump: " (e :b) (type (e :b)))
       (log/trace "(seq e): " (seq e)))))
 
@@ -292,7 +292,7 @@
   (testing "clojure api: query"
     (let [e (ds/entity-map! [:Foo/d3] {:a 1 :b 2})]
       (log/trace e)
-      (log/trace (.entity e))
+      (log/trace (.content e))
       (log/trace (type e))
       (log/trace "associative? " (associative? e))
       (log/trace "map? " (map? e))
@@ -306,7 +306,7 @@
       (is (ds/emap? e))
       (is (= (type e) migae.datastore.PersistentEntityMap))
       (is (= (type (:migae/key (meta e))) clojure.lang.PersistentVector))
-      (is (= (type (.getKey (.entity e))) com.google.appengine.api.datastore.Key))
+      (is (= (type (.getKey (.content e))) com.google.appengine.api.datastore.Key))
     )))
 
 ;; ################################################################

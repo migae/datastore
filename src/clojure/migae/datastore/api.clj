@@ -349,10 +349,6 @@
 
 ;; Modalities:  ! necessarily, ? possibly (exception on not found)
 ;; e.g.
-;;   emap?! = find necessarily - return if found (ignoring props arg)
-;;   else create, i.e. either find what's already there or "find"
-;;   what's passed as props arg.
-
 ;;   emap?? = find possibly - return if found (ignoring props arg) else throw exception
 ;;
 ;;
@@ -612,14 +608,14 @@
   [keylinks maps]
   (log/trace "")
   (log/trace "emaps?!" keylinks maps)
-  (if (keylink? (last keylinks))
-    (throw (IllegalArgumentException. "emaps?! keylinks must end in a Kind keyword (e.g. :Foo); try emap!!"))
+  (if (ekey/improper-keychain? keylinks)
     (if (map? maps)
       (emap?! keylinks maps)
       (doseq [emap maps]
         (do
           (emap?! keylinks emap))))
-      ))
+    (throw (IllegalArgumentException. "emaps?! keylinks must end in a Kind keyword (e.g. :Foo); try emap!!"))
+    ))
 
 
 (defmacro emaps!

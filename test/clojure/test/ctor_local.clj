@@ -111,10 +111,10 @@
       (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
       (log/trace "em1 keychain:" (ds/keychain em1))
       (log/trace "em1 keychain type:" (type (ds/keychain em1)))
-      (log/trace "em1 key:" (key em1))
-      (log/trace "em1 key type:" (type (key em1)))
-      (log/trace "em1 content:" (val em1))
-      (log/trace "em1 content type:" (type (val em1)))
+;; FIXME      (log/trace "em1 key:" (key em1))
+;; FIXME      (log/trace "em1 key type:" (type (key em1)))
+;; FIXME      (log/trace "em1 content:" (val em1))
+;; FIXME      (log/trace "em1 content type:" (type (val em1)))
       (is (ds/entity-map? em1))
       )))
 
@@ -128,7 +128,7 @@
       (log/trace "em1" (ds/print em1))
       (log/trace "em1 type:" (type em1))
       (log/trace "em1 kind:" (ds/kind em1))
-      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+;; FIXME      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
       (log/trace "em1 keychain:" (.k em1))
       (log/trace "em1 keychain type:" (type (.k em1)))
       (log/trace "em1 content:" (.content em1))
@@ -143,8 +143,8 @@
   (testing "entity-map ctor2"
     (let [em1 (ds/entity-map [:A/B :C/D] {:a 1 :b 2})]
       (is (ds/entity-map? em1))
-      (is (= (key em1) [:A/B :C/D]))
-      (is (= (val em1) {:a 1 :b 2}))
+;; FIXME      (is (= (key em1) [:A/B :C/D]))
+;; FIXME      (is (= (val em1) {:a 1 :b 2}))
 ;; FIXME:  keys and vals should not include :migae/keychain?
       (is (= (keys em1) [:a :b :migae/keychain]))
       (is (= (vals em1) [1 2 [:A/B :C/D]]))

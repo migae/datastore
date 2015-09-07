@@ -138,7 +138,7 @@
      (do ;; (log/trace "mode " arg1 " keychain: " arg2)
          (get-ds arg1 arg2))
      ;; else keychain
-     (if (ekey/keychain? arg1)
+     (if (ekey/improper-keychain? arg1)
        (get-ds arg1 arg2))))
   ;; modal keychain + propmap filters
   ([arg1 arg2 arg3]
@@ -201,6 +201,9 @@
         (apply find-definite-necessarily keylinks propmap))
     (throw-bad-keylinks keylinks))))
 
+;;   emap?! = find necessarily - return if found (ignoring props arg)
+;;   else create, i.e. either find what's already there or "find"
+;;   what's passed as props arg.
 (defn emap?!
   [keylinks & propmap]
   (log/trace "emap?!" keylinks propmap)

@@ -200,7 +200,10 @@
     (log/trace "merge em1 em3: " (ds/print-str (merge em1 em3)))
     (log/trace "merge em1 em4: " (ds/print-str (merge em1 em4)))
     (log/trace "merge em1 {:x 9}: " (ds/print-str (merge em1 {:x 9})))
+    ;; merging into IPersistentMap sheds keychain:
     (log/trace "merge {}  em1: " (ds/print-str (merge {} em1)))
+    ;; to retain keychain info:
+    (log/trace "merge {}  em1: " (ds/print-str (merge {:migae/keychain (ds/keychain em1)} em1)))
     ))
 
 (deftest ^:merge merge-1
@@ -229,6 +232,18 @@
                                (ds/entity-map [:X/Y] {:b 1})))
            [:A/B])
       )))
+
+(deftest ^:merge merge-4
+  (testing "merge 4: merging em into plain map loses key"
+    (is (= (merge {} (ds/entity-map [:X/Y] {:b 1})))
+        ^{:migae/keychain [:A/B]} {:b 1})
+    (is (= (type (merge {} (ds/entity-map [:X/Y] {:b 1})))
+           clojure.lang.PersistentArrayMap))
+    (is (= (merge {:a 1} (ds/entity-map [:X/Y] {:b 1})))
+        ^{:migae/keychain [:A/B]} {:a 1 :b 1})
+    (is (= (type (merge {:a 1} (ds/entity-map [:X/Y] {:b 1})))
+           clojure.lang.PersistentArrayMap))
+    ))
 
 ;; (deftest ^:merge emap-merge-4
 ;;   (testing "merge map with an emap-seq"

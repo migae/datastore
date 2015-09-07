@@ -181,7 +181,7 @@
           (PersistentEntityMap. new-entity nil)))
       (= (type o) clojure.lang.PersistentArrayMap)
       (do
-        ;; (log/trace "cons PersistentArrayMap to emap")
+        (log/trace "cons PersistentArrayMap to emap")
         (let [newe (.clone content)
               newm (clj/into {} em-meta)]
           (doseq [[k v] o]
@@ -236,6 +236,7 @@
                                  {prop val}))))
           k (ekey/to-keychain content)
           res (with-meta emap {:migae/keychain k})
+          ;; res (clj/into r {:migae/keychain k})
           ]
       ;; (log/trace "seq result:" #_(meta res) (type res) res)
       (seq res)))

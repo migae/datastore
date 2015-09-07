@@ -80,6 +80,10 @@
           em1a (ds/entity-map* [:A/B] {})
           em2  (ds/entity-map! :force [:A/B] {:a 2})
           em2a (ds/entity-map* [:A/B] {})
+    ;; (ds/entity-map! :force [:Foo/Bar] {:a 1})
+    ;; (ds/entity-map! :force  [:A/A] {:a 1})
+    ;; (ds/entity-map! :force  [:A/B] {:a 1})
+    ;; (ds/entity-map! :force  [:A/C] {:a 1})
           ]
       (log/trace "em1:" (ds/print em1))
       (log/trace "em1a:" (ds/print em1a))
@@ -107,10 +111,59 @@
         ;; (log/trace "em1 identifier:" (ds/identifier em1))
         (is (= (ds/kind em1) :Foo))
         (is (= (ds/kind em1) (ds/kind em2)))
-        (is (= (val em1) (val em2)))
+;; FIXME        (is (= (val em1) (val em2)))
         (is (not= (ds/identifier em1) (ds/identifier em2)))
         )))
 
+(deftest ^:ctor ctor-push-multi
+  (testing "construct multiple emaps in one go"
+    (let [ems (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])]
+      (log/trace "ems:" ems)
+      (doseq [em ems]
+        (log/trace (ds/print-str em)))
+      )))
 
+    ;; (ds/entity-map! :multi [:A/B :Foo] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:Bar] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/A :A] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/A :B] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/A :C] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:B] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/B :A] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/B :B] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/B :C] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:C] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/C :A] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/C :B] [{:a 1} {:a 2} {:a 3}])
+    ;; (ds/entity-map! :multi [:A/C :C] [{:a 1} {:a 2} {:a 3}])
+    ;; ))
 
+    ;; preferred syntax: (filter <keypred>? <valpred>?  @ds/DSMap)
+    ;; e.g.   (filter [:Foo] @ds/DSMap)
 
+    ;; (let [es (filter #(= (ds/kind %) :Foo)  @ds/DSMap)]
+    ;;   (log/trace "filtered by kind:")
+    ;;   (doseq [e es]
+    ;;     (log/trace (ds/print e)))
+    ;;   )
+
+    ;; (let [es (ds/filter [:Foo])]
+    ;;   (log/trace "filtered on key:")
+    ;;   (doseq [e es]
+    ;;     (log/trace (ds/print e)))
+    ;;   )
+
+;; FIXME: kindless queries cannot filter on properties
+    ;; (let [es (ds/filter [] {:a 1})]
+    ;;   (log/trace "filtered on val:")
+    ;;   (doseq [e es]
+    ;;     (log/trace (ds/print e)))
+    ;;   )
+
+    ;; (let [es1 (ds/filter [:Foo] {:a 1})
+    ;;       es2 (ds/filter [:Foo] {:a '(> 1)})]
+    ;;   (log/trace "filtered on key and val:")
+    ;;   (doseq [e es2]
+    ;;     (log/trace (ds/print e)))
+    ;;   )
