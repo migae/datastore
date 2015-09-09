@@ -1,0 +1,188 @@
+== Roadmap
+
+=== EDN syntax
+
+[source,clojure]
+----
+^{:type IPersistentEntityMap, :migae/keychain[:A/B]} {:a 1}
+----
+
+* enhance ctors/co-ctors to work with edn
+* implement edn emitter, e.g. `entity-edn`, `to-edn`, or the like
+
+=== ctors
+
+* modal keywords:  `:replace, :transaction, :into, :merge, :conj` etc.
+* keyword `:replace` - use `:!' instead?
+* pull ctor `entity-map*` - default to homomorphisms, support `:iso` to force isomorphic matches
+
+=== pull ctor patterns
+
+i.e. query filters.
+
+Operators: GAE query filters support `=, not=, >, >=, <, <=,` and
+`in`.  We can easily support these using metadata syntax.  For `in`,
+use `some`.
+
+==== key filters
+
+E.g. fetch entities with kind :Person whose key is greater than some k K:
+
+[source,java]
+----
+Filter keyFilter =
+  new FilterPredicate(Entity.KEY_RESERVED_PROPERTY,
+                      FilterOperator.GREATER_THAN,
+                      K)
+Query q =  new Query("Person").setFilter(keyFilter);
+----
+
+* improper keychain always interpreted as a kind query
+* prefix of improper keychain may be: ancestor (default), parent, or part of filter expression
+
+[source,clojure]
+----
+(entity-map* ^>[:A/B])  ;; entities with key > [:A/B]
+(entity-map* ^>[:A/B :Person])  ;; :Person kinded entitys with key > [:A/B]
+(entity-map* [:A/B :Person])  ;; default: ancestor query, all :Person ems with ancestor [:A/B]
+(entity-map* :parent [:A/B :Person])  ;; parent query: all :Person ems with parent [:A/B]
+----
+
+==== property filters
+
+==== inequality filters
+
+Metadata syntax like `^>{:a 3}` (meaning all :a vals > 3) applies to
+the entire map.  But since the datastore restricts inequality filters
+to a single property, this is ok.
+
+[source,clojure]
+----
+(entity-map* k ^>{:a 3}) ;;  #(> % 3) mapped over values of :a
+(entity-map* k ^<={:a 9}) ;;  #(<= % 9) mapped over values of :a
+(entity-map* k ^some{:a [1 2 3]}) ;; for each :a value v, evaluate `(some [1 2 3] v)`.
+----
+
+For multiple filters on one property, we obviously need multiple
+specs.  Filters can be combined using `and`, `or`, and `of` (?) so we
+need some way to express such combinations as well.
+
+Something like:
+
+[source,clojure]
+----
+(entity-map* k [^>{:a 3} ^<={:a 9}]) ;; vector means and?
+(entity-map* k #{^>{:a 9} ^<={:a 3}}) ;; set means or?
+(entity-map* k #{ [^>{:a 3} ^<{:a 9}]
+	          [^>{:a 23} ^<{:a 27}]}) ;; (:a > 3 AND :a < 9) OR (:a > 23 AND :a < 27)
+;; or, since only one prop allowed, only mention it once:
+(entity-map* k {:a #{[^>3 ^<9] [^>23 ^<29]}}) ;; BROKEN - no metadata on numbers!
+(entity-map* k {:a #{[> 3 < 9] [> 23 < 29]}}) ;; legal; defaults to inequality query
+(entity-map* k ^={:a #{[> 3 < 9] [> 23 < 29]}}) ;; explicit equality filter; see below
+----
+
+OOPS!  That won't work - you cannot put metadata on numbers!
+
+Maybe something like `(entity-map* k {:a ^:? #{[> 3 < 9] [> 23 <
+29]}})`.  But this is getting pretty unwieldy; maybe a good ol'
+keyword like `:filter` is best: `(entity-map* :filter k {:a #{[> 3 < 9] [> 23 <
+29]}})`.  But that doesn't resolve the ambiguity.
+
+The problem to be solved here is that we don't have a way to
+distinguish this from an exact match filter, which finds entities
+whose :a value is exactly `#{[> 3 < 9] [> 23 < 29]}`.  Maybe put some
+metadata on the set expression to indicate it is not an equality
+filter.  Or, use ^= for equality filters, even though it is not needed
+to express the filter logic, only to disambiguate.
+
+==== equality filters
+
+We don't need to use metadata syntax to express equality filters; we
+can just specify the maps.  However, in order to distinguish equality
+from inequality filters, we need to mark everything explicitly.
+
+[source,clojure]
+----
+(entity-map* k ^={:a 1}) ;; homomorphisms: entities containing [:a 1] entry
+(entity-map* :iso k ^={:a 1}) ;; isomorphisms: entities matching {:a 1} exactly
+;; or
+(entity-map* k ^=={:a 1}) ;; `==` means isomorphism: entities matching {:a 1} exactly
+----
+
+Equality filters on multiple fields are allowed, so in this case we
+may need to mention each field explicitly.
+
+==== set membership
+
+For the Datastore IN filter we use `clojure.core/some`:
+
+[source,clojure]
+----
+(entity-map* k ^some{:a [1 2 3]}) ;; for each :a value v, evaluate `(some [1 2 3] v)`.
+----
+
+
+===== rejected syntax
+
+The problem with using functions is that we cannot validate them.  A
+  function can express any predicate but we need to be able to extract
+  a valid filter for querying against the datastore before we can
+  apply the full predicate.  So we need to either quote the form or
+  implement a macro of some kind:
+
+[source,clojure]
+----
+(entity-map* k {:a #(> % 1)}) ;; value at :a > 1
+(entity-map* k {:a '(> % 1)})
+(entity-map* k {:a (migae-filter >  1)}) ;; yech
+(entity-map* k {:a '(odd? %)}) ;; convert to: fetch all, then filter with #(odd %)
+----
+
+What about, e.g. all odd values between m and n?  We need a syntactic
+means of marking the expression to be used as a property filter.  Use metadata?
+
+[source,clojure]
+----
+(entity-map* k ^{:filter '>}[:a 3])
+(entity-map* k '(odd? ^>{:a 3})) ;; ????
+----
+
+With `^>{:a 3}` we can check metadata to find the "basic" filter
+predicate to use in querying the datastore.  In the above example, run
+the filter to get a list of results, then map over them with odd?
+
+==== sort order
+
+
+
+=== Mutation
+
+* support mode tags :into, :merge, etc.
+
+[source,clojure]
+----
+(def em (entity-map! [:A/B] {:a 1}))
+(entity-map! :into [:A/B] {:x 9}) ;; => {:a 1, :x 9} saved to [:A/B] entity
+(entity-map! :into [:A/B] {:a 9}) ;; => update: {:a 9} saved to [:A/B] entity
+(entity-map! :aug [:A/B] {:a 9}) ;; => augment: {:a [1 9]} saved to [:A/B] entity
+(entity-map! :replace :into [:A/B] {:x 9}) ;; avoid EntityNotFoundException
+(entity-map! :transaction :into [:A/B] {:x 9}) ;;
+----
+
+=== Schema support
+
+* associate e.g. Prismatic schema specification with kind keyword
+* postfix '?' on kind keyword means "validate against schema"; e.g.
+* ctor mode keyword `:iso` checks for isomorphism against schema; default is homomorphism
+
+[source,clojure]
+----
+(entity-map [:A?/B] {:x 9}) ;; validate {:x 9} against :A schema
+----
+
+=== Transactions
+
+* `with-transaction`
+* ctor mode key `:transaction`
+
+=== GAE Namespaces
