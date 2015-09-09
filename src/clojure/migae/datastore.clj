@@ -71,7 +71,7 @@
 (load "datastore/PersistentEntityMap")
 (load "datastore/PersistentEntityHashMap")
 (load "datastore/utils")
-(load "datastore/ctor_common")
+(load "datastore/ctor_local")
 (load "datastore/hashmap/adapter")
 (load "datastore/predicates")
 (load "datastore/ctor_push")

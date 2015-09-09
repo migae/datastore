@@ -35,7 +35,19 @@
   :dependencies [[org.clojure/clojure "1.7.0"]  ;;  "1.8.0-master-SNAPSHOT"]
                  [org.clojure/tools.reader "0.8.16"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [com.google.appengine/appengine-api-1.0-sdk "1.9.25"]
+                 [com.google.appengine/appengine-api-1.0-sdk "1.9.26"]
+                 [com.google.appengine.tools/appengine-mapreduce "0.8.5"
+                  :exclusions [com.google.appengine/appengine-api-1.0-sdk
+                               com.google.appengine.tools/appengine-gcs-client
+                               ;; com.google.appengine.tools/appengine-pipeline
+                               com.google.guava/guava
+                               it.unimi.dsi/fastutil
+                               com.google.api-client/google-api-client
+                               com.google.api-client/google-api-client-appengine
+                               com.google.http-client/google-http-client-jackson2
+                               com.fasterxml.jackson.core/jackson-databind
+                               com.fasterxml.jackson.core/jackson-core
+                               ]]
                  [log4j "1.2.17" :exclusions [javax.mail/mail
                                               javax.jms/jms
                                               com.sun.jdmk/jmxtools
