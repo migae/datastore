@@ -141,9 +141,9 @@
     (if (= k :migae/keychain)
       (ekey/to-keychain content)
       (let [prop (get-val-clj (subs (str k) 1))]
-        ;; (log/trace "prop:" prop)
         (if-let [v  (.getProperty content prop)]
-          (get-val-clj v)
+          (do (log/trace "prop:" prop ", val:" v)
+              (get-val-clj v))
           nil))))
   (valAt [_ k not-found]  ; -> Object
     (log/trace "valAt w/notfound: " k)
@@ -396,13 +396,3 @@
     (PersistentEntityMap. (.next query) nil))
   ;; (remove  [this])
   )
-
-;; ;; (load "datastore/adapter")
-;; ;; (load "datastore/ctor_common")
-;; (load "datastore/predicates")
-;; (load "datastore/ctor_push")
-;; (load "datastore/query")
-;; (load "datastore/ctor_pull")
-;; ;;(load "datastore/ekey")
-;; (load "datastore/dsmap")
-;; (load "datastore/api")
