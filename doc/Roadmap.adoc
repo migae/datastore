@@ -1,6 +1,26 @@
-== Roadmap
+= Roadmap
 
-=== EDN syntax
+In no particular order:
+
+* <<edn,EDN syntax>>
+* <<ctors,ctors>>
+** <<entity-tree,entity-tree ctor>>
+* <<filters,filters (pull ctor patterns)>>
+** <<keys,key filters>>
+** <<properties,property filters>>
+*** <<inequality,inequalities>>
+*** <<equality,equalities>>
+*** <<membership,set membership>>
+*** <<sorting,sorting>>
+* <<mutation,mutation>>
+* <<validation,validation>>
+** <<values,value types>>
+** <<schema,schema support>>
+* <<transactions,transactions>>
+* <<namespaces,namespaces>>
+* <<bulk,bulk actions>>
+
+== [[ed]] EDN syntax
 
 [source,clojure]
 ----
@@ -10,13 +30,53 @@
 * enhance ctors/co-ctors to work with edn
 * implement edn emitter, e.g. `entity-edn`, `to-edn`, or the like
 
-=== ctors
+== [[ctors]] ctors
 
 * modal keywords:  `:replace, :transaction, :into, :merge, :conj` etc.
 * keyword `:replace` - use `:!' instead?
 * pull ctor `entity-map*` - default to homomorphisms, support `:iso` to force isomorphic matches
 
-=== pull ctor patterns
+=== [[entity-tree]] entity-tree ctor
+
+Use case: add a tree of entities, such that parent entity key is
+parent key of child.  For example:
+
+[source,clojure]
+----
+^{:migae/keychain [:Parent/A]} {:a 1}
+^{:migae/keychain [:Parent/A Child/A]} {:b 1}
+^{:migae/keychain [:Parent/A Child/A Grandchild/A]} {:c 1}
+^{:migae/keychain [:Parent/A Child/B]} {:b 2}
+^{:migae/keychain [:Parent/A Child/C]} {:b 3}
+----
+
+Suppose further that we want to use kinded keys, letting the Datastore
+autogen ids for at least some of the parent entities.  In that case we
+would have to push the parent, extract its key, and then use that key
+to construct the children.  The `entity-tree` constructor will sugar
+this; something along the lines of:
+
+[source,clojure]
+----
+(entity-tree [^{:migae/keychain [:Parent]} {:a 1}
+	       [^{:migae/keychain [:Child/A]} {:b 1}
+	         [^{:migae/keychain [:Grandchild/A]} {:c 1}
+	        ^{:migae/keychain [:Child/B]} {:b 2}
+		^{:migae/keychain [:Child/C]} {:b 3}]])
+;; or, even sweeter:
+(entity-tree [[:Parent] {:a 1}
+	       [;; vector of entity-tree nodes
+	        [[:Child/A] {:b 1}
+	          [[:Grandchild/A] {:c 1}]]
+	        [[:Child/B] {:b 2}]
+		[[:Child/C] {:b 3}]]])
+----
+
+A node in the tree is a vector containing a parent kinded entity-edn
+and a vector of child tree nodes.
+
+
+== [[filters]] filters (pull ctor patterns)
 
 i.e. query filters.
 
@@ -24,7 +84,7 @@ Operators: GAE query filters support `=, not=, >, >=, <, <=,` and
 `in`.  We can easily support these using metadata syntax.  For `in`,
 use `some`.
 
-==== key filters
+=== [[keys]] key filters
 
 E.g. fetch entities with kind :Person whose key is greater than some k K:
 
@@ -48,9 +108,9 @@ Query q =  new Query("Person").setFilter(keyFilter);
 (entity-map* :parent [:A/B :Person])  ;; parent query: all :Person ems with parent [:A/B]
 ----
 
-==== property filters
+=== [[properties]] property filters
 
-==== inequality filters
+==== [[inequality]] inequality filters
 
 Metadata syntax like `^>{:a 3}` (meaning all :a vals > 3) applies to
 the entire map.  But since the datastore restricts inequality filters
@@ -95,7 +155,7 @@ metadata on the set expression to indicate it is not an equality
 filter.  Or, use ^= for equality filters, even though it is not needed
 to express the filter logic, only to disambiguate.
 
-==== equality filters
+==== [[equality]] equality filters
 
 We don't need to use metadata syntax to express equality filters; we
 can just specify the maps.  However, in order to distinguish equality
@@ -112,7 +172,7 @@ from inequality filters, we need to mark everything explicitly.
 Equality filters on multiple fields are allowed, so in this case we
 may need to mention each field explicitly.
 
-==== set membership
+==== [[membership]] set membership
 
 For the Datastore IN filter we use `clojure.core/some`:
 
@@ -121,8 +181,10 @@ For the Datastore IN filter we use `clojure.core/some`:
 (entity-map* k ^some{:a [1 2 3]}) ;; for each :a value v, evaluate `(some [1 2 3] v)`.
 ----
 
+==== [[sorting]] sorting
 
-===== rejected syntax
+
+=== rejected syntax
 
 The problem with using functions is that we cannot validate them.  A
   function can express any predicate but we need to be able to extract
@@ -165,12 +227,7 @@ the filter to get a list of results, then map over them with odd?
     ;;       ems2 (ds/emaps?? [:A] (| :a = 1 ; or
     ;;                                :b = 2))]
 
-
-==== sort order
-
-
-
-=== Mutation
+== [[mutation]] mutation
 
 * support mode tags :into, :merge, etc.
 
@@ -184,7 +241,11 @@ the filter to get a list of results, then map over them with odd?
 (entity-map! :transaction :into [:A/B] {:x 9}) ;;
 ----
 
-=== Schema support
+== [[validation]] validation
+
+=== [[values]] value types
+
+=== [[schema]] schema support
 
 * associate e.g. Prismatic schema specification with kind keyword
 * postfix '?' on kind keyword means "validate against schema"; e.g.
@@ -195,9 +256,22 @@ the filter to get a list of results, then map over them with odd?
 (entity-map [:A?/B] {:x 9}) ;; validate {:x 9} against :A schema
 ----
 
-=== Transactions
+== [[transactions]] Transactions
 
 * `with-transaction`
 * ctor mode key `:transaction`
 
-=== GAE Namespaces
+== [[namespaces]] GAE Namespaces
+
+== [[bulk]] bulk actions
+
+=== bulk update
+
+Case: add a field `:foo` with default value `:bar` to all entities of
+kind `:k`.  Something like:
+
+[source,clojure]
+----
+(let [ems (ds/entity-map* [:k])]
+     (doseq [grp grps]
+     	    (ds/entity-map! :into grp {:foo :bar})))
