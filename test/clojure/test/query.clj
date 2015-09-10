@@ -1,3 +1,5 @@
+;; MOSTLY OUTDATED
+
 (ns test.query
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing

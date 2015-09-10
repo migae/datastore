@@ -151,6 +151,21 @@ With `^>{:a 3}` we can check metadata to find the "basic" filter
 predicate to use in querying the datastore.  In the above example, run
 the filter to get a list of results, then map over them with odd?
 
+===== older rejects
+
+    ;;  (:: (:a = 1 & :b > 2) | (:a < 5))
+
+;; better: use a reader to mimic function
+;;     (ds/emaps?? [:A] {:a #migae/fn (= % 2)})
+;; or: (ds/emaps?? [:A] {:a '(= % 2)})
+
+    (let [ems (ds/emaps?? [:A] {:a '(= 2)})]
+    ;; (let [ems (ds/emaps?? [:A] (& :a = 1 ;  and
+    ;;                               :b = 2))
+    ;;       ems2 (ds/emaps?? [:A] (| :a = 1 ; or
+    ;;                                :b = 2))]
+
+
 ==== sort order
 
 
