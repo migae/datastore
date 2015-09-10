@@ -24,11 +24,34 @@ In no particular order:
 
 [source,clojure]
 ----
-^{:type IPersistentEntityMap, :migae/keychain[:A/B]} {:a 1}
+^{:type IPersistentEntityMap, :migae/keychain [:A/B]} {:a 1}
+;; or, minimally:
+^{:migae [:A/B]} {:a 1}
 ----
 
 * enhance ctors/co-ctors to work with edn
 * implement edn emitter, e.g. `entity-edn`, `to-edn`, or the like
+* do we really need `:migae/keychain`?  isn't `:migae` sufficient?
+
+* do we really need [:type IPersistentEntityMap]?  Maybe not.  We can
+  reliably infer type from `:migae` metadata.  For example, from
+  `^{:migae [:a/b]}` we infer the additional metadata `:type
+  IPersistentEntityMap`; if we later need to support additional migae
+  types, we can use `:migae` as namespace, e.g. `:migae/seq` for
+  `IPersistentEntityMapSeq`.  On the other hand, we want `type` to
+  work for entity-maps in edn.
+
+If we restrict keylinks to a single '/' (i.e. keywords of the form
+`:A/B/C` would be disallowed) then we can concatenat keylinks to form
+a single symbol, which we could use as a metadata key.  To distinguish
+it from ordinary keywords we need to use the `:migae` namespace:
+
+[source,clojure]
+----
+[:a/b :c/d :e/f] ==>  :migae/a/b/c/d/e/f
+(meta ^:migae/a/b/c/d/e/f {:a 1}) => {:migae/a/b/c/d/e/f true}
+----
+
 
 == [[ctors]] ctors
 
@@ -231,15 +254,35 @@ the filter to get a list of results, then map over them with odd?
 
 * support mode tags :into, :merge, etc.
 
+* modal decorators: `+` and `-`.  default for e.g. `:into` is to
+  overwrite old values; modal decorators allow us to modify this
+  behavior. So `:into+` means 'augment' (e.g. cons, convert to list if
+  necessary), and `:into-` means discard new val if an old val exists.
+
 [source,clojure]
 ----
 (def em (entity-map! [:A/B] {:a 1}))
 (entity-map! :into [:A/B] {:x 9}) ;; => {:a 1, :x 9} saved to [:A/B] entity
+(entity-map! :into em {:x 9}) ;; same
 (entity-map! :into [:A/B] {:a 9}) ;; => update: {:a 9} saved to [:A/B] entity
-(entity-map! :aug [:A/B] {:a 9}) ;; => augment: {:a [1 9]} saved to [:A/B] entity
+(entity-map! :augment [:A/B] {:a 9}) ;; => augment: {:a [1 9]} saved to [:A/B] entity
+;; or add a modal decorator:
+(entity-map! :into+ [:A/B] {:a 9}) ;; => augment: {:a [1 9]} saved to [:A/B] entity
+(entity-map! :into+ (entity-map [:A/B] {:a 1}) {:a 9}) ;; => [:A/B] {:a [1 9]}
+(entity-map! :into- [:A/B] {:a 9}) ;; => discard 9, since {:a 1} already exists
+;; or
+(entity-map! :into? [:A/B] {:a 9}) ;; => if :a exists ('?') discard new val 9
 (entity-map! :replace :into [:A/B] {:x 9}) ;; avoid EntityNotFoundException
 (entity-map! :transaction :into [:A/B] {:x 9}) ;;
 ----
+
+* do we need bangified ops :into!, :merge! etc.?
+
+* by default `into` overwrites existing values.  what if we want to
+ preserve them?  then we have two options:
+
+** discard the new value and keep the old
+** keep both - make a list value of the old and new vals.  syntax: `:augment`, or modal decorator `+`
 
 == [[validation]] validation
 
