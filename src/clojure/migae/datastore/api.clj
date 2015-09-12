@@ -1,4 +1,5 @@
 (in-ns 'migae.datastore)
+;(in-ns 'migae.datastore)
 
 ;; (ns migae.datastore.api
 ;;   (:refer-clojure :exclude [empty? filter get into key name reduce])
@@ -103,21 +104,21 @@
   [keylinks]
   (throw (IllegalArgumentException.
           (str "Every element of keylink vector "
-               (clj/pr-str keylinks)
+               (pr-str keylinks)
                " must be a keyword with namespace and name (e.g. :Foo/Bar)"))))
 
 (defn- throw-bad-keykind
   [keylinks]
   (throw (IllegalArgumentException.
           (str "Last element of keylink vector "
-               (clj/pr-str keylinks)
+               (pr-str keylinks)
                " must be a definite (e.g. :Foo/Bar) or indefinite (e.g. :Foo) keylink"))))
 
 (defn- emap-definite!!
   ;; keylinks already validated
   [keylinks & props]
   ;; (log/trace "emap-definite!!" keylinks props)
-  (let [k (apply ekey/keychain-to-key keylinks)
+  (let [k (apply keychain-to-key keylinks)
         e  (Entity. k)
         propmap (first props)]
     (if (not (nil? propmap))
@@ -131,9 +132,9 @@
   [keylinks & props]
   ;; (log/trace "emap-indefinite!!" keylinks props)
   (let [e (if (> (count keylinks) 1)
-            (let [parent (apply ekey/keychain-to-key (butlast keylinks))]
-              (Entity. (clj/name (last keylinks)) parent))
-            (Entity. (clj/name (first keylinks))))
+            (let [parent (apply keychain-to-key (butlast keylinks))]
+              (Entity. (name (last keylinks)) parent))
+            (Entity. (name (first keylinks))))
         propmap (first props)]
     (if (not (nil? propmap))
       (let [propmap (first props)]
@@ -148,7 +149,7 @@
   [keylinks & propmap]
   (log/trace "find-definite-necessarily" keylinks propmap)
   (if (every? keylink? keylinks)
-    (let [akey (apply ekey/keychain-to-key keylinks)
+    (let [akey (apply keychain-to-key keylinks)
           e (try (.get (ds/datastore) akey)
                  (catch EntityNotFoundException ex nil))]
       (if (nil? e) ;; not found
@@ -178,10 +179,10 @@
   ;; if propmap not nil, construct property-filter query
 
   (let [e (if (nil? (butlast keylinks))
-            (Entity. (clj/name (last keylinks)))
-            (let [parent (apply ekey/keychain-to-key (butlast keylinks))]
+            (Entity. (name (last keylinks)))
+            (let [parent (apply keychain-to-key (butlast keylinks))]
               ;; (log/trace "parent" parent)
-              (Entity. (clj/name (last keylinks)) parent)))]
+              (Entity. (name (last keylinks)) parent)))]
         (if (not (nil? propmap))
           (let [props (first propmap)]
             ;; (log/trace "props" props)
@@ -212,7 +213,7 @@
 ;; ;;   [^Key k ^Entity e content]
 ;; ;;   {:pre [(map? content)]}
 ;; ;;   ;; (log/trace "emap old " k content)
-;; ;;   (if (clj/empty? content)
+;; ;;   (if (empty? content)
 ;; ;;     (PersistentEntityMap. e nil)
 ;; ;;     (do
 ;; ;;       (doseq [[k v] content]
@@ -247,7 +248,7 @@
 
 ;; ;; (defn- emap-update-empty
 ;; ;;   [keylinks]
-;; ;;   (let [k (apply ekey/keychain-to-key keylinks)
+;; ;;   (let [k (apply keychain-to-key keylinks)
 ;; ;;         e (try (.get (ds/datastore) k)
 ;; ;;                (catch EntityNotFoundException ex nil)
 ;; ;;                (catch DatastoreFailureException ex (throw ex))
@@ -263,7 +264,7 @@
 ;; ;; (defn- emap-update-map
 ;; ;;   [keylinks content]
 ;; ;;   ;; (log/trace "emap-update-map " keychain content)
-;; ;;   (let [k (apply ekey/keychain-to-key keylinks)]
+;; ;;   (let [k (apply keychain-to-key keylinks)]
 ;; ;;     ;; (log/trace "emap-update-map key: " k)
 ;; ;;     (let [e (if (keyword? k)
 ;; ;;               (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
@@ -275,17 +276,17 @@
 ;; ;;                    (catch java.lang.IllegalArgumentException ex (throw ex))))]
 ;; ;;       (if (nil? e)
 ;; ;;         (emap-new k content)
-;; ;;         (emap-old k e content) ; even a new one hits this if id autogenned by ekey/keychain-to-key
+;; ;;         (emap-old k e content) ; even a new one hits this if id autogenned by keychain-to-key
 ;; ;;         ))))
 
 
 ;; (defn- emap-update-fn
 ;;   "Second arg is a function to be applied to the Entity whose key is first arg"
 ;;   [keylinks f]
-;;   (if (nil? (clj/namespace (first keylinks)))
+;;   (if (nil? (namespace (first keylinks)))
 ;;     ;; if first link in keychain has no namespace, it cannot be an ancestor node
 ;;     (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
-;;           e (Entity. (clj/name (first keylinks)))
+;;           e (Entity. (name (first keylinks)))
 ;;           em (PersistentEntityMap. e nil)]
 ;;       (try
 ;;         (f em)
@@ -295,7 +296,7 @@
 ;;           (if (.isActive txn)
 ;;             (.rollback txn))))
 ;;       em)
-;;     (let [k (apply ekey/keychain-to-key keylinks)
+;;     (let [k (apply keychain-to-key keylinks)
 ;;           e (try (.get (ds/datastore) k)
 ;;                  (catch EntityNotFoundException e
 ;;                    ;;(log/trace (.getMessage e))
@@ -332,9 +333,9 @@
 ;; no put - PersistentEntityMap only
 ;; (defn emap
 ;;   [keychain em]
-;;   (if (clj/empty? keychain)
+;;   (if (empty? keychain)
 ;;     (throw (IllegalArgumentException. "key vector must not be empty"))
-;;     (let [k (apply ekey/keychain-to-key keychain)
+;;     (let [k (apply keychain-to-key keychain)
 ;;           e (Entity. k)]
 ;;       (doseq [[k v] em]
 ;;         (.setProperty e (subs (str k) 1) (get-val-ds v)))
@@ -358,10 +359,10 @@
   extend (i.e. create and add props)."
   [keylinks & propmap]
   (log/trace "emap+? " keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e (try (.get (ds/datastore) akey)
                    (catch EntityNotFoundException ex (Entity. akey)))]
                    ;; (catch DatastoreFailureException ex (throw ex))
@@ -382,10 +383,10 @@
   not found, throw exception."
   ([keylinks & propmap]
    (log/trace "emap+?" keylinks propmap)
-   (if (clj/empty? keylinks)
+   (if (empty? keylinks)
      (throw (IllegalArgumentException. "key vector must not be empty"))
      (if (every? keylink? keylinks)
-       (let [k (apply ekey/keychain-to-key keylinks)
+       (let [k (apply keychain-to-key keylinks)
              e ;; (try
                  (.get (ds/datastore) k)]
                     ;; (catch EntityNotFoundException ex (throw ex))
@@ -408,10 +409,10 @@
   existing nil vals."
   [keylinks & propmap]
   (log/trace "emap=! " keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e (try (.get (ds/datastore) akey)
                    (catch EntityNotFoundException ex nil))]
                    ;; (catch DatastoreFailureException ex (throw ex))
@@ -440,10 +441,10 @@
   not extend (add new props); if not found, throw exception."
   [keylinks & propmap]
   (log/trace "emap=? " keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e ;;(try
                 (.get (ds/datastore) akey)]
                    ;; (catch EntityNotFoundException ex (throw ex))
@@ -465,10 +466,10 @@
   props.  If entity not found, create it and all all new props."
   [keylinks & propmap]
   (log/trace "emap+=! " keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e (try (.get (ds/datastore) akey)
                    (catch EntityNotFoundException ex (Entity. akey)))]
                    ;; (catch DatastoreFailureException ex (throw ex))
@@ -486,10 +487,10 @@
   override existing props.  If entity not found, throw exception."
   [keylinks & propmap]
   (log/trace "emap+=? " keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e ;;(try
                 (.get (ds/datastore) akey)]
                    ;; (catch EntityNotFoundException ex  (throw ex))
@@ -507,10 +508,10 @@
   "Delete, necessarily.  If found, delete props, if not found, return nil."
   [keylinks props]
   (log/trace "emap+=? " keylinks props)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e (try (.get (ds/datastore) akey)
                    (catch EntityNotFoundException ex nil))]
                    ;; (catch DatastoreFailureException ex (throw ex))
@@ -528,10 +529,10 @@
   "Delete, possibly.  If found, delete props; if not found, throw exception."
   [keylinks props]
   (log/trace "emap+=? " keylinks props)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [akey (apply ekey/keychain-to-key keylinks)
+      (let [akey (apply keychain-to-key keylinks)
             e ;;(try
                 (.get (ds/datastore) akey)]
                    ;; (catch EntityNotFoundException ex (throw ex))
@@ -548,10 +549,10 @@
   create new); otherwise throw exception."
   [keylinks & propmap]
   (log/trace "emap!?" keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
-      (let [k (apply ekey/keychain-to-key keylinks)
+      (let [k (apply keychain-to-key keylinks)
             e (.get (ds/datastore) k)] ;; throws EntityNotFoundException
         ;; e was found; replace it
         (let [newe (Entity. k)]
@@ -608,7 +609,7 @@
   [keylinks maps]
   (log/trace "")
   (log/trace "emaps?!" keylinks maps)
-  (if (ekey/improper-keychain? keylinks)
+  (if (improper-keychain? keylinks)
     (if (map? maps)
       (emap?! keylinks maps)
       (doseq [emap maps]
@@ -637,7 +638,7 @@
       ;;   (= 1 (count keylinks))
       ;;   (let [kw (first keylinks)]
       ;;     (if (keyword? kw)
-      ;;       (if (nil? (clj/namespace kw))
+      ;;       (if (nil? (namespace kw))
       ;;         'KindVec
       ;;         'KeyVec)
       ;;       (throw (IllegalArgumentException. "keylinks must be keywords"))))
@@ -657,7 +658,7 @@
       ;; (key? keylinks)
       ;; 'Key
       ;; (keyword? keylinks)
-      ;; (if (nil? (clj/namespace keylinks))
+      ;; (if (nil? (namespace keylinks))
       ;;   'Kind                           ; e.g.  :Foo
       ;;   'Key)                          ; e.g.  :Foo/Bar
       ;;   :else
@@ -677,7 +678,7 @@
     ;; (if (vector? keylinks)
     (if (every? keylink? (butlast keylinks))
       (cond
-        (clj/empty? keylinks)
+        (empty? keylinks)
         'Kindless
         (keykind? (last keylinks))
         'Kinded
@@ -698,12 +699,12 @@
   [keylinks & pm]             ; e.g. :Foo/Bar
   (log/trace "emaps?? Keychain:" keylinks pm)
 ;; <<<<<<< HEAD
-  (let [dskey (ekey/keychain-to-key (first keylinks) (second keylinks))
+  (let [dskey (keychain-to-key (first keylinks) (second keylinks))
         e (try (.get (ds/datastore) dskey)
          (catch EntityNotFoundException e (throw e))
          (catch Exception e (throw e)))]
 ;; =======
-;;   (let [dskey (ekey/keychain-to-key (first keylinks) (second keylinks))
+;;   (let [dskey (keychain-to-key (first keylinks) (second keylinks))
 ;;         e ;;(try
 ;;             (.get (ds/datastore) dskey)]
 ;;                ;; (catch EntityNotFoundException ex (throw ex))
@@ -784,7 +785,7 @@
 (defmethod emaps?? 'Kinded
   [keylinks & filter-map]
   (log/trace "emaps?? Kinded:" keylinks filter-map (type filter-map))
-  (let [kind (clj/name (last keylinks)) ;; we already know last link has form :Foo
+  (let [kind (name (last keylinks)) ;; we already know last link has form :Foo
         ;; foo (log/trace "kind:" kind (type kind))
         q (Query. kind)
         pfx (butlast keylinks)
@@ -797,7 +798,7 @@
         (do
           (kinded-no-ancestor q (first filter-map))))
       ;; we have a prefix keychain, so set it as ancestor constraint
-      (let [k (apply ekey/keychain-to-key pfx)
+      (let [k (apply keychain-to-key pfx)
             ;; kf (log/trace "K:" k (type k))
             qq (.setAncestor q k)]
         (if (not (nil? filter-map))
@@ -826,9 +827,9 @@
         (if (keylink? (last keylinks))
           (let [;f (ffirst filter-map)
 ;; <<<<<<< HEAD
-                ;; k (apply ekey/keychain-to-key keychain)
+                ;; k (apply keychain-to-key keychain)
 ;; =======
-                 k (apply ekey/keychain-to-key keylinks)
+                 k (apply keychain-to-key keylinks)
 ;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
                 foo (log/trace "KEY: " k)
                 filter (Query$FilterPredicate. Entity/KEY_RESERVED_PROPERTY
@@ -843,7 +844,7 @@
                                                  Query$FilterOperator/GREATER_THAN
                                                  (= op '>=)
                                                  Query$FilterOperator/GREATER_THAN_OR_EQUAL)
-                                               ;; (ekey/keychain-to-key (first (second op)) (rest (second op))))
+                                               ;; (keychain-to-key (first (second op)) (rest (second op))))
                                                k)
                 q (.setFilter (Query.) filter)
                 pq (.prepare (ds/datastore) q)
@@ -858,7 +859,7 @@
 (defmethod emaps?? 'Kind               ; e.g. :Foo
   [^clojure.lang.Keyword kind]
   (log/trace "emaps?? Kind")
-  (let [q (Query. (clj/name kind))
+  (let [q (Query. (name kind))
         pq (.prepare (ds/datastore) q)
         it (.asIterator pq)
         emseq (emap-seq it)]
@@ -872,7 +873,7 @@
 (defmethod emaps?? 'KindVec               ; e.g. [:Foo]
   [[^clojure.lang.Keyword kind]]
   (log/trace "emapss?? KindVec:")
-  (let [q (Query. (clj/name kind))
+  (let [q (Query. (name kind))
         pq (.prepare (ds/datastore) q)
         it (.asIterator pq)
         em-seq (emap-seq it)]
@@ -901,9 +902,9 @@
   [keylinks content]
   ;; if second arg is a map, treat it ...
   ;; if second arg is a function, ...
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
-    (let [k (apply ekey/keychain-to-key keylinks)
+    (let [k (apply keychain-to-key keylinks)
           e (Entity. k)]
       (doseq [[k v] content]
         (.setProperty e (subs (str k) 1) v))
@@ -940,7 +941,7 @@
 (defn assoc!!
   "safe assoc with save and txn for DS Entities"
   [m k v & kvs]
-  {:pre [(nil? (clj/namespace k))]}
+  {:pre [(nil? (namespace k))]}
    (let [txn (.beginTransaction (ds/datastore))
          coll (if (emap? m)
                 (.content m)
@@ -970,15 +971,15 @@
   ;; (if (empty? keylinks)
   ;;   (do
   ;;     (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
-  ;;     (let [ks (clj/keylinks filter-map)
+  ;;     (let [ks (keylinks filter-map)
   ;;           vs (vals filter-map)
   ;;           k  (subs (str (first ks)) 1)
   ;;           v (last vs)
   ;;           f (Query$FilterPredicate. k Query$FilterOperator/EQUAL v)]
   ;;       (log/trace (format "key: %s, val: %s" k v))))
   ;;   (let [k (if (coll? keylinks)
-  ;;             (apply ekey/keychain-to-key keylinks)
-  ;;             (apply ekey/keychain-to-key [keylinks]))
+  ;;             (apply keychain-to-key keylinks)
+  ;;             (apply keychain-to-key [keylinks]))
   ;;         ;; foo (log/trace "emap?? kw keylinks: " k)
   ;;         e (try (.get (ds/datastore) k)
   ;;                (catch EntityNotFoundException ex (throw ex))
@@ -1006,7 +1007,7 @@
 ;;               (keyword kind nm))]
 ;;     (if (nil? parent)
 ;;       [kw]
-;;       (clj/into [kw]
+;;       (into [kw]
 ;;              (get-keychain parent)))))
 
 ;; FIXME:  since we've implemented IPersistentMap etc. these are no longer needed:
@@ -1026,11 +1027,11 @@
   ;;[com.google.appengine.api.datastore.Entity nil]
   [^Entity e]
   (let [k (.getKey e)
-        kch (to-keychain k)
-        props (clj/into {} (.getProperties e))
-        em (clj/into {} {:kind_ (.getKind k) :ident_ (identifier k)})]
-        ;; em (clj/into {} {:key kch})]
-    (clj/into em (for [[k v] props] [(keyword k) v]))))
+        kch (keychain k)
+        props (into {} (.getProperties e))
+        em (into {} {:kind_ (.getKind k) :ident_ (identifier k)})]
+        ;; em (into {} {:key kch})]
+    (into em (for [[k v] props] [(keyword k) v]))))
 
 ;; taken verbatim from 1.7.0
 ;; (defn into
@@ -1042,14 +1043,14 @@
 ;;    (log/trace "ds/into")
 ;;      (if (instance? clojure.lang.IEditableCollection to)
 ;;        ;; (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
-;;        (let [res (persistent! (clj/reduce conj! (transient to) from))]
+;;        (let [res (persistent! (reduce conj! (transient to) from))]
 ;;          (log/trace "ds/into result w/o meta:" (epr res))
 ;;          (let [metameta (merge (meta to) (meta from))] ; the fix
 ;;            (log/trace "ds/into metameta:" (epr metameta))
 ;;            (let [result (with-meta res metameta)]
 ;;              (log/trace "ds/into result w/meta:" (epr result))
 ;;              result)))
-;;        (clj/reduce conj to from)))
+;;        (reduce conj to from)))
 ;;   ([to xform from]
 ;;      (if (instance? clojure.lang.IEditableCollection to)
 ;;        (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
@@ -1078,8 +1079,8 @@
 ;;    (log/trace "ds/into v1.7")
 ;;      (if (instance? clojure.lang.IEditableCollection to)
 ;;        (with-meta (persistent! (reduce conj! (transient to) from)) (meta to))
-;;        (reduce clj/conj to from))))
+;;        (reduce conj to from))))
 ;;   ;; ([to xform from]
 ;;   ;;    (if (instance? clojure.lang.IEditableCollection to)
 ;;   ;;      (with-meta (persistent! (transduce xform conj! (transient to) from)) (meta to))
-;;   ;;      (transduce xform clj/conj to from))))
+;;   ;;      (transduce xform conj to from))))

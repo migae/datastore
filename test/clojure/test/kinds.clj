@@ -16,7 +16,7 @@
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
-            [migae.datastore.keychain :as k]
+            ;; [migae.datastore.keychain :as k]
             ;; [migae.datastore.service :as dss]
             ;; [migae.datastore.entity :as dse]
             ;; [migae.datastore.query  :as dsqry]

@@ -1,5 +1,5 @@
 (ns test.keys
-  (:refer-clojure :exclude [name hash])
+ (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email
             EntityNotFoundException
@@ -18,7 +18,7 @@
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
-            [migae.datastore.keychain :as k]
+            ;; [migae.datastore.keychain :as k]
             ;; [migae.datastore.service :as dss]
             ;; [migae.datastore.entity :as dse]
             ;; [migae.datastore.query  :as dsqry]
@@ -107,7 +107,7 @@
       (is (= (ds/kind  (ds/entity-key [:A/B])) :A)) ;; migae kinds are keywords
       (is (= (.getName k2) "B"))
       (is (= (ds/kind [:A/B]) :A))
-      (is (= (ds/name [:A/B]) "B"))
+      (is (= (ds/ename [:A/B]) "B"))
       (is (= (ds/kind (ds/keychain (ds/entity-map [:A/B] {:a 1}))) :A))
     )))
 
@@ -154,61 +154,61 @@
 
 (deftest ^:keychain keychain-fail
   (testing "keys 3: keychain literals: name"
-    (let [ex (try (k/keychain-to-key [:A/B :X])
+    (let [ex (try (ds/keychain-to-key [:A/B :X])
                   (catch IllegalArgumentException e e))]
       (is (= (type ex) IllegalArgumentException))
       (is (= (.getMessage ex)
              "Invalid keychain: [:A/B :X]")))
     ;; FIXME: restructure to verifiy exception occurs, as above
-    (try (k/keychain-to-key [:A/B :Y :D/E])
+    (try (ds/keychain-to-key [:A/B :Y :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B :Y :D/E]"))))
-    (try (k/keychain-to-key [:A/B 'Z :D/E])
+    (try (ds/keychain-to-key [:A/B 'Z :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B Z :D/E]"))))
-    (try (k/keychain-to-key [:A/B "C" :D/E])
+    (try (ds/keychain-to-key [:A/B "C" :D/E])
          (catch java.lang.RuntimeException e
            (is (= (.getMessage e)
                   "Invalid keychain: [:A/B \"C\" :D/E]"))))
-    (try (k/keychain-to-key '(:A/B))
+    (try (ds/keychain-to-key '(:A/B))
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: (:A/B)"
                (.getMessage ex)))))
-    (try (k/keychain-to-key '{:a 1})
+    (try (ds/keychain-to-key '{:a 1})
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: {:a 1}"
                (.getMessage ex)))))
-    (try (k/keychain-to-key [:A])
+    (try (ds/keychain-to-key [:A])
          (catch IllegalArgumentException ex
            (is (= "missing namespace: :A")
                (.getMessage ex))))
-    (try (k/keychain-to-key :A)
+    (try (ds/keychain-to-key :A)
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: :A"
                   (.getMessage ex)))))
-    (try (k/keychain-to-key [9])
+    (try (ds/keychain-to-key [9])
          (catch IllegalArgumentException ex
            (is (=  "Invalid keychain: [9]"
                   (.getMessage ex)))))
-    (try (k/keychain-to-key 9)
+    (try (ds/keychain-to-key 9)
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: 9"
                    (.getMessage ex)))))
-    (try (k/keychain-to-key ['a])
+    (try (ds/keychain-to-key ['a])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [a]"
                   (.getMessage ex)))))
-    (try (k/keychain-to-key 'a)
+    (try (ds/keychain-to-key 'a)
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: a"
                   (.getMessage ex)))))
-    (try (k/keychain-to-key ["a"])
+    (try (ds/keychain-to-key ["a"])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [\"a\"]"
                   (.getMessage ex)))))
-    (try (k/keychain-to-key "a")
+    (try (ds/keychain-to-key "a")
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: a"
                   (.getMessage ex)))))
@@ -252,7 +252,7 @@
       (is (= (ds/dogtag e1) (ds/dogtag e2) (ds/dogtag e3)))
       (is (= (ds/kind e1) (ds/kind e2) (ds/kind e3)))
       (is (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B])))
-      (is (= (ds/name e1) (ds/name e2) (ds/name e3)))
+      (is (= (ds/ename e1) (ds/ename e2) (ds/ename e3)))
       (is (= (ds/identifier [:A/B]) (ds/identifier [:X/Y :A/B])))
       )))
 

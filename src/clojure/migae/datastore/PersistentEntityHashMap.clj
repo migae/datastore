@@ -24,7 +24,7 @@
     (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
-          em-iter (PersistentEntityMapIterator. e-iter) ]
+          em-iter (PersistentEntityMapSeq. e-iter) ]
     ;; (log/trace "Iterable res:" em-iter)
     em-iter))
 
@@ -51,7 +51,7 @@
     {:pre [(keyword? k)]}
     (log/trace "IFn.invoke(" k ")")
     (if (= k :migae/keychain)
-      (ekey/to-keychain content)
+      (keychain content)
       (let [kw (subs (str k) 1)
             prop (.getProperty content kw)]
         (if (not (nil? prop))
@@ -63,7 +63,7 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   clojure.lang.IMapEntry
   ;; key, val
-  ;; (clj/key [this]  ; -> Object
+  ;; (key [this]  ; -> Object
   ;;   (log/trace "IMapEntry key")
   ;;   )
   ;; (val [this]  ; -> Object
@@ -73,7 +73,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   clojure.lang.IObj ;; extends IMeta
   ;; withMeta; meta
   (^IPersistentMap meta [this]
-    ;; (log/trace "IObj meta" (ekey/to-keychain content))
+    ;; (log/trace "IObj meta" (keychain content))
     meta)
   ;;;; extends IMeta
   (^IObj withMeta [this ^IPersistentMap md]
@@ -90,19 +90,19 @@
       ;; (.setProperty content prop v)
       ;; this))
       (let [to-props (.getProperties content)
-            to-coll (clj/into {} (for [[k v] to-props]
+            to-coll (into {} (for [[k v] to-props]
                                      (let [prop (keyword k)
                                            content (get-val-clj v)]
                                        {prop content})))
-            key-chain (ekey/to-keychain this)
-            res (clj/assoc to-coll k v)]
+            key-chain (keychain this)
+            res (assoc to-coll k v)]
       (log/trace "IPersistentMap assoc res: " res)
       (with-meta res {:migae/keychain key-chain}))))
   (assocEx [_ k v]
     (log/trace "assocEx")
     (PersistentEntityMap. (.assocEx content k v) nil))
   (without [this k]                     ; = dissoc!, return new datum with k removed
-    (let [prop (clj/name k)]
+    (let [prop (ename k)]
       (log/trace "without: removing prop " k "->" prop)
       (.removeProperty content prop)
       this))
@@ -117,12 +117,12 @@
   ;; containsKey, entryAt, assoc
   (containsKey [_ k] ; -> boolean
     (do (log/trace "Associative.containsKey " k)
-    (let [prop (clj/name k)
+    (let [prop (ename k)
           r    (.hasProperty content prop)]
       r)))
   (entryAt [this k] ; -> IMapEntry
     (do (log/trace "Associative.entryAt " k)
-    (let [val (.getProperty content (clj/name k))
+    (let [val (.getProperty content (name k))
           entry (clojure.lang.MapEntry. k val)]
       ;; (log/trace "entryAt " k val entry)
       entry)))
@@ -133,7 +133,7 @@
   (valAt [_ k]  ; -> Object
     (log/trace "ILookup.valAt" k)
     (if (= k :migae/keychain)
-      (ekey/to-keychain content)
+      (keychain content)
       (let [prop (get-val-clj (subs (str k) 1))]
         ;; (log/trace "prop:" prop)
         (if-let [v  (.getProperty content prop)]
@@ -213,7 +213,7 @@
     ;; seq is called by: into, merge, "print", e.g. (log/trace em)
     ;; (log/trace "seq" (.hashCode this) (.getKey content))
     ;; (let [props (.getProperties content)
-    ;;       kprops (clj/into {}
+    ;;       kprops (into {}
     ;;                        (for [[k v] props]
     ;;                          (do
     ;;                            ;; (log/trace "v: " v)
@@ -221,8 +221,8 @@
     ;;                                  val (get-val-clj v)]
     ;;                              ;; (log/trace "prop " prop " val " val)
     ;;                              {prop val}))))
-    ;;       k (ekey/to-keychain val)
-    (let [res (clj/into content {:migae/keychain k})]
+    ;;       k (keychain val)
+    (let [res (into content {:migae/keychain k})]
       ;; (log/trace "hashmap seq result:" (type res) res)
       (seq res)))
   ;;      this))
@@ -251,19 +251,19 @@
           (.setPropertiesFrom e (.content to-map))
           (.setPropertiesFrom e content)
           (PersistentEntityMap. e nil)))
-      ;; f = cons, so we can just use the native clj/into
+      ;; f = cons, so we can just use the native into
       ;; (let [from-props (.getProperties content)
-      ;;       from-coll (clj/into {} (for [[k v] from-props]
+      ;;       from-coll (into {} (for [[k v] from-props]
       ;;                                (let [prop (keyword k)
       ;;                                      val (get-val-clj v)]
       ;;                                  {prop val})))
       ;;       foo (.setPropertiesFrom (.content to-map) (.content this))
       ;;       to-props (.getProperties (.content to-map))
-      ;;       to-coll (clj/into {} (for [[k v] to-props]
+      ;;       to-coll (into {} (for [[k v] to-props]
       ;;                              (let [prop (keyword k)
       ;;                                    val (get-val-clj v)]
       ;;                                {prop val})))
-      ;;       res (with-meta (clj/into to-coll from-coll)
+      ;;       res (with-meta (into to-coll from-coll)
       ;;             {:migae/keychain (:migae/key (meta to-map))
       ;;              :type PersistentEntityMap})]
       ;;   ;; (log/trace "to-coll: " res (type res))
@@ -274,17 +274,17 @@
         ;; we use a ghastly hack in order to retain metadata
         ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentEntityMap metadata)
         (let [from-props (.getProperties content)
-              from-coll (clj/into {} (for [[k v] from-props]
+              from-coll (into {} (for [[k v] from-props]
                                        (let [prop (keyword k)
                                              val (get-val-clj v)]
                                          {prop val})))
               to-ent (Entity. (.getKey content))
-              ;; to-coll (clj/into {} (for [[k v] to-props]
+              ;; to-coll (into {} (for [[k v] to-props]
               ;;                        (let [prop (keyword k)
               ;;                              val (get-val-clj v)]
               ;;                          {prop val})))
               to-keychain (if (nil? (:migae/keychain (meta to-map)))
-                            (ekey/to-keychain content)
+                            (keychain content)
                             (:migae/keychain (meta to-map)))]
           (doseq [[k v] from-coll]
             (assoc! to-map k v))
@@ -292,7 +292,7 @@
             (doseq [[k v] p]
               (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
           ;; (let [m1 (persistent! to-map)
-          ;;       m2 (with-meta m1 {:migae/keychain ekey/to-keychain
+          ;;       m2 (with-meta m1 {:migae/keychain keychain
           ;;                         :type PersistentEntityMap})
           ;;       to-coll (transient m2)]
           ;;   (log/trace "m2: " (meta m2) m2 (class m2))
@@ -321,8 +321,8 @@
   (conj [this args]  ; -> ITransientCollection
     (log/trace "ITransientCollection conj")
     (let [item (first args)
-          k (clj/name (clj/key item))
-          v (clj/val item)
+          k (name (key item))
+          v (val item)
           val (if (number? v) v
                   (if (string? v) v
                       (edn/read-string v)))]
@@ -333,8 +333,8 @@
     (log/trace "ITransientCollection persistent")
     ;; (try (/ 1 0) (catch Exception e (print-stack-trace e)))
     (let [props (.getProperties content)
-          kch (ekey/to-keychain content)
-          coll (clj/into {} (for [[k v] props]
+          kch (keychain content)
+          coll (into {} (for [[k v] props]
                               (let [prop (keyword k)
                                     val (get-val-clj v)]
                                 {prop val})))
@@ -346,12 +346,12 @@
 
   ;; clojure.lang.ITransientMap
   ;; (assoc [this k v]                     ; both assoc! and assoc (?)
-  ;;   (let [prop (clj/name k)]
+  ;;   (let [prop (name k)]
   ;;     (log/trace "ITransientMap assoc: setting prop " k "->" prop v)
   ;;     (.setProperty content prop v)
   ;;     this))
   ;; (without [this k]                     ; = dissoc!, return new datum with k removed
-  ;;   (let [prop (clj/name k)]
+  ;;   (let [prop (name k)]
   ;;     (log/trace "without: removing prop " k "->" prop)
   ;;     (.removeProperty content prop)
   ;;     this))

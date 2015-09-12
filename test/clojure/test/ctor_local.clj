@@ -45,30 +45,46 @@
 
 (deftest ^:ctor ctor-fail-1
   (testing "keychain must not be empty"
-    (try (ds/entity-map [] {})
-         (catch IllegalArgumentException e
-           (is (= "keychain vector must not be empty"
-                  (.getMessage e)))))))
+    (let [e (try (ds/entity-map [] {})
+                 (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (not (empty? keychain))"
+             (.getMessage e))))))
+
+(deftest ^:ctor ctor-fail-1.1
+  (testing "keychain must be vector of keywords"
+    (let [e (try (ds/entity-map [1 2] {})
+                 (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (every? keylink? keychain)"
+             (.getMessage e))))))
 
 (deftest ^:ctor ctor-fail-2
   (testing "property map arg must not be null (but it can be empty)"
-    (let [em1 (ds/entity-map [:A/B] {})]
-      (try (ds/entity-map [:A/B] )
-         (catch clojure.lang.ArityException e
-           (is (= "Wrong number of args (1) passed to: datastore/entity-map"
-                  (.getMessage e))))))))
+    (let [em1 (ds/entity-map [:A/B] {})
+          em2 (try (ds/entity-map [:A/B] )
+                   (catch clojure.lang.ArityException x x))]
+      (is (= "Wrong number of args (1) passed to: datastore/entity-map"
+             (.getMessage em2))))))
 
 (deftest ^:ctor ctor-fail-3
   (testing "local ctor requires proper keychain"
     (let [em1 (ds/entity-map [:A/B] {}) ;; ok
           em2 (try (ds/entity-map [:A] {})
-                   (catch java.lang.IllegalArgumentException ex ex))
+                   (catch java.lang.AssertionError x x))
           em3 (try (ds/entity-map [:A/B :C] {})
-                   (catch java.lang.IllegalArgumentException ex ex))]
-      (is (= "Invalid keychain: [:A]"
+                   (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (every? keylink? keychain)"
               (.getMessage em2)))
-      (is (= "Invalid keychain: [:A/B :C]"
-              (.getMessage em3))))))
+      (is (= "Assert failed: (every? keylink? keychain)"
+              (.getMessage em3)))
+      )))
+
+
+(deftest ^:ctor ctor-fail-4
+  (testing "local ctor arg must be map")
+    (let [em1 (try (ds/entity-map [:A/B] [1 2])
+                   (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (map? em)"
+             (.getMessage em1)))))
 
 (deftest ^:emap emap-ctor
   (testing "entity-map ctor"

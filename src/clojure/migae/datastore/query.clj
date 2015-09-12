@@ -34,7 +34,7 @@
   (let [q  (Query.)
         prepared-query (.prepare (ds/datastore) q)
         iterator (.asIterator prepared-query)
-        res (PersistentEntityMapIterator. (iterator-seq iterator))
+        res (PersistentEntityMapSeq. (iterator-seq iterator))
         ]
     ;; (log/trace "iter res: " (type res) " count:" (count res))
     res))

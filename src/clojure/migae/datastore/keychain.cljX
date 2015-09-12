@@ -1,4 +1,5 @@
 (ns migae.datastore.keychain
+  (:refer-clojure :exclude [name])
   (:import [com.google.appengine.api.datastore
             Entity
             Key KeyFactory KeyFactory$Builder]
@@ -8,158 +9,163 @@
             [clojure.stacktrace :as stack]
             [clojure.tools.reader.edn :as edn]
             [clojure.tools.logging :as log :only [trace debug info]]
+            ;;migae.datastore.PersistentEntityMap
             [migae.datastore.service :as ds]))
 
 ;; TODO: implement keychain as a deftype?  so we get
 ;; migae.datastore.Keychain rather than clojure.lang.PersistentVector
 
+(clojure.core/println "reloading keychain")
+
 (declare keychain-to-key identifier)
 
 ;; for repl:
 ;; (require '(migae.datastore [keychain :as k]))
-(defn keylink?
-  [k]
-  ;; (log/trace "keylink? k" k)
-  (and (keyword? k)
-       (not (nil? (clj/namespace k)))))
+;; (defn keylink?
+;;   [k]
+;;   ;; (log/trace "keylink? k" k)
+;;   (and (keyword? k)
+;;        (not (nil? (clj/namespace k)))))
 
-(defn proper-keychain?
-  [k]
-  (if (and  (vector? k) (not (empty? k)))
-    (if (every? keylink? k)
-      true
-      false)
-    false))
-(defn improper-keychain?
-  [k]
-  ;; (log/trace "k: " k)
-  (if (and (not (empty? k)) (vector? k))
-    (if (every? keylink? (butlast k))
-      (let [dogtag (last k)]
-        ;; (log/trace "dogtag k" dogtag)
-        (and (keyword? dogtag)
-             (nil? (clj/namespace dogtag))))
-      false)
-    false))
-(defn keychain?
-  [k]
-  (or (proper-keychain? k) (improper-keychain? k)))
+;; (defn proper-keychain?
+;;   [k]
+;;   {:pre [(and (vector? k) (not (empty? k)))]}
+;;   ;; (if (and  (vector? k) (not (empty? k)))
+;;   (if (every? keylink? k)
+;;       true
+;;       false))
+;; (defn improper-keychain?
+;;   [k]
+;;   {:pre [(and (vector? k) (not (empty? k)))]}
+;;   (log/trace "improper-keychain?: " k)
+;;   (if (every? keylink? (butlast k))
+;;     (let [dogtag (last k)]
+;;       (log/trace "DOGTAG K" dogtag)
+;;       (and (keyword? dogtag)
+;;            (nil? (clj/namespace dogtag))))
+;;     false))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti to-keychain
-  "to-keychain converts a DS Key to a vector of Clojure keywords"
-  class)
-
-(defmethod to-keychain nil
-  [x]
-  nil)
-
-(defmethod to-keychain Key
-  [^Key k]
-  ;; (log/trace "to-keychain Key: " k)
-  (if (nil? k)
-    nil
-    (let [kind (.getKind k)
-          nm (.getName k)
-          id (str (.getId k))
-          this (keyword kind (if nm nm id))
-          res (if (.getParent k)
-                (conj (list this) (to-keychain (.getParent k)))
-                (list this))]
-      ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
-      ;; (log/trace "res: " res)
-      ;; (log/trace "res2: " (vec (flatten res)))
-      (vec (flatten res)))))
-
-(defmethod to-keychain Entity
-  [^Entity e]
-  ;; (log/trace "to-keychain Entity: " e)
-  (to-keychain (.getKey e)))
-
-(defmethod to-keychain migae.datastore.IPersistentEntityMap
-  [^IPersistentEntityMap e]
-  (log/trace "to-keychain IPersistentEntityMap: " e)
-  (to-keychain (.getKey (.content e))))
-
-(defmethod to-keychain com.google.appengine.api.datastore.EmbeddedEntity
-  [^com.google.appengine.api.datastore.EmbeddedEntity ee]
-  ;; (log/trace "to-keychain Entity: " e)
-  (to-keychain (.getKey ee)))
+;; (defn keychain?
+;;   [k]
+;;   {:pre [(and (vector? k) (not (empty? k)))]}
+;;   (or (proper-keychain? k) (improper-keychain? k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(declare keyword-to-key)
-(defn add-child-keylink
-  [^KeyFactory$Builder builder chain]
-  ;; (log/trace "add-child-keylink builder:" builder)
-  ;; (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
-  (doseq [kw chain]
-    (if (nil? kw)
-      nil
-      (if (keylink? kw)
-        (let [k (keyword-to-key kw)]
-          (.addChild builder
-                     (.getKind k)
-                     (identifier k)))
-        (throw (IllegalArgumentException.
-                (str "not a clojure.lang.Keyword: " kw)))))))
-;; (throw (RuntimeException. (str "Bad child keylink (not a clojure.lang.Keyword): " kw)))))))
+;; FIXME: rename "keychain"
+;; (defmulti to-keychain
+;;   "to-keychain converts a DS Key to a vector of Clojure keywords"
+;;   class)
 
-;; FIXME: make this an internal helper method
-;; (defmethod keychain-to-key clojure.lang.Keyword
-(defn keyword-to-key
-  [^clojure.lang.Keyword k]
-   "map single keyword to key."
-;;     {:pre [(= (type k) clojure.lang.Keyword)]}
-     ;; (log/trace "keyword-to-key:" k (type k))
-     (if (not (= (type k) clojure.lang.Keyword))
-        (throw (IllegalArgumentException.
-                (str "not a clojure.lang.Keyword: " k))))
-       ;; (throw (RuntimeException. (str "Bad keylink (not a clojure.lang.Keyword): " k))))
-     (let [kind (clojure.core/namespace k)
-           ident (edn/read-string (clojure.core/name k))]
-       ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
-       (cond
-        (nil? kind)
-        ;;(throw (RuntimeException. (str "Improper keylink (missing namespace): " k)))
-        (throw (IllegalArgumentException.
-                (str "missing namespace: " k)))
-        (integer? ident)
-        (KeyFactory/createKey kind ident)
-        (symbol? ident)                  ;; edn reader makes symbols
-        (let [s (str ident)]
-          (cond
-           (= (first s) \d)
-           (let [id (edn/read-string (apply str (rest s)))]
-             (if (= (type id) java.lang.Long)
-               (KeyFactory/createKey kind id)
-               (KeyFactory/createKey kind s)))
-           (= (first s) \x)
-           (let [id (edn/read-string (str "0" s))]
-             (if (= (type id) java.lang.Long)
-               (KeyFactory/createKey kind id)
-               (KeyFactory/createKey kind s)))
-           :else
-           (KeyFactory/createKey kind s)))
-        :else
-        (throw (IllegalArgumentException.
-                (str k))))))
-        ;; (throw (RuntimeException. (str "Bad keylink: " k))))))
+;; (defmethod to-keychain nil
+;;   [x]
+;;   nil)
+
+;; (defmethod to-keychain Key
+;;   [^Key k]
+;;   ;; (log/trace "to-keychain Key: " k)
+;;   (if (nil? k)
+;;     nil
+;;     (let [kind (.getKind k)
+;;           nm (.getName k)
+;;           id (str (.getId k))
+;;           this (keyword kind (if nm nm id))
+;;           res (if (.getParent k)
+;;                 (conj (list this) (to-keychain (.getParent k)))
+;;                 (list this))]
+;;       ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
+;;       ;; (log/trace "res: " res)
+;;       ;; (log/trace "res2: " (vec (flatten res)))
+;;       (vec (flatten res)))))
+
+;; (defmethod to-keychain Entity
+;;   [^Entity e]
+;;   ;; (log/trace "to-keychain Entity: " e)
+;;   (to-keychain (.getKey e)))
+
+;; (defmethod to-keychain migae.datastore.PersistentEntityMap
+;;   [^IPersistentEntityMap e]
+;;   (log/trace "to-keychain IPersistentEntityMap: " e)
+;;   (to-keychain (.getKey (.content e))))
+
+;; (defmethod to-keychain com.google.appengine.api.datastore.EmbeddedEntity
+;;   [^com.google.appengine.api.datastore.EmbeddedEntity ee]
+;;   ;; (log/trace "to-keychain Entity: " e)
+;;   (to-keychain (.getKey ee)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FIXME: restrict keychain-to-key to proper keychains
-;; (defmethod keychain-to-key clojure.lang.PersistentVector
-(defn keychain-to-key
-  ;; FIXME: validate keychain only keylinks
-  ([keychain]
-  ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
-  ;; (stack/print-cause-trace (throw (RuntimeException. "foo")) 99)
-   (if (proper-keychain? keychain)
-     (let [k (keyword-to-key (first keychain))
-           root (KeyFactory$Builder. k)]
-       (.getKey (doto root (add-child-keylink (rest keychain)))))
-     (throw (IllegalArgumentException.
-             (str "Invalid keychain: " keychain))))))
-;; (throw (RuntimeException. (str "Bad keychain (not a vector of keywords): " keychain))))))
+;; (declare keyword-to-key)
+;; (defn add-child-keylink
+;;   [^KeyFactory$Builder builder chain]
+;;   ;; (log/trace "add-child-keylink builder:" builder)
+;;   ;; (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
+;;   (doseq [kw chain]
+;;     (if (nil? kw)
+;;       nil
+;;       (if (keylink? kw)
+;;         (let [k (keyword-to-key kw)]
+;;           (.addChild builder
+;;                      (.getKind k)
+;;                      (identifier k)))
+;;         (throw (IllegalArgumentException.
+;;                 (str "not a clojure.lang.Keyword: " kw)))))))
+;; ;; (throw (RuntimeException. (str "Bad child keylink (not a clojure.lang.Keyword): " kw)))))))
+
+;; ;; FIXME: make this an internal helper method
+;; ;; (defmethod keychain-to-key clojure.lang.Keyword
+;; (defn keyword-to-key
+;;   [^clojure.lang.Keyword k]
+;;    "map single keyword to key."
+;; ;;     {:pre [(= (type k) clojure.lang.Keyword)]}
+;;      ;; (log/trace "keyword-to-key:" k (type k))
+;;      (if (not (= (type k) clojure.lang.Keyword))
+;;         (throw (IllegalArgumentException.
+;;                 (str "not a clojure.lang.Keyword: " k))))
+;;        ;; (throw (RuntimeException. (str "Bad keylink (not a clojure.lang.Keyword): " k))))
+;;      (let [kind (clojure.core/namespace k)
+;;            ident (edn/read-string (clojure.core/name k))]
+;;        ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
+;;        (cond
+;;         (nil? kind)
+;;         ;;(throw (RuntimeException. (str "Improper keylink (missing namespace): " k)))
+;;         (throw (IllegalArgumentException.
+;;                 (str "missing namespace: " k)))
+;;         (integer? ident)
+;;         (KeyFactory/createKey kind ident)
+;;         (symbol? ident)                  ;; edn reader makes symbols
+;;         (let [s (str ident)]
+;;           (cond
+;;            (= (first s) \d)
+;;            (let [id (edn/read-string (apply str (rest s)))]
+;;              (if (= (type id) java.lang.Long)
+;;                (KeyFactory/createKey kind id)
+;;                (KeyFactory/createKey kind s)))
+;;            (= (first s) \x)
+;;            (let [id (edn/read-string (str "0" s))]
+;;              (if (= (type id) java.lang.Long)
+;;                (KeyFactory/createKey kind id)
+;;                (KeyFactory/createKey kind s)))
+;;            :else
+;;            (KeyFactory/createKey kind s)))
+;;         :else
+;;         (throw (IllegalArgumentException.
+;;                 (str k))))))
+;;         ;; (throw (RuntimeException. (str "Bad keylink: " k))))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; FIXME: restrict keychain-to-key to proper keychains
+;; ;; (defmethod keychain-to-key clojure.lang.PersistentVector
+;; (defn keychain-to-key
+;;   ;; FIXME: validate keychain only keylinks
+;;   ([keychain]
+;;   ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+;;   ;; (stack/print-cause-trace (throw (RuntimeException. "foo")) 99)
+;;    (if (proper-keychain? keychain)
+;;      (let [k (keyword-to-key (first keychain))
+;;            root (KeyFactory$Builder. k)]
+;;        (.getKey (doto root (add-child-keylink (rest keychain)))))
+;;      (throw (IllegalArgumentException.
+;;              (str "Invalid keychain: " keychain))))))
+;; ;; (throw (RuntimeException. (str "Bad keychain (not a vector of keywords): " keychain))))))
 
 
 
@@ -304,14 +310,14 @@
 ;;      ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti identifier class)
+;; (defmulti identifier class)
 
-(defmethod identifier Key
-  [^Key k]
-  ;; (log/trace "Key identifier" k)
-  (let [nm (.getName k)
-        id (.getId k)]
-    (if (nil? nm) id nm)))
+;; (defmethod identifier Key
+;;   [^Key k]
+;;   ;; (log/trace "Key identifier" k)
+;;   (let [nm (.getName k)
+;;         id (.getId k)]
+;;     (if (nil? nm) id nm)))
 
 ;; (defmethod identifier migae.datastore.PersistentEntityMap
 ;;   [^PersistentEntityMap em]

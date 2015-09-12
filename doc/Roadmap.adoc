@@ -18,7 +18,7 @@ In no particular order:
 ** <<schema,schema support>>
 * <<transactions,transactions>>
 * <<namespaces,namespaces>>
-* <<bulk,bulk actions>>
+* <<bulk,bulk operations>>
 
 == [[ed]] EDN syntax
 
@@ -306,9 +306,17 @@ the filter to get a list of results, then map over them with odd?
 
 == [[namespaces]] GAE Namespaces
 
-== [[bulk]] bulk actions
+== [[bulk]] bulk operations
+
+=== bulk loading
+
+* link:http://ikaisays.com/2010/08/11/using-the-app-engine-mapper-for-bulk-data-import/[Using the App Engine Mapper for bulk data import] (somewhat outdated)
+
+edn: to add records, we can just upload a file of edn representations of entity-maps.
 
 === bulk update
+
+* investigate link:https://cloud.google.com/appengine/docs/java/dataprocessing/[MapReduce for AppEngine]
 
 Case: add a field `:foo` with default value `:bar` to all entities of
 kind `:k`.  Something like:
@@ -318,3 +326,5 @@ kind `:k`.  Something like:
 (let [ems (ds/entity-map* [:k])]
      (doseq [grp grps]
      	    (ds/entity-map! :into grp {:foo :bar})))
+----
+

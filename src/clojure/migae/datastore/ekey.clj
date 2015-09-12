@@ -24,7 +24,7 @@
   (keyword (.getKind (.content e))))
 (defmethod kind migae.datastore.PersistentEntityHashMap
   [^migae.datastore.PersistentEntityHashMap e]
-  (keyword (clj/namespace (last (.k e)))))
+  (keyword (namespace (last (.k e)))))
 (defmethod kind clojure.lang.Keyword
   [^clojure.lang.Keyword kw]
   (when-let [k (namespace kw)]
@@ -54,7 +54,7 @@
   [^migae.datastore.PersistentEntityHashMap em]
   ;; (log/trace "PersistentEntityHashMap.identifier")
   (let [fob (dogtag (.k em))
-        nm (read-string (clj/name fob))]
+        nm (read-string (name fob))]
     nm))
 (defmethod identifier clojure.lang.PersistentVector
   [^clojure.lang.PersistentVector keychain]
@@ -64,74 +64,50 @@
       nm
       (.getId k))))
 
-(defmulti name class)
-(defmethod name Entity
-  [^Entity e]
-  (.getName (.getKey e)))
-(defmethod name clojure.lang.PersistentVector
-  [^ clojure.lang.PersistentVector keychain]
-  (clj/name (last keychain)))
-(defmethod name migae.datastore.PersistentEntityMap
-  [^migae.datastore.PersistentEntityMap em]
-  (.getName (.getKey (.content em))))
-
-(defmulti id class)
-(defmethod id clojure.lang.PersistentVector
-  [ks]
-   (let [keylink (last ks)]
-     (.getId keylink)))
-(defmethod id Key
-  [^Key k]
-  (.getId k))
-(defmethod id Entity
-  [^Entity e]
-  (.getId (.getKey e)))
-(defmethod id migae.datastore.PersistentEntityMap
-  [^migae.datastore.PersistentEntityMap e]
-  (.getId (.getKey (.content e))))
-
 (defn ekey? [^com.google.appengine.api.datastore.Key k]
   (= (type k) com.google.appengine.api.datastore.Key))
 
 (defn keylink?
   [k]
   ;; (log/trace "keylink?" k (and (keyword k)
-  ;;                              (not (nil? (clj/namespace k)))))
-  (and (keyword k)
-       (not (nil? (clj/namespace k)))))
+  ;;                              (not (nil? (namespace k)))))
+  (or (and (keyword k)
+           (not (nil? (namespace k))))
+      (= (type k) com.google.appengine.api.datastore.Key)))
 
 
-(defmulti to-keychain class)
-(defmethod to-keychain Key
-  [k]
-  (ekey/to-keychain k))
-(defmethod to-keychain migae.datastore.PersistentEntityMap
-  [em]
-  (ekey/to-keychain (.getKey (.content em))))
+
+;; (defmulti to-keychain class)
+;; (defmethod to-keychain Key
+;;   [k]
+;;   (keychain k))
+;; (defmethod to-keychain migae.datastore.PersistentEntityMap
+;;   [em]
+;;   (keychain (.getKey (.content em))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti keychain class)
-(defmethod keychain Key
-  [k]
-  (let [keychain (ekey/to-keychain k)]
-    keychain))
-(defmethod keychain migae.datastore.PersistentEntityMap
-  [em]
-  (let [keychain (ekey/to-keychain (.getKey (.content em)))]
-    keychain))
-(defmethod keychain clojure.lang.PersistentVector
-  [keychain]
-  keychain)
+;; (defmulti keychain class)
+;; (defmethod keychain Key
+;;   [k]
+;;   (let [keychain (keychain k)]
+;;     keychain))
+;; (defmethod keychain migae.datastore.PersistentEntityMap
+;;   [em]
+;;   (let [keychain (keychain (.getKey (.content em)))]
+;;     keychain))
+;; (defmethod keychain clojure.lang.PersistentVector
+;;   [keychain]
+;;   keychain)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti dogtag class)
 (defmethod dogtag Key
   [k]
-  (let [keychain (ekey/to-keychain k)]
+  (let [keychain (keychain k)]
     (last keychain)))
 (defmethod dogtag migae.datastore.PersistentEntityMap
   [em]
-  (let [keychain (ekey/to-keychain (.getKey (.content em)))]
+  (let [keychain (keychain (.getKey (.content em)))]
     (last keychain)))
 (defmethod dogtag clojure.lang.PersistentVector
   [keychain]
@@ -152,11 +128,11 @@
   (.getKey e))
 (defmethod entity-key clojure.lang.Keyword
   [^clojure.lang.Keyword k]
-  (ekey/keychain-to-key [k]))
+  (keychain-to-key [k]))
 (defmethod entity-key clojure.lang.PersistentVector
   [kchain]
   ;; FIXME: validate vector contains only keylinks
-  (ekey/keychain-to-key kchain))
+  (keychain-to-key kchain))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn key=
@@ -172,12 +148,18 @@
 (defn keykind?
   [k]
   ;; (log/trace "keykind?" k (and (keyword k)
-  ;;                              (not (nil? (clj/namespace k)))))
-  (and (keyword? k) (nil? (clj/namespace k))))
+  ;;                              (not (nil? (namespace k)))))
+  (and (keyword? k) (nil? (namespace k))))
 
+;; NB: this dups what's in the keychain namespace
+;; to make it available as ds/keychain?
 (defn keychain? [k]
-  ;; k is vector of DS Keys and clojure keywords
-  (every? #(or (keyword? %) (= (type %) Key)) k))
+  (keychain? k))
+
+;; (defn keychain
+;;   [arg]
+;;   (log/debug "KEYCHAIN: " arg)
+;;   (keychain arg))
 
 (defn keychain=
   [k1 k2]

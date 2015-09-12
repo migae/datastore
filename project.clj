@@ -4,7 +4,7 @@
   :min-lein-version "2.0.0"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :aot [IPersistentEntityMap]
+  :aot [IPersistentEntityMap IPersistentEntityMapSeq]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]
@@ -58,7 +58,9 @@
   :profiles {:test {:dependencies [[com.google.appengine/appengine-api-stubs "1.9.25"]
                                    [com.google.appengine/appengine-testing "1.9.25"]]}
              :dev {:source-paths ["dev" "src/clojure"]
-                   :dependencies [[com.google.appengine/appengine-api-stubs "1.9.25"]
+                   :dependencies [[org.clojure/tools.namespace "0.2.3"]
+                                  [org.clojure/java.classpath "0.2.0"]
+                                  [com.google.appengine/appengine-api-stubs "1.9.25"]
                                    [com.google.appengine/appengine-testing "1.9.25"]]}})
   ;;                                  [ring-zombie "1.0.1"]]}})
 

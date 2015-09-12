@@ -6,22 +6,22 @@
   ;; (log/trace "get-kinded-emap " keychain)
   (if (> (count keychain) 1)
     ;; kinded descendant query
-    (let [ancestor-key (ekey/keychain-to-key (vec (butlast keychain)))
-          kind (clj/name (last keychain))
+    (let [ancestor-key (keychain-to-key (vec (butlast keychain)))
+          kind (name (last keychain))
           q (Query. kind ancestor-key)
           prepared-query (.prepare (ds/datastore) q)
           iterator (.asIterator prepared-query)
           seq (iterator-seq iterator)
-          res (PersistentEntityMapIterator. seq)]
+          res (PersistentEntityMapSeq. seq)]
       ;; (log/trace "seq1: " (type seq))
       res)
     ;; kinded query
-    (let [kind (clj/name (last keychain))
+    (let [kind (name (last keychain))
           q (Query. kind)
           prepared-query (.prepare (ds/datastore) q)
           iterator (.asIterator prepared-query)
            seq (iterator-seq iterator)
-          res (PersistentEntityMapIterator. seq)]
+          res (PersistentEntityMapSeq. seq)]
       ;; (log/trace "seq2: " (type seq))
       res)))
 
@@ -30,14 +30,14 @@
   ;; (log/trace "keychain" keychain)
   ;; (log/trace "data" data)
   ;; (let [em (first data)
-  ;;       kind (clj/name (last keychain))
+  ;;       kind (name (last keychain))
   ;;       ;; foo (log/trace "kind" kind)
   ;;       parent-keychain (vec (butlast keychain))
   ;;       e (if (nil? parent-keychain)
   ;;           (Entity. kind)
   ;;           (do #_(log/trace "parent-keychain" parent-keychain)
-  ;;               #_(log/trace "parent-key" (ekey/keychain-to-key parent-keychain))
-  ;;               (Entity. kind  (ekey/keychain-to-key parent-keychain))
+  ;;               #_(log/trace "parent-key" (keychain-to-key parent-keychain))
+  ;;               (Entity. kind  (keychain-to-key parent-keychain))
   ;;               ))]
   ;;   (when (not (empty? em))
   ;;     (doseq [[k v] (seq em)]
@@ -49,15 +49,15 @@
   [keychain]
   ;; precon: keychain has already been validated
   ;; (log/trace "get-prefix-matches" keychain)
-  (let [prefix (apply ekey/keychain-to-key keychain)
+  (let [prefix (apply keychain-to-key keychain)
         q (.setAncestor (Query.) prefix)
         prepared-query (.prepare (ds/datastore) q)
         iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
         seq  (iterator-seq iterator)
-        res (PersistentEntityMapIterator. seq)]
+        res (PersistentEntityMapSeq. seq)]
     res))
 
-;;   (let [k (ekey/keychain-to-key keychain)
+;;   (let [k (keychain-to-key keychain)
 ;;         e (.get (ds/datastore) k)]
 ;; ;;               (catch EntityNotFoundException e nil))]
 ;;     (PersistentEntityMap. e nil)))
@@ -66,7 +66,7 @@
   [keychain & data]
   ;; precon: keychain has already been validated
   ;; (log/trace "get-proper-emap" keychain)
-  (let [k (ekey/keychain-to-key keychain)
+  (let [k (keychain-to-key keychain)
         e (.get (ds/datastore) k)]
 ;;               (catch EntityNotFoundException e nil))]
     (PersistentEntityMap. e nil)))
@@ -77,20 +77,20 @@
   ;; (log/trace "get-ds " keychain arg2)
    (cond
      (= :prefix keychain)
-     (if (apply ekey/proper-keychain? arg2)
+     (if (apply proper-keychain? arg2)
        (get-prefix-matches arg2))
      (empty? keychain)
      (pull-all)
-     (ekey/improper-keychain? keychain)
+     (improper-keychain? keychain)
      (get-kinded-emap keychain)
-     (ekey/proper-keychain? keychain)
+     (proper-keychain? keychain)
      (get-proper-emap keychain)
      :else
       (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
 
-   ;; (if (clj/empty? keychain)
+   ;; (if (empty? keychain)
    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-   ;;   (let [k (ekey/keychain-to-key keychain)
+   ;;   (let [k (keychain-to-key keychain)
    ;;         e (.get (ds/datastore) k)]
    ;;     (log/trace "key: " k)
    ;;     (log/trace "e: " e)
@@ -138,7 +138,7 @@
      (do ;; (log/trace "mode " arg1 " keychain: " arg2)
          (get-ds arg1 arg2))
      ;; else keychain
-     (if (ekey/improper-keychain? arg1)
+     (if (improper-keychain? arg1)
        (get-ds arg1 arg2))))
   ;; modal keychain + propmap filters
   ([arg1 arg2 arg3]
@@ -160,19 +160,19 @@
   (log/trace "emap?? keylinks" keylinks (type keylinks))
   (log/trace "emap?? filter-map" filter-map (type filter-map))
 ;; )
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (do
       (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
       )
-      ;; (let [ks (clj/keylinks filter-map)
+      ;; (let [ks (keylinks filter-map)
       ;;       vs (vals filter-map)
       ;;       k  (subs (str (first ks)) 1)
       ;;       v (last vs)
       ;;       f (Query$FilterPredicate. k Query$FilterOperator/EQUAL v)]
       ;;   (log/trace (format "key: %s, val: %s" k v))))
     (let [k (if (coll? keylinks)
-              (apply ekey/keychain-to-key keylinks)
-              (apply ekey/keychain-to-key [keylinks]))
+              (apply keychain-to-key keylinks)
+              (apply keychain-to-key [keylinks]))
           ;; foo (log/trace "emap?? kw keylinks: " k)
           e (try (.get (ds/datastore) k)
                  (catch EntityNotFoundException e (throw e))
@@ -193,7 +193,7 @@
   entity."
   [keylinks & propmap]
   (log/trace "emap?!" keylinks propmap)
-  (if (clj/empty? keylinks)
+  (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (keyword? (last keylinks))
       (if (nil? (namespace (last keylinks)))
@@ -210,7 +210,7 @@
   (entity-map?! keylinks propmap))
 
 
-     ;; (let [k (apply ekey/keychain-to-key keychain)
+     ;; (let [k (apply keychain-to-key keychain)
      ;;       e (try (.get (ds/datastore) k)
      ;;              (catch EntityNotFoundException e
      ;;                ;;(log/trace (.getMessage e))
@@ -236,7 +236,7 @@
 ;;   ;; [keylinks & propmap]
 ;;   [keylinks]
 ;;    (log/trace "emap??" keylinks)
-;;    (if (clj/empty? keylinks)
+;;    (if (empty? keylinks)
 ;;      (throw (IllegalArgumentException. "keychain vector must not be empty"))
 ;;      (if (every? keylink? keylinks)
 ;;        (let [k (apply keychainer keylinks)

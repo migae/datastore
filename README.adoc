@@ -27,7 +27,6 @@ In no particular order:
 * <<co-ctors,co-construction>>
 * <<queries,queries>>
 * <<mutation,mutation>>
-* <<testing,testing>>
 
 == [[start]]getting started
 
@@ -495,11 +494,13 @@ $ lein repl  ;; runs dev/user.clj
 ;;; edit test/ctor_local.clj ...
 (refresh)  ;; reload changed test/ctor_local.clj only
 (ds-reset)   ;; reinitialize appengine datastore local test env
-(clojure.test/test-var #'test.ctor-local/hashmap-axioms)
+(clojure.test/test-var #'test.ctor-local/hashmap-axioms) ;; run one test
 ;;; edit migae datastore lib source
 (refresh-all)    ;; reloads everything
 (ds-reset)   ;; local datastore test env times out relatively rapidly, so reinitialize it
+;; or:  (do (refresh-all) (ds-reset))
 (clojure.test/test-var #'test.ctor-local/hashmap-axioms)
+(clojure.test/run-tests 'test.tutorial) ;; run everything in test.tutorial
 ----
 
 You can also use leiningen to run tests, but the repl is faster by

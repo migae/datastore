@@ -1,18 +1,20 @@
-(in-ns 'migae.datastore)
-;; (ns migae.datastore.adapter
-;;   (:import [java.util
-;;             ArrayList
-;;             Vector]
-;;            [com.google.appengine.api.datastore
-;;             Email
-;;             Entity EmbeddedEntity EntityNotFoundException
-;;             Key KeyFactory KeyFactory$Builder
-;;             Link]
-;;            )
-;;   (:require ;; [migae.datastore.keychain :refer :all]
-;;             [clojure.core :as clj]
-;;             [clojure.tools.reader.edn :as edn]
-;;             [clojure.tools.logging :as log :only [trace debug info]]))
+(ns migae.datastore.adapter
+  (:import [java.util
+            ArrayList
+            Vector]
+           [com.google.appengine.api.datastore
+            Email
+            Entity EmbeddedEntity EntityNotFoundException
+            Key KeyFactory KeyFactory$Builder
+            Link]
+;;           [migae.datastore PersistentEntityMap]
+           )
+  (:require ;; [migae.datastore.keychain :refer :all]
+;;            [clojure.core :as clj]
+            [clojure.tools.reader.edn :as edn]
+            [clojure.tools.logging :as log :only [trace debug info]]
+            [migae.datastore.entity-map :refer :all]
+            ))
 
 ;;(in-ns 'migae.datastore)
   ;; (:refer-clojure :exclude [name hash key])
@@ -28,22 +30,22 @@
   [kw]
    (KeyFactory/createKey "Keyword"
                          ;; remove leading ':'
-                         (subs (clj/str kw) 1)))
+                         (subs (str kw) 1)))
 
 (defn- symbol-to-ds
   [sym]
-   (KeyFactory/createKey "Symbol" (clj/str sym)))
+   (KeyFactory/createKey "Symbol" (str sym)))
 
 (defn- get-val-clj-coll
   "Type conversion: java to clojure"
   [coll]
   ;; (log/trace "get-val-clj-coll" coll (type coll))
   (cond
-    (= (type coll) java.util.ArrayList) (clj/into '() (for [item coll]
+    (= (type coll) java.util.ArrayList) (into '() (for [item coll]
                                                        (get-val-clj item)))
-    (= (type coll) java.util.HashSet)  (clj/into #{} (for [item coll]
+    (= (type coll) java.util.HashSet)  (into #{} (for [item coll]
                                                        (get-val-clj item)))
-    (= (type coll) java.util.Vector)  (clj/into [] (for [item coll]
+    (= (type coll) java.util.Vector)  (into [] (for [item coll]
                                                        (get-val-clj item)))
     :else (log/trace "EXCEPTION: unhandled coll " coll)
     ))
@@ -104,9 +106,7 @@
                   (instance? java.util.Collection v) (get-val-clj-coll v)
                   (= (type v) Link) (.toString v)
                   (= (type v) Email) (.getEmail v)
-                  (= (type v) EmbeddedEntity) ;; (let [e (Entity. (.getKey v))]
-                                              ;;  (.setPropertiesFrom e v)
-                                                (migae.datastore.PersistentEntityMap. v nil) ;; )
+                  (= (type v) EmbeddedEntity) (->PersistentEntityMap v nil)
                   (= (type v) Key) (let [kind (.getKind v)]
                                      (if (= kind "Keyword")
                                        (keyword (.getName v))
@@ -136,7 +136,7 @@
                   (= (type v) java.lang.Long) v
                   (= (type v) java.lang.Boolean) v
                   (= (type v) java.util.Date) v
-                  (= (type v) java.util.ArrayList) v ;; (clj/into [] v)
+                  (= (type v) java.util.ArrayList) v ;; (into [] v)
                   :else (do
                           (log/trace "ELSE: get val type" v (type v))
                           v))]
@@ -145,7 +145,7 @@
 
 (defn- props-to-map
   [props]
-  (clj/into {} (for [[k v] props]
+  (into {} (for [[k v] props]
                  (let [prop (keyword k)
                        val (get-val-clj v)]
                    {prop val}))))

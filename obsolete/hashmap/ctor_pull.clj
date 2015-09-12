@@ -12,7 +12,7 @@
           prepared-query (.prepare (ds/datastore) q)
           iterator (.asIterator prepared-query)
           seq (iterator-seq iterator)
-          res (PersistentEntityMapIterator. seq)]
+          res (PersistentEntityMapSeq. seq)]
       ;; (log/trace "seq1: " (type seq))
       res)
     ;; kinded query
@@ -21,7 +21,7 @@
           prepared-query (.prepare (ds/datastore) q)
           iterator (.asIterator prepared-query)
            seq (iterator-seq iterator)
-          res (PersistentEntityMapIterator. seq)]
+          res (PersistentEntityMapSeq. seq)]
       ;; (log/trace "seq2: " (type seq))
       res)))
 
@@ -54,7 +54,7 @@
         prepared-query (.prepare (ds/datastore) q)
         iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
         seq  (iterator-seq iterator)
-        res (PersistentEntityMapIterator. seq)]
+        res (PersistentEntityMapSeq. seq)]
     res))
 
 ;;   (let [k (ekey/keychain-to-key keychain)

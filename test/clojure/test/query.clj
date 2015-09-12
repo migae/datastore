@@ -17,7 +17,7 @@
   (:require [clojure.test :refer :all]
             [migae.infix :as infix]
             [migae.datastore :as ds]
-            [migae.datastore.keychain :as k] ; FIXME
+            ;; [migae.datastore.keychain :as k] ; FIXME
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -309,7 +309,7 @@
 (deftest ^:query ancestor-query
   (testing "emaps?? ancestor query"
     (let [acme (ds/entity-map! :force [:Group] {:name "Acme"})
-          k (k/to-keychain acme)        ; FIXME
+          k (ds/keychain acme)        ; FIXME
           foo (log/trace "ancestor-query key: " k)
           foo (flush)
           ;; id (ds/id k)

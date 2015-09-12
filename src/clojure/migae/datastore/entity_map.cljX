@@ -1,4 +1,55 @@
-(in-ns 'migae.datastore)
+(ns migae.datastore.entity-map
+  (:refer-clojure :exclude [get into name print println print-str pr-str reduce])
+  (:import [java.lang IllegalArgumentException RuntimeException]
+           [java.util
+            Collection
+            Collections
+            ;; Collections$UnmodifiableMap
+            ;; Collections$UnmodifiableMap$UnmodifiableEntrySet
+            ;; Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry
+            ArrayList
+            HashMap HashSet
+            Map Map$Entry
+            Vector]
+           ;; [clojure.lang MapEntry]
+           [com.google.appengine.api.blobstore BlobKey]
+           [com.google.appengine.api.datastore
+            Blob
+            DatastoreFailureException
+            DatastoreService
+            DatastoreServiceFactory
+            DatastoreServiceConfig
+            DatastoreServiceConfig$Builder
+            Email
+            Entity EmbeddedEntity EntityNotFoundException
+            FetchOptions$Builder
+            ImplicitTransactionManagementPolicy
+            Key KeyFactory KeyFactory$Builder
+            Link
+            PhoneNumber
+            ReadPolicy ReadPolicy$Consistency
+            Query Query$SortDirection
+            Query$FilterOperator Query$FilterPredicate
+            Query$CompositeFilter Query$CompositeFilterOperator
+            ShortBlob
+            Text
+            Transaction]
+           [clojure.lang IFn ILookup IMapEntry IObj
+            IPersistentCollection IPersistentMap IReduce IReference ISeq ITransientCollection]
+           )
+  (:require [clojure.core :as clj]
+            [clojure.walk :as walk]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [clojure.tools.reader.edn :as edn]
+            [migae.datastore.service :as ds]
+            [migae.datastore.keychain :as ekey]
+;;            [migae.datastore.ctor-push :as push]
+;;            [migae.datastore.adapter :refer :all]
+            ;; [migae.datastore.entity :as dse]
+            ;; [migae.datastore.key :as dskey]
+            ;; [migae.datastore.query :as dsqry]
+            [migae.infix :as infix]
+            [clojure.tools.logging :as log :only [trace debug info]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PersistentEntityMap
@@ -12,7 +63,7 @@
     (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
-          em-iter (PersistentEntityMapIterator. e-iter) ]
+          em-iter (PersistentEntityMapSeq. e-iter) ]
     ;; (log/trace "Iterable res:" em-iter)
     em-iter))
 
@@ -396,3 +447,25 @@
     (PersistentEntityMap. (.next query) nil))
   ;; (remove  [this])
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   API
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn entity-map!
+  ([keychain]
+   (push/into-ds! keychain))
+  ([keychain em]
+   {:pre [(map? em)
+          (vector? keychain)
+          (not (empty? keychain))
+          (every? keyword? keychain)]}
+   (push/into-ds! keychain em))
+  ([force keychain em]
+   {:pre [(map? em)
+          (vector? keychain)
+          (not (empty? keychain))
+          (every? keyword? keychain)]}
+   (push/into-ds! force keychain em)))
+
+

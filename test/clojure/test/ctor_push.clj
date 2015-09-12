@@ -43,7 +43,47 @@
                                         ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:ctor-push ctor-push-fail
+(deftest ^:ctor-push ctor-push-fail-1.0
+  (testing "ctor-push fail: non-empty keychain"
+    (let [em (try (ds/entity-map! [] {:a 2})
+                  (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (not (empty? keychain))"
+         (.getMessage em)))
+      )))
+
+(deftest ^:ctor-push ctor-push-fail-1.1
+  (testing "ctor-push fail: keychain of keylinks"
+    (let [em (try (ds/entity-map! [1 2] {:a 2})
+                  (catch java.lang.AssertionError ex ex))]
+      (is (= "Assert failed: (every? keyword? keychain)"
+             (.getMessage em)))
+      )))
+
+(deftest ^:ctor-push ctor-push-fail-1.2
+  (testing "ctor-push fail: keychain of keylinks"
+    (let [em (try (ds/entity-map! [:A :B] {:a 2})
+                   (catch java.lang.RuntimeException ex ex))]
+      (is (= "Invalid keychain : [:A :B]"
+             (.getMessage em)))
+      )))
+
+(deftest ^:ctor-push ctor-push-fail-1.3
+  (testing "ctor-push fail: vector keychain"
+    (let [em (try (ds/entity-map! 2 {:a 2})
+                  (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (vector? keychain)"
+             (.getMessage em)))
+      )))
+
+(deftest ^:ctor-push ctor-push-fail-1.4
+  (testing "ctor-push fail: vector keychain"
+    (let [em (try (ds/entity-map! :x {:a 2})
+                  (catch java.lang.AssertionError x x))]
+      (is (= "Assert failed: (vector? keychain)"
+             (.getMessage em)))
+      )))
+
+(deftest ^:ctor-push ctor-push-fail-2
   (testing "ctor-push fail"
     (let [em1 (ds/entity-map! [:A/B] {:a 1})
           em2 (try (ds/entity-map! [:A/B] {:a 2})
@@ -117,6 +157,7 @@
 
 (deftest ^:ctor ctor-push-multi
   (testing "construct multiple emaps in one go"
+    ;; FIXME
     (let [ems (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])]
       (log/trace "ems:" ems)
       (doseq [em ems]
