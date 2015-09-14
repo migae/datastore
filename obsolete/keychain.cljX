@@ -51,48 +51,6 @@
 ;;   (or (proper-keychain? k) (improper-keychain? k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FIXME: rename "keychain"
-;; (defmulti to-keychain
-;;   "to-keychain converts a DS Key to a vector of Clojure keywords"
-;;   class)
-
-;; (defmethod to-keychain nil
-;;   [x]
-;;   nil)
-
-;; (defmethod to-keychain Key
-;;   [^Key k]
-;;   ;; (log/trace "to-keychain Key: " k)
-;;   (if (nil? k)
-;;     nil
-;;     (let [kind (.getKind k)
-;;           nm (.getName k)
-;;           id (str (.getId k))
-;;           this (keyword kind (if nm nm id))
-;;           res (if (.getParent k)
-;;                 (conj (list this) (to-keychain (.getParent k)))
-;;                 (list this))]
-;;       ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
-;;       ;; (log/trace "res: " res)
-;;       ;; (log/trace "res2: " (vec (flatten res)))
-;;       (vec (flatten res)))))
-
-;; (defmethod to-keychain Entity
-;;   [^Entity e]
-;;   ;; (log/trace "to-keychain Entity: " e)
-;;   (to-keychain (.getKey e)))
-
-;; (defmethod to-keychain migae.datastore.PersistentEntityMap
-;;   [^IPersistentEntityMap e]
-;;   (log/trace "to-keychain IPersistentEntityMap: " e)
-;;   (to-keychain (.getKey (.content e))))
-
-;; (defmethod to-keychain com.google.appengine.api.datastore.EmbeddedEntity
-;;   [^com.google.appengine.api.datastore.EmbeddedEntity ee]
-;;   ;; (log/trace "to-keychain Entity: " e)
-;;   (to-keychain (.getKey ee)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (declare keyword-to-key)
 ;; (defn add-child-keylink
 ;;   [^KeyFactory$Builder builder chain]

@@ -13,7 +13,6 @@
             EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.infix :as infix]
             [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
@@ -102,9 +101,10 @@
 
 (deftest ^:emap emap1
   (testing "emap key vector must not be empty"
-    (try (ds/emap [] {})
-         (catch IllegalArgumentException e
-           (log/trace (.getMessage e))))))
+    (let [e (try (ds/entity-map [] {})
+                 (catch java.lang.AssertionError ex ex))]
+      (is (= "Assert failed: (not (empty? keychain))"
+             (.getMessage e))))))
 
 (deftest ^:emap emap?
   (testing "entitymap deftype"
@@ -173,7 +173,7 @@
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Chibi"))
         ;; (should-fail (is (= e1 e2)))
-        (is (ds/key= e1 e2))
+        (is (ds/key=? e1 e2))
         )))
 
 (deftest ^:emap emap-fetch
@@ -182,7 +182,7 @@
     (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
 ;; FIXME: implement support for :or, meaning: fetch if exists, otherwise create and save
           ;; em2 (ds/entity-map! :or [:Species/Felis_catus] {:name "Felix"})]
-        ;; (is (ds/key= em1 em2))
+        ;; (is (ds/key=? em1 em2))
         ;; (is (= (get em1 :name) "Chibi"))
         ;; (is (= (get em2 :name) "Chibi"))
         )

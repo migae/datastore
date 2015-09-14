@@ -4,8 +4,8 @@
   :min-lein-version "2.0.0"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :aot [IPersistentEntityMap IPersistentEntityMapSeq]
-  :source-paths ["src/clojure"]
+  :aot [Interfaces]
+  :source-paths ["src/clojure" "src/clj-compile"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]
   :test-selectors {:ancestor :ancestor
@@ -52,15 +52,30 @@
                                               com.sun.jdmk/jmxtools
                                               com.sun.jmx/jmxri]]]
 
-                 ;; [org.slf4j/slf4j-log4j12 "1.6.6"]
-;;  :repositories {"local" "file:maven_repository"}
-  :repl-options {:welcome (println "migae datastore repl.  (ds-reset) to reinitialize test datastore.")}
+  ;; :filespecs [;;{:type :path :path "config/base.clj"}
+  ;;             ;; Directory paths are included recursively.
+  ;;             ;;{:type :paths :paths ["config/web" "config/cli"]}
+  ;;             ;; Programmatically-generated content can use :bytes.
+  ;;             {:type :bytes :path "project.clj"
+;;  :prep-tasks [["with-profile" "cc" "compile"]] ;; "javac" "compile"]
+  :repl-options {:welcome (clojure.core/println "migae datastore repl.  (ds-reset) to reinitialize test datastore.")
+                 :port 8081}
   :profiles {:test {:dependencies [[com.google.appengine/appengine-api-stubs "1.9.25"]
                                    [com.google.appengine/appengine-testing "1.9.25"]]}
-             :dev {:source-paths ["dev" "src/clojure"]
+             :dev {:source-paths ["src/clojure" "dev"]
                    :dependencies [[org.clojure/tools.namespace "0.2.3"]
                                   [org.clojure/java.classpath "0.2.0"]
                                   [com.google.appengine/appengine-api-stubs "1.9.25"]
-                                   [com.google.appengine/appengine-testing "1.9.25"]]}})
-  ;;                                  [ring-zombie "1.0.1"]]}})
+                                   [com.google.appengine/appengine-testing "1.9.25"]]}
+             :repl {:source-paths ["src/clojure" "dev"]
+                   :dependencies [[org.clojure/tools.namespace "0.2.3"]
+                                  [org.clojure/java.classpath "0.2.0"]
+                                  [com.google.appengine/appengine-api-stubs "1.9.25"]
+                                   [com.google.appengine/appengine-testing "1.9.25"]]}
+             :cc {:source-paths ["src/clojure"]
+                   :dependencies [[org.clojure/tools.namespace "0.2.3"]
+                                  [org.clojure/java.classpath "0.2.0"]
+                                  [com.google.appengine/appengine-api-stubs "1.9.25"]
+                                   [com.google.appengine/appengine-testing "1.9.25"]]}
+             })
 

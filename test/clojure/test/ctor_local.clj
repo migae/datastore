@@ -12,7 +12,6 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-;;            [migae.infix :as infix]
             [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
@@ -162,8 +161,8 @@
 ;; FIXME      (is (= (key em1) [:A/B :C/D]))
 ;; FIXME      (is (= (val em1) {:a 1 :b 2}))
 ;; FIXME:  keys and vals should not include :migae/keychain?
-      (is (= (keys em1) [:a :b :migae/keychain]))
-      (is (= (vals em1) [1 2 [:A/B :C/D]]))
+      (is (= (keys em1) [:a :b]))
+      (is (= (vals em1) [1 2]))
       )))
 
 (deftest ^:emap emap-empty-ctor
@@ -222,14 +221,14 @@
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Chibi"))
         ;; (should-fail (is (= e1 e2)))
-        (is (not (ds/key= e1 e2)))
+        (is (not (ds/key=? e1 e2)))
         )))
 
 (deftest ^:emap emap-fetch
   (testing "entity-map! new, update, replace"
     (let [em1 (ds/entity-map! [:Species/Felis_catus :Cat/Chibi] {:name "Chibi"})
           em2 (ds/entity-map! [:Species/Felis_catus :Cat/Max] {:name "Max"})]
-        ;; FIXME: key=  (is (ds/key= em1 em2))
+        ;; FIXME: key=?  (is (ds/key=? em1 em2))
         (is (= (get em1 :name) "Chibi"))
         (is (= (em1 :name) "Chibi"))
         (is (= (:name em1) "Chibi"))

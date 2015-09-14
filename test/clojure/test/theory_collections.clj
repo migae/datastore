@@ -14,16 +14,9 @@
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
-  ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            ;; [migae.infix :as infix]
             [migae.datastore :as ds]
-            ;; [migae.datastore.api :as ds]
-            ;; [migae.datastore.service :as dss]
-            ;; [migae.datastore.entity :as dse]
-            ;; [migae.datastore.query  :as dsqry]
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  map api
@@ -78,7 +71,7 @@
           e2 (empty e1)]
       (is (ds/emap? e2))
       (is (empty? e2))
-      (is (ds/key= e1 e2)) ; an entity-map must have a key
+      (is (ds/key=? e1 e2)) ; an entity-map must have a key
       )))
 
 (deftest ^:coll empty-axiom2
@@ -87,7 +80,7 @@
           e2 (not-empty e1)]
       (is (ds/emap? e2))
       (is (not (empty? e2)))
-      (is (ds/key= e1 e2))
+      (is (ds/key=? e1 e2))
       (is (= e1 e2))
       )))
 
@@ -314,12 +307,12 @@
       (log/trace "em1" (ds/print em1))
       (log/trace "em3" (ds/keychain em3) (ds/print em3))
       (log/trace "em3 type:" (type em3))
-      (is (= em1 em3))
-;;      (is (ds/key= em1 em3))
+      (is (not= em1 em3))
+;;      (is (ds/key=? em1 em3))
 
       (let [em4 (merge em3 {:d 27})]
         (log/trace "em4" em4)
-        (is (= em3 em4)))
+        (is (not= em3 em4)))
 
       (let [em5 (merge em3 {:c #{{:d 3}}})]
         (log/trace "em5" em5)

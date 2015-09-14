@@ -15,14 +15,8 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.infix :as infix]
             [migae.datastore :as ds]
-            ;; [migae.datastore.service :as dss]
-            ;; [migae.datastore.entity :as dse]
-            ;; [migae.datastore.query  :as dsqry]
-            ;; [migae.datastore.key    :as dskey]
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]

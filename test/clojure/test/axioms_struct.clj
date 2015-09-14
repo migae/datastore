@@ -16,7 +16,6 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.infix :as infix]
             [migae.datastore :as ds]
             ;; [migae.datastore.api :as ds]
             ;; [migae.datastore.service :as dss]
@@ -130,8 +129,8 @@
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:b 2})]
       (let [em3 (into em1 em2)]
-        (is (ds/key= em3 em2))
-        (is (not (ds/key= em3 em1))))
+        (is (ds/key=? em3 em2))
+        (is (not (ds/key=? em3 em1))))
       ))
 
 (deftest ^:into emap-into-axiom3
@@ -142,8 +141,8 @@
       ;; (log/trace "em2" (ds/print em2))
       (let [em3 (into em1 em2)]
         ;; (log/trace "(into em1 em2) => " (ds/print em3))
-        (is (ds/key= em3 em2))
-        (is (not (ds/key= em3 em1)))
+        (is (ds/key=? em3 em2))
+        (is (not (ds/key=? em3 em1)))
         (is (= (:a em3) (:a em2)))
         (is (not= (:a em3) (:a em1))))
       ))
@@ -256,13 +255,11 @@
       (is (instance? clojure.lang.ILookup em1))
       (is (instance? clojure.lang.IMeta em1))
       (is (instance? clojure.lang.IObj em1))
-      (is (instance? clojure.lang.IMapEntry em1))
       (is (instance? clojure.lang.IPersistentCollection em1))
       (is (instance? clojure.lang.IPersistentMap em1))
       (is (instance? clojure.lang.IReduce em1))
       (is (instance? clojure.lang.IReference em1))
       (is (instance? clojure.lang.ITransientCollection em1))
-      (is (instance? java.util.Map$Entry em1))
       (is (instance? java.lang.Iterable em1))
       ))
 

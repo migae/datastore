@@ -72,7 +72,7 @@
 ;;     ;;                          (do
 ;;     ;;                            ;; (log/trace "v: " v)
 ;;     ;;                            (let [prop (keyword k)
-;;     ;;                                  val (get-val-clj v)]
+;;     ;;                                  val (ds-to-clj v)]
 ;;     ;;                              ;; (log/trace "prop " prop " val " val)
 ;;     ;;                              {prop val}))))
 ;;     ;;       res (clj/seq kprops)]

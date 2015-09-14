@@ -13,16 +13,9 @@
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
-  ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
-            ;; [migae.datastore.keychain :as k]
-            ;; [migae.datastore.service :as dss]
-            ;; [migae.datastore.entity :as dse]
-            ;; [migae.datastore.query  :as dsqry]
-            ;; [migae.datastore.key    :as dskey]
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]
@@ -63,14 +56,20 @@
 (deftest ^:kinds kind-ctor-fail
   (testing "kinded construction: local ctor fails"
     (let [ex (try (ds/entity-map [:A] {})
-                  (catch java.lang.IllegalArgumentException e e))]
-      (is (= (type ex)  java.lang.IllegalArgumentException)))
+                  (catch java.lang.AssertionError e e))]
+      (is (= (type ex) java.lang.AssertionError))
+      (is (= "Assert failed: (every? keylink? keychain)"
+             (.getMessage ex))))
     (let [ex (try (ds/entity-map [:A/B :C] {})
-                  (catch java.lang.IllegalArgumentException e e))]
-      (is (= (type ex)  java.lang.IllegalArgumentException)))
+                  (catch java.lang.AssertionError x x))]
+      (is (= (type ex) java.lang.AssertionError))
+      (is (= "Assert failed: (every? keylink? keychain)"
+             (.getMessage ex))))
     (let [ex (try (ds/entity-map [:A/B :C :X/Y] {})
-                  (catch java.lang.IllegalArgumentException e e))]
-      (is (= (type ex)  java.lang.IllegalArgumentException)))
+                  (catch java.lang.AssertionError x x))]
+      (is (= (type ex) java.lang.AssertionError))
+      (is (= "Assert failed: (every? keylink? keychain)"
+             (.getMessage ex))))
       ))
 
 (deftest ^:kinds kind-ctor-chain

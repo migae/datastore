@@ -1,3 +1,5 @@
+(clojure.core/println "loading test.ctor-push")
+
 (ns test.ctor-push
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
@@ -12,7 +14,6 @@
            [com.google.appengine.api.datastore EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            ;;            [migae.infix :as infix]
             [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
                                         ;            [ring-zombie.core :as zombie]))

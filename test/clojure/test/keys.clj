@@ -15,16 +15,9 @@
            [com.google.apphosting.api ApiProxy]
            [com.google.appengine.api.datastore
             Key KeyFactory KeyFactory$Builder])
-  ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
-            ;; [migae.datastore.keychain :as k]
-            ;; [migae.datastore.service :as dss]
-            ;; [migae.datastore.entity :as dse]
-            ;; [migae.datastore.query  :as dsqry]
-            ;; [migae.datastore.key    :as dskey]
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]
@@ -169,48 +162,48 @@
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B Z :D/E]"))))
     (try (ds/keychain-to-key [:A/B "C" :D/E])
-         (catch java.lang.RuntimeException e
-           (is (= (.getMessage e)
+         (catch java.lang.RuntimeException ex
+           (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B \"C\" :D/E]"))))
     (try (ds/keychain-to-key '(:A/B))
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: (:A/B)"
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                (.getMessage ex)))))
     (try (ds/keychain-to-key '{:a 1})
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: {:a 1}"
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                (.getMessage ex)))))
     (try (ds/keychain-to-key [:A])
          (catch IllegalArgumentException ex
            (is (= "missing namespace: :A")
                (.getMessage ex))))
     (try (ds/keychain-to-key :A)
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: :A"
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
     (try (ds/keychain-to-key [9])
          (catch IllegalArgumentException ex
            (is (=  "Invalid keychain: [9]"
                   (.getMessage ex)))))
     (try (ds/keychain-to-key 9)
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: 9"
-                   (.getMessage ex)))))
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
+                  (.getMessage ex)))))
     (try (ds/keychain-to-key ['a])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [a]"
                   (.getMessage ex)))))
     (try (ds/keychain-to-key 'a)
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: a"
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
     (try (ds/keychain-to-key ["a"])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [\"a\"]"
                   (.getMessage ex)))))
     (try (ds/keychain-to-key "a")
-         (catch IllegalArgumentException ex
-           (is (= "Invalid keychain: a"
+         (catch java.lang.AssertionError ex
+           (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
     ))
 

@@ -1,60 +1,5 @@
 (in-ns 'migae.datastore)
-;(in-ns 'migae.datastore)
 
-;; (ns migae.datastore.api
-;;   (:refer-clojure :exclude [empty? filter get into key name reduce])
-;;   (:import [java.lang IllegalArgumentException RuntimeException]
-;;            [java.util
-;;             Collection
-;;             Collections
-;;             ;; Collections$UnmodifiableMap
-;;             ;; Collections$UnmodifiableMap$UnmodifiableEntrySet
-;;             ;; Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry
-;;             ArrayList
-;;             HashMap HashSet
-;;             Map Map$Entry
-;;             Vector]
-;;            ;; [clojure.lang MapEntry]
-;;            [com.google.appengine.api.datastore
-;;             Blob
-;;             ;; DatastoreFailureException
-;;             DatastoreService
-;;             ;; DatastoreServiceFactory
-;;             DatastoreServiceConfig
-;;             DatastoreServiceConfig$Builder
-;;             Email
-;;             Entity EmbeddedEntity EntityNotFoundException
-;;             FetchOptions$Builder
-;;             ImplicitTransactionManagementPolicy
-;;             Key KeyFactory KeyFactory$Builder
-;;             Link
-;;             PhoneNumber
-;;             ReadPolicy ReadPolicy$Consistency
-;;             Query Query$SortDirection
-;;             Query$FilterOperator Query$FilterPredicate
-;;             Query$CompositeFilter Query$CompositeFilterOperator
-;;             ShortBlob
-;;             Text
-;;             Transaction]
-;;            [com.google.appengine.api.blobstore BlobKey]
-;;            ;; [migae.datastore PersistentEntityMap PersistentEntityMapCollIterator])
-;;            )
-;;   (:require [clojure.core :as clj]
-;;             [clojure.walk :as walk]
-;;             [clojure.stacktrace :refer [print-stack-trace]]
-;;             [clojure.tools.reader.edn :as edn]
-;;             [migae.datastore :refer :all]
-;;             [migae.datastore.keychain :refer :all]
-;;             ;; [migae.datastore.dsmap :as dsm]
-;;             ;; [migae.datastore.emap :as emap]
-;;             ;; [migae.datastore.entity :as dse]
-;;             ;; [migae.datastore.key :as dskey]
-;;             ;; [migae.datastore.query :as dsqry]
-;;             [migae.infix :as infix]
-;;             [clojure.tools.logging :as log :only [trace debug info]]))
-
-
-;;(declare epr)
 ;; =======
 (declare #_emap?? emaps?? emap-seq epr #_emap? keychain=)
 
@@ -77,8 +22,6 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;;  emaps stuff
-
-;; <<<<<<< HEAD
 (defn emaps!!
   "e.g. (emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}]) saves three Entities of kind :Foo
 
@@ -327,8 +270,6 @@
 ;;               (if (.isActive txn)
 ;;                 (.rollback txn))))
 ;;           em)))))
-
-;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
 
 ;; no put - PersistentEntityMap only
 ;; (defn emap
@@ -680,14 +621,14 @@
       (cond
         (empty? keylinks)
         'Kindless
-        (keykind? (last keylinks))
-        'Kinded
         (keylink? (last keylinks))
         'Keychain  ;; illegal? only one possible match
         ;; (vector? keylinks)
         ;; (if (keylink? (last keylinks))
         ;;   'Keychain  ;; illegal? only one possible match
         ;;   'Kinded)
+        (keykind? (last keylinks))
+        'Kinded
         (set? keylinks)
         'Multikey
         :else

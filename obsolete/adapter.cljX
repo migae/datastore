@@ -23,7 +23,7 @@
   ;;           ;; Key])
   ;; (:require [clojure.tools.logging :as log :only [trace debug info]]))
 
-(declare get-val-clj get-val-ds)
+(declare ds-to-clj get-val-ds)
 (declare make-embedded-entity)
 
 (defn- keyword-to-ds
@@ -36,17 +36,17 @@
   [sym]
    (KeyFactory/createKey "Symbol" (str sym)))
 
-(defn- get-val-clj-coll
+(defn- ds-to-clj-coll
   "Type conversion: java to clojure"
   [coll]
-  ;; (log/trace "get-val-clj-coll" coll (type coll))
+  ;; (log/trace "ds-to-clj-coll" coll (type coll))
   (cond
     (= (type coll) java.util.ArrayList) (into '() (for [item coll]
-                                                       (get-val-clj item)))
+                                                       (ds-to-clj item)))
     (= (type coll) java.util.HashSet)  (into #{} (for [item coll]
-                                                       (get-val-clj item)))
+                                                       (ds-to-clj item)))
     (= (type coll) java.util.Vector)  (into [] (for [item coll]
-                                                       (get-val-clj item)))
+                                                       (ds-to-clj item)))
     :else (log/trace "EXCEPTION: unhandled coll " coll)
     ))
 
@@ -95,15 +95,15 @@
     )
 
 ;; this is for values to be printed (i.e. from ds to clojure)
-(defn- get-val-clj
+(defn- ds-to-clj
   [v]
-  ;; (log/trace "get-val-clj" v (type v) (class v))
+  ;; (log/trace "ds-to-clj" v (type v) (class v))
   (let [val (cond (integer? v) v
                   (string? v) (str v)
                   (= (class v) java.lang.Double) v
                   (= (class v) java.lang.Boolean) v
                   (= (class v) java.util.Date) v
-                  (instance? java.util.Collection v) (get-val-clj-coll v)
+                  (instance? java.util.Collection v) (ds-to-clj-coll v)
                   (= (type v) Link) (.toString v)
                   (= (type v) Email) (.getEmail v)
                   (= (type v) EmbeddedEntity) (->PersistentEntityMap v nil)
@@ -113,10 +113,10 @@
                                        ;; (symbol (.getName v))))
                                        (str \' (.getName v))))
                   :else (do
-                          ;; (log/trace "HELP: get-val-clj else " v (type v))
-                          (throw (RuntimeException. (str "HELP: get-val-clj else " v (type v))))
+                          ;; (log/trace "HELP: ds-to-clj else " v (type v))
+                          (throw (RuntimeException. (str "HELP: ds-to-clj else " v (type v))))
                           (edn/read-string v)))]
-    ;; (log/trace "get-val-clj result:" v val)
+    ;; (log/trace "ds-to-clj result:" v val)
     val))
 
 ;; this is for values to be stored (i.e. from clojure to ds java types)
@@ -147,7 +147,7 @@
   [props]
   (into {} (for [[k v] props]
                  (let [prop (keyword k)
-                       val (get-val-clj v)]
+                       val (ds-to-clj v)]
                    {prop val}))))
 
 (defn- make-embedded-entity

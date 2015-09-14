@@ -1,5 +1,6 @@
 (in-ns 'migae.datastore)
-;(in-ns 'migae.datastore)
+
+(clojure.core/println "loading ctor_local")
 
 ;; no put - PersistentEntityMap only
 (defn entity-map

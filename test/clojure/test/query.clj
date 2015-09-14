@@ -13,13 +13,9 @@
            [com.google.appengine.api.datastore
             EntityNotFoundException]
            [com.google.apphosting.api ApiProxy])
-  ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.infix :as infix]
             [migae.datastore :as ds]
-            ;; [migae.datastore.keychain :as k] ; FIXME
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]
@@ -333,7 +329,7 @@
       ;; (is (=  (ds/emaps?? :Group/Acme)  (ds/emaps?? [:Group/Acme])))
       ;; (is (ds/key=  (first (ds/emaps?? [:Group/Acme :Member/Joe])) joe))
       (log/trace "FOO" (ds/emaps?? [:Member]))
-      (is (=  (count (ds/emaps?? [:Member])) 3))
+      (is (=  (count (ds/emaps?? [:Member])) 2))
 ;; FIXME      (log/trace ":Group" (ds/emaps?? (merge k :Member)))
 ;; FIXME      (is (=  (count (ds/emaps?? (merge k :Member))) 1))
       )))

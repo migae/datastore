@@ -102,7 +102,7 @@
       (let [kw (subs (str k) 1)
             prop (.getProperty content kw)]
         (if (not (nil? prop))
-          (get-val-clj prop)
+          (ds-to-clj prop)
           nil))))
   ;; Object applyTo(ISeq arglist) ;
   (applyTo [_ ^ISeq arglist]  ; -> Object
@@ -119,7 +119,7 @@
   ;;   (let [props (.getProperties content)
   ;;         coll (clj/into {} (for [[k v] props]
   ;;                             (let [prop (keyword k)
-  ;;                                   val (get-val-clj v)]
+  ;;                                   val (ds-to-clj v)]
   ;;                               {prop val})))
   ;;         keychain (ekey/to-keychain content)
   ;;         ;; res (clj/into coll {:migae/keychain keychain})]
@@ -148,7 +148,7 @@
       (let [to-props (.getProperties content)
             to-coll (clj/into {} (for [[k v] to-props]
                                      (let [prop (keyword k)
-                                           val (get-val-clj v)]
+                                           val (ds-to-clj v)]
                                        {prop val})))
             key-chain (ekey/to-keychain this)
             res (clj/assoc to-coll k v)]
@@ -191,10 +191,10 @@
     (log/trace "ILookup.valAt" k)
     (if (= k :migae/keychain)
       (ekey/to-keychain content)
-      (let [prop (get-val-clj (subs (str k) 1))]
+      (let [prop (ds-to-clj (subs (str k) 1))]
         (if-let [v  (.getProperty content prop)]
           (do (log/trace "prop:" prop ", val:" v)
-              (get-val-clj v))
+              (ds-to-clj v))
           nil))))
   (valAt [_ k not-found]  ; -> Object
     (log/trace "valAt w/notfound: " k)
@@ -263,7 +263,7 @@
                            (for [[k v] props]
                              (do
                                (let [prop (keyword k)
-                                     val (get-val-clj v)]
+                                     val (ds-to-clj v)]
                                  ;; (log/trace "prop " prop " val " val)
                                  {prop val}))))]
         (= pmap o))))
@@ -282,7 +282,7 @@
                            (for [[k v] props]
                              (do
                                (let [prop (keyword k)
-                                     val (get-val-clj v)]
+                                     val (ds-to-clj v)]
                                  ;; (log/trace "prop " prop " val " val)
                                  {prop val}))))
           k (ekey/to-keychain content)
@@ -321,13 +321,13 @@
       ;; (let [from-props (.getProperties content)
       ;;       from-coll (clj/into {} (for [[k v] from-props]
       ;;                                (let [prop (keyword k)
-      ;;                                      val (get-val-clj v)]
+      ;;                                      val (ds-to-clj v)]
       ;;                                  {prop val})))
       ;;       foo (.setPropertiesFrom (.content to-map) (.content this))
       ;;       to-props (.getProperties (.content to-map))
       ;;       to-coll (clj/into {} (for [[k v] to-props]
       ;;                              (let [prop (keyword k)
-      ;;                                    val (get-val-clj v)]
+      ;;                                    val (ds-to-clj v)]
       ;;                                {prop val})))
       ;;       res (with-meta (clj/into to-coll from-coll)
       ;;             {:migae/keychain (:migae/key (meta to-map))
@@ -342,12 +342,12 @@
         (let [from-props (.getProperties content)
               from-coll (clj/into {} (for [[k v] from-props]
                                        (let [prop (keyword k)
-                                             val (get-val-clj v)]
+                                             val (ds-to-clj v)]
                                          {prop val})))
               to-ent (Entity. (.getKey content))
               ;; to-coll (clj/into {} (for [[k v] to-props]
               ;;                        (let [prop (keyword k)
-              ;;                              val (get-val-clj v)]
+              ;;                              val (ds-to-clj v)]
               ;;                          {prop val})))
               to-keychain (if (nil? (:migae/keychain to-map))
                             (ekey/to-keychain content)
@@ -402,7 +402,7 @@
           kch (ekey/to-keychain content)
           coll (clj/into {} (for [[k v] props]
                               (let [prop (keyword k)
-                                    val (get-val-clj v)]
+                                    val (ds-to-clj v)]
                                 {prop val})))
           res (with-meta coll {:migae/keychain kch
                                :type PersistentEntityMap})]

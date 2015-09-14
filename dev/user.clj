@@ -1,14 +1,16 @@
 ;; datastore test environment setup
 ;; see https://cloud.google.com/appengine/docs/java/tools/localunittesting
 
-;; (println "hello, user")
+;; WARNING: run `lein with-profile compile compile` before starting repl
+
+(clojure.core/println "loading user.clj")
 
 (require '[clojure.test :refer [run-tests test-var]])
-(require '[clojure.tools.namespace.repl :refer [refresh refresh-all]])
+(require '[clojure.tools.namespace.repl :refer [refresh refresh-all set-refresh-dirs]])
 
-(defn rt
-  [t]
-  (clojure.test/test-var t))
+;; (defn rt
+;;   [t]
+;;   (clojure.test/test-var t))
 
 ;;(require 'test.ctor-local :reload-all)
 ;;(run-tests 'test.ctor-local)
@@ -18,8 +20,30 @@
           LocalServiceTestConfig
           LocalDatastoreServiceTestConfig))
 
-;;(require '(migae [datastore :as ds]))
-;;(require '(migae.datastore [keychain :as k]))
+(require '(migae [datastore :as ds]))
+
+(def ds-test-env (.setEnforceApiDeadlines
+                  (LocalServiceTestHelper.
+                   (into-array LocalServiceTestConfig
+                               [(LocalDatastoreServiceTestConfig.)]))
+                  false))
+
+(set-refresh-dirs "test/clojure" "src/clojure")
+
+(defn ds-reset []
+  ;;(.tearDown ds-test-env)
+  (refresh-all)
+  (.setUp ds-test-env))
+
+;; some abbrevs, to save typing in the repl.  season to taste.
+(def k [:A/B])
+(def m {:a 1})
+
+(.setUp ds-test-env)
+(def em (ds/entity-map k m))
+
+;; (.tearDown ds-test-env))))
+
 
 ;; LocalServiceTestHelper
 ;; static void	endRequest()
@@ -44,23 +68,3 @@
 ;; LocalServiceTestHelper	setTimeZone(java.util.TimeZone timeZone)
 ;; LocalServiceTestHelper	setUp()
 ;; void	tearDown()
-
-(def ds-test-env (.setEnforceApiDeadlines
-                  (LocalServiceTestHelper.
-                   (into-array LocalServiceTestConfig
-                               [(LocalDatastoreServiceTestConfig.)]))
-                  false))
-
-(defn ds-reset []
-  ;;(.tearDown ds-test-env)
-  (.setUp ds-test-env))
-
-;; some abbrevs, to save typing in the repl.  season to taste.
-(def k [:A/B])
-(def m {:a 1})
-
-(.setUp ds-test-env)
-;; (def em (ds/entity-map k m))
-
-;; (.tearDown ds-test-env))))
-
