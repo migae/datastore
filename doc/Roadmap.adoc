@@ -206,6 +206,10 @@ For the Datastore IN filter we use `clojure.core/some`:
 
 ==== [[sorting]] sorting
 
+Vector.  `:sort [:a :b]`
+
+Default is ascending order: just the field key.  For descending, add a negative:  `:sort [:-a :-b]`
+
 
 === rejected syntax
 
