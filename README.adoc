@@ -34,6 +34,10 @@ In no particular order:
   library in a development environment.  The gradle build system will
   download and install (to `~/.gradle`) everything you need.
 
+1.  Fork/clone
+2.  $ lein with-profile compile compile
+3.  $ lein repl
+
 **WARNING**  Tested only on Mac OS X 10.9.5
 
 A demo servlet is in the works.  For now, you can explore the lib by
