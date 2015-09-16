@@ -1,5 +1,5 @@
 (ns migae.datastore
-  (:refer-clojure :exclude [print println print-str])
+  (:refer-clojure :exclude [print println print-str println-str])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util
             Collection
@@ -37,23 +37,16 @@
            [clojure.lang IFn ILookup IMapEntry IObj
             IPersistentCollection IPersistentMap IReduce IReference ISeq ITransientCollection]
            )
-  (:require [clojure.core :refer :all]
-            [clojure.walk :as walk]
+  (:require [clojure.walk :as walk]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.service :as ds]
-            ;; [migae.datastore.keychain :as ekey]
-            ;; [migae.datastore.ctor-push :as push]
-;;            [migae.datastore.adapter :refer :all]
-            ;; [migae.datastore.entity-map :as emap]
-            ;; [migae.datastore.key :as dskey]
-            ;; [migae.datastore.query :as dsqry]
-            ;; [migae.infix :as infix]
-            [clojure.tools.logging :as log :only [trace debug info]]))
-
+            ;; [migae.datastore.service :as ds]
+            ;; NB:  trace level not available on gae
+            [clojure.tools.logging :as log :only [debug info]])) ;; warn, error, fatal
 
 (clojure.core/println "loading datastore")
 
+(declare ->PersistentStoreMap)
 (declare ->PersistentEntityMapSeq)
 (declare ->PersistentEntityMap)
 (declare ->PersistentEntityHashMap)
@@ -64,14 +57,20 @@
 
 (declare keychain? keylink? keykind? keychain keychain-to-key proper-keychain? improper-keychain?)
 
+(load "datastore/PersistentStoreMap")
+
+(defonce store-map (DatastoreServiceFactory/getDatastoreService))
+
 (load "datastore/PersistentEntityMapSeq")
 (load "datastore/PersistentEntityMap")
 (load "datastore/PersistentEntityHashMap")
 
+
+
 (defn- get-next-emap-prop [this]
-  ;; (log/trace "get-next-emap-prop" (.query this))
+  ;; (log/debug "get-next-emap-prop" (.query this))
   (let [r (.next (.query this))]
-    ;; (log/trace "next: " r)
+    ;; (log/debug "next: " r)
     r))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,6 +85,11 @@
   (binding [*print-meta* true]
     (pr-str em)))
 
+(defn println-str
+  [em]
+  (binding [*print-meta* true]
+    (prn-str em)))
+
 (defn println
   [^migae.datastore.IPersistentEntityMap em]
   (binding [*print-meta* true]
@@ -94,17 +98,17 @@
 (defn dump
   [msg datum data]
   (binding [*print-meta* true]
-    (log/trace msg (pr datum) (pr data))))
+    (log/debug msg (pr datum) (pr data))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftype PersistentEntityMapCollIterator [query]
   java.util.Iterator
   (hasNext [this]
-    (log/trace "PersistentEntityMapCollIterator hasNext")
+    (log/debug "PersistentEntityMapCollIterator hasNext")
     (.hasNext query))
   (next    [this]
-    (log/trace "PersistentEntityMapCollIterator next")
+    (log/debug "PersistentEntityMapCollIterator next")
     (->PersistentEntityMap (.next query) nil))
   ;; (remove  [this])
   )
@@ -124,7 +128,7 @@
 (defn- ds-to-clj-coll
   "Type conversion: java to clojure"
   [coll]
-  ;; (log/trace "ds-to-clj-coll" coll (type coll))
+  ;; (log/debug "ds-to-clj-coll" coll (type coll))
   (cond
     (= (type coll) java.util.ArrayList) (into '() (for [item coll]
                                                        (ds-to-clj item)))
@@ -132,7 +136,7 @@
                                                        (ds-to-clj item)))
     (= (type coll) java.util.Vector)  (into [] (for [item coll]
                                                        (ds-to-clj item)))
-    :else (log/trace "EXCEPTION: unhandled coll " coll)
+    :else (log/debug "EXCEPTION: unhandled coll " coll)
     ))
 
 (defn- get-val-ds-coll
@@ -146,14 +150,14 @@
   ;;  :added "1.0"
   ;;  :static true}
   [coll]
-  ;; (log/trace "get-val-ds-coll" coll (type coll))
+  ;; (log/debug "get-val-ds-coll" coll (type coll))
   (cond
     (list? coll) (let [a (ArrayList.)]
                      (doseq [item coll]
                        (do
-                         ;; (log/trace "vector item:" item (type item))
+                         ;; (log/debug "vector item:" item (type item))
                          (.add a (get-val-ds item))))
-                     ;; (log/trace "ds converted:" coll " -> " a)
+                     ;; (log/debug "ds converted:" coll " -> " a)
                      a)
 
     (map? coll) (make-embedded-entity coll)
@@ -161,28 +165,28 @@
     (set? coll) (let [s (java.util.HashSet.)]
                   (doseq [item coll]
                     (let [val (get-val-ds item)]
-                      ;; (log/trace "set item:" item (type item))
+                      ;; (log/debug "set item:" item (type item))
                       (.add s (get-val-ds item))))
-                  ;; (log/trace "ds converted:" coll " -> " s)
+                  ;; (log/debug "ds converted:" coll " -> " s)
                   s)
 
     (vector? coll) (let [a (Vector.)]
                      (doseq [item coll]
                        (do
-                         ;; (log/trace "vector item:" item (type item))
+                         ;; (log/debug "vector item:" item (type item))
                          (.add a (get-val-ds item))))
-                     ;; (log/trace "ds converted:" coll " -> " a)
+                     ;; (log/debug "ds converted:" coll " -> " a)
                      a)
 
     :else (do
-            (log/trace "HELP" coll)
+            (log/debug "HELP" coll)
             coll))
     )
 
 ;; this is for values to be printed (i.e. from ds to clojure)
 (defn- ds-to-clj
   [v]
-  (log/trace "DS-to-CLJ:" v (type v) (class v))
+  ;; (log/debug "ds-to-clj:" v (type v) (class v))
   (let [val (cond (integer? v) v
                   (string? v) (str v)
                   (= (class v) java.lang.Double) v
@@ -207,16 +211,16 @@
                                        ;; (symbol (.getName v))))
                                        (str \' (.getName v))))
                   :else (do
-                          ;; (log/trace "HELP: ds-to-clj else " v (type v))
+                          ;; (log/debug "HELP: ds-to-clj else " v (type v))
                           (throw (RuntimeException. (str "HELP: ds-to-clj else " v (type v))))
                           (edn/read-string v)))]
-    ;; (log/trace "ds-to-clj result:" v val)
+    ;; (log/debug "ds-to-clj result:" v val)
     val))
 
 ;; this is for values to be stored (i.e. from clojure to ds java types)
 (defn get-val-ds
   [v]
-  ;; (log/trace "get-val-ds" v (type v))
+  ;; (log/debug "get-val-ds" v (type v))
   (let [val (cond (integer? v) v
                   (string? v) (str v)
                   (coll? v) (get-val-ds-coll v)
@@ -232,9 +236,9 @@
                   (= (type v) java.util.Date) v
                   (= (type v) java.util.ArrayList) v ;; (into [] v)
                   :else (do
-                          (log/trace "ELSE: get val type" v (type v))
+                          (log/debug "ELSE: get val type" v (type v))
                           v))]
-    ;; (log/trace "get-val-ds result:" v " -> " val "\n")
+    ;; (log/debug "get-val-ds result:" v " -> " val "\n")
     val))
 
 (defn props-to-map
@@ -275,7 +279,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn keylink?
   [k]
-  ;; (log/trace "keylink?" k (and (keyword k)
+  ;; (log/debug "keylink?" k (and (keyword k)
   ;;                              (not (nil? (namespace k)))))
   (or (and (keyword? k)
            (not (nil? (namespace k))))
@@ -290,10 +294,10 @@
 (defn improper-keychain?
   [k]
   {:pre [(and (vector? k) (not (empty? k)))]}
-  ;; (log/trace "improper-keychain?: " k)
+  ;; (log/debug "improper-keychain?: " k)
   (if (every? keylink? (butlast k))
     (let [dogtag (last k)]
-      ;; (log/trace "DOGTAG K" dogtag)
+      ;; (log/debug "DOGTAG K" dogtag)
       (and (keyword? dogtag)
            (nil? (namespace dogtag))))
     false))
@@ -313,11 +317,11 @@
   (keyword (.getKind e)))
 (defmethod kind migae.datastore.IPersistentEntityMap
   [^migae.datastore.PersistentEntityMap e]
-  (log/trace "IPersistentEntityMap.kind")
+  (log/debug "IPersistentEntityMap.kind")
   (keyword (.getKind (.content e))))
 ;; (defmethod kind migae.datastore.PersistentEntityHashMap
 ;;   [^migae.datastore.PersistentEntityMap e]
-;;   ;; (log/trace "PersistentEntityHashMap.kind")
+;;   ;; (log/debug "PersistentEntityHashMap.kind")
 ;;   (kind (.k e)))
 (defmethod kind clojure.lang.Keyword
   [^clojure.lang.Keyword kw]
@@ -334,20 +338,20 @@
 (defmulti identifier class)
 (defmethod identifier Key
   [^Key k]
-  ;; (log/trace "Key identifier" k)
+  ;; (log/debug "Key identifier" k)
   (let [nm (.getName k)
         id (.getId k)]
     (if (nil? nm) id (str nm))))
 (defmethod identifier migae.datastore.PersistentEntityMap
   [^migae.datastore.PersistentEntityMap em]
-  ;; (log/trace "PersistentEntityMap.identifier")
+  ;; (log/debug "PersistentEntityMap.identifier")
   (let [k (.getKey (.content em))
         nm (.getName k)
         id (.getId k)]
     (if (nil? nm) id (str nm))))
 ;; (defmethod identifier migae.datastore.PersistentEntityHashMap
 ;;   [^migae.datastore.PersistentEntityHashMap em]
-;;   ;; (log/trace "PersistentEntityHashMap.identifier")
+;;   ;; (log/debug "PersistentEntityHashMap.identifier")
 ;;   (let [fob (dogtag (.k em))
 ;;         nm (read-string (name fob))]
 ;;     nm))
@@ -407,18 +411,18 @@
 
 (defmethod keychain Entity
   [^Entity e]
-  ;; (log/trace "keychain co-ctor 1: entity" e)
+  ;; (log/debug "keychain co-ctor 1: entity" e)
   (keychain (.getKey e)))
 
 (defmethod keychain EmbeddedEntity
   [^EmbeddedEntity e]
-  ;; (log/trace "keychain co-ctor 1: entity" e)
+  ;; (log/debug "keychain co-ctor 1: entity" e)
   (keychain (.getKey e)))
 
 (defmethod keychain Key
   [^Key k]
   {:pre [(not (nil? k))]}
-  ;; (log/trace "keychain co-ctor 2: key" k)
+  ;; (log/debug "keychain co-ctor 2: key" k)
   (let [kind (.getKind k)
         nm (.getName k)
         id (str (.getId k))
@@ -426,19 +430,19 @@
         res (if (.getParent k)
               (conj (list dogtag) (keychain (.getParent k)))
               (list dogtag))]
-    ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
-    ;; (log/trace "res: " res)
-    ;; (log/trace "res2: " (vec (flatten res)))
+    ;; (log/debug "kind" kind "nm " nm " id " id " parent " (.getParent k))
+    ;; (log/debug "res: " res)
+    ;; (log/debug "res2: " (vec (flatten res)))
     (vec (flatten res))))
 
 (defmethod keychain migae.datastore.PersistentEntityMap
   [^PersistentEntityMap e]
-  (log/trace "to-keychain IPersistentEntityMap: " e)
+  (log/debug "to-keychain IPersistentEntityMap: " e)
   (to-keychain (.getKey (.content e))))
 
 ;; (defmethod keychain migae.datastore.PersistentEntityHashMap
 ;;   [^PersistentEntityHashMap e]
-;;   (log/trace "to-keychain IPersistentEntityMap: " e)
+;;   (log/debug "to-keychain IPersistentEntityMap: " e)
 ;;   (.k e))
 
 (defmethod keychain clojure.lang.PersistentVector
@@ -452,8 +456,8 @@
 (declare keyword-to-key)
 (defn add-child-keylink
   [^KeyFactory$Builder builder chain]
-  ;; (log/trace "add-child-keylink builder:" builder)
-  ;; (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
+  ;; (log/debug "add-child-keylink builder:" builder)
+  ;; (log/debug "add-child-keylink chain:" chain (type chain) (type (first chain)))
   (doseq [kw chain]
     (if (nil? kw)
       nil
@@ -472,7 +476,7 @@
 (defn keychain-to-key
   ;; FIXME: validate keychain only keylinks
   ([keychain]
-  ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+  ;; (log/debug "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
    (if (proper-keychain? keychain)
      (let [k (keyword-to-key (first keychain))
            root (KeyFactory$Builder. k)]
@@ -488,14 +492,14 @@
   [^clojure.lang.Keyword k]
    "map single keyword to key."
 ;;     {:pre [(= (type k) clojure.lang.Keyword)]}
-     ;; (log/trace "keyword-to-key:" k (type k))
+     ;; (log/debug "keyword-to-key:" k (type k))
      (if (not (= (type k) clojure.lang.Keyword))
         (throw (IllegalArgumentException.
                 (str "not a clojure.lang.Keyword: " k))))
        ;; (throw (RuntimeException. (str "Bad keylink (not a clojure.lang.Keyword): " k))))
      (let [kind (clojure.core/namespace k)
            ident (edn/read-string (clojure.core/name k))]
-       ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
+       ;; (log/debug (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
        (cond
         (nil? kind)
         ;;(throw (RuntimeException. (str "Improper keylink (missing namespace): " k)))
@@ -570,14 +574,14 @@
       (keychain=? em1 em2))
     (if (map? em1)
       (keychain=? em1 em2)
-      (log/trace "EXCEPTION: key= applies only to maps and emaps"))))
+      (log/debug "EXCEPTION: key= applies only to maps and emaps"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn entity-map=?
   [em1 em2]
   ;; FIXME:  pre: validate types
   (and (key=? em1 em2) (map=? em1 em2)))
-      ;; (log/trace "EXCEPTION: key= applies only to maps and emaps"))))
+      ;; (log/debug "EXCEPTION: key= applies only to maps and emaps"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti map=?
@@ -591,12 +595,12 @@
   (if (instance? migae.datastore.IPersistentEntityMap em1)
     (if (instance? migae.datastore.IPersistentEntityMap em2)
       (do
-        (log/trace "comparing 2 PersistentEntityMaps")
+        (log/debug "comparing 2 PersistentEntityMaps")
         (let [this-map (.getProperties (.content em1))
               that-map (.getProperties (.content em2))]
-          (log/trace "this-map:" this-map (type this-map))
-          (log/trace "that-map:" that-map (type that-map))
-          (log/trace "(= this-map that-map)" (clojure.core/= this-map that-map))
+          (log/debug "this-map:" this-map (type this-map))
+          (log/debug "that-map:" that-map (type that-map))
+          (log/debug "(= this-map that-map)" (clojure.core/= this-map that-map))
           (clojure.core/= this-map that-map)))
       false) ; FIXME
     false)  ; FIXME
@@ -607,37 +611,37 @@
   (let [this-map (ds-to-clj (.getProperties (.content em1)))
         ;; FIXME: is ds-to-clj appropriate for this?  is props-to-map a better name/concept?
         that-map em2]
-    (log/trace "this-map:" this-map (type this-map))
-    (log/trace "that-map:" em2 (type em2))
-    (log/trace "(= this-map em2)" (clojure.core/= this-map em2))
+    (log/debug "this-map:" this-map (type this-map))
+    (log/debug "that-map:" em2 (type em2))
+    (log/debug "(= this-map em2)" (clojure.core/= this-map em2))
     (clojure.core/= this-map em2))
   )
 
 (defmethod map=? [PersistentEntityMap clojure.lang.PersistentArrayMap]
   [^PersistentEntityMap pem ^clojure.lang.PersistentArrayMap pam]
-  (log/trace "comparing: PersistentEntityMap PersistentArrayMap")
+  (log/debug "comparing: PersistentEntityMap PersistentArrayMap")
   (hybrid= pem pam))
 
 (defmethod map=? [clojure.lang.PersistentArrayMap PersistentEntityMap]
   [^clojure.lang.PersistentArrayMap pam ^PersistentEntityMap pem]
-  (log/trace "comparing: PersistentEntityMap PersistentArrayMap")
+  (log/debug "comparing: PersistentEntityMap PersistentArrayMap")
   (hybrid= pem pam))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (defmethod map=? [PersistentEntityMap clojure.lang.PersistentHashMap]
 ;;   [^PersistentEntityMap pem ^clojure.lang.PersistentHashMap phm]
-;;   (log/trace "comparing: PersistentEntityMap PersistentHashMap")
+;;   (log/debug "comparing: PersistentEntityMap PersistentHashMap")
 ;;   (hybrid= pem phm))
 
 ;; (defmethod map=? [clojure.lang.PersistentHashMap PersistentEntityMap]
 ;;   [^clojure.lang.PersistentHashMap phm ^PersistentEntityMap pem]
-;;   (log/trace "comparing: PersistentEntityMap PersistentHashMap")
+;;   (log/debug "comparing: PersistentEntityMap PersistentHashMap")
 ;;   (hybrid= pem phm))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn keykind?
   [k]
-  (log/trace "keykind?" k (and (keyword k)
+  (log/debug "keykind?" k (and (keyword k)
                                (not (nil? (namespace k)))))
   (and (keyword? k) (nil? (namespace k))))
 

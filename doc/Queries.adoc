@@ -1,0 +1,43 @@
+= migae datastore:  queries
+
+The native low-level Java Datastore API has queries; migae does not.
+The concept of "querying" has no place in mathematics.  Whether it
+makes sense for computation is more debatable, but that debate is for
+somewhere else.  Suffice it to say that migae conceptualizes just
+about everything in terms of constructions and co-constructions.
+Which makes queries (pull-) constructors.
+
+Lots (most?) database languages are at least partially inspired by
+SQL.  SQL makes sense from a user perspective: it presents the
+database manager as a kind of person-like thing with which the user
+can have a dialog, so that the notion of querying the database makes
+intuitive sense.  "Selecting" stuff from tables also makes intuitive
+sense: it recalls the real-world experience of pulling documents from
+files in file cabinets.
+
+But for the developer this is the wrong metaphor.  One does not
+"query" a datastore; one constructs values.  Instead of functions with
+names like "find" or "query" we just have a specialized pull
+constructor, `entity-map*`, applied to a pattern, just like the local
+and push ctors, `entity-map` and `entity-map!`, respectively.  The
+difference is that the pattern is treated as a predicate rather than
+an expression.
+
+Think of the '\*' decorator as a kind of Kleene star for entities, and
+read `entity-map* <predicate>` as "zero or more entity-maps satisfying
+<predicate>".
+
+== other approaches
+
+Datalog-like languages:
+
+* link:http://docs.datomic.com/query.html[datomic]
+* link:https://github.com/martintrojer/datalog[martintrojer/datalog]
+
+Rule languages
+
+* link:https://github.com/rbrush/clara-rules[clara-rules]
+
+Schema-less databases
+
+* link:http://clojuremongodb.info/articles/querying.html#monger_query_dsl[Monger] - Clojure client for MongoDb

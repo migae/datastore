@@ -1,6 +1,6 @@
 (in-ns 'migae.datastore)
 
-(clojure.core/println "loading ctor-push")
+;(clojure.core/println "loading ctor-push")
 
 (declare into-ds!)
 
@@ -59,7 +59,7 @@
     (when (not (empty? em))
       (doseq [[k v] (seq em)]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put (ds/datastore) e)
+    (.put store-map e)
     (PersistentEntityMap. e nil)))
 
 (defn- put-proper-emap
@@ -71,7 +71,7 @@
   (let [k (keychain-to-key keyvec)
         e (if (not force)
             (do #_(log/trace "not force")
-            (let [ent (try (.get (ds/datastore) k)
+            (let [ent (try (.get store-map k)
                            (catch EntityNotFoundException ex ex))]
               (if (= (type ent) Entity) ;; found
                 (throw (RuntimeException. "Key already used"))
@@ -81,7 +81,7 @@
     (when (not (empty? propmap))
       (doseq [[k v] propmap]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put (ds/datastore) e)
+    (.put store-map e)
     (PersistentEntityMap. e nil)))
 
 (declare into-ds!)
@@ -94,9 +94,9 @@
    (cond
      (map? arg)
      (do
-       ;; edn, e.g.  (entity-map! ^{:migae [:a/b]} {:a 1})
+       ;; edn, e.g.  (entity-map! ^{:migae/keychain [:a/b]} {:a 1})
        (let [k (:migae/keychain (meta arg))]
-         (log/debug "edn key: " k " improper?" (improper-keychain? k))
+          ;; (log/debug "edn key: " k " improper?" (improper-keychain? k))
          (cond
            (improper-keychain? k)
            (put-kinded-emap k arg)
@@ -159,7 +159,7 @@
 
 
      ;; (let [k (apply keychain-to-key keychain)
-     ;;       e (try (.get (ds/datastore) k)
+     ;;       e (try (.get store-map k)
      ;;              (catch EntityNotFoundException e
      ;;                ;;(log/trace (.getMessage e))
      ;;                e)
@@ -173,7 +173,7 @@
      ;;   ;; (log/trace "emap! got e: " e)
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
-     ;;       (.put (ds/datastore) e)
+     ;;       (.put store-map e)
      ;;       (PersistentEntityMap. e nil))
      ;;     (PersistentEntityMap. e nil))))))
 
@@ -187,7 +187,7 @@
             val (get-val-ds v)]
         ;; (log/trace "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
-    (.put (ds/datastore) e)
+    (.put store-map e)
     (PersistentEntityMap. e nil)))
 
 (defn- emap-old
@@ -223,21 +223,21 @@
               ;; (log/trace "setting val" val (type val))
               ;; (flush)
               (.setProperty e prop val)))))
-      (.put (ds/datastore) e)
+      (.put store-map e)
       ;; (log/trace "saved entity " e)
       (PersistentEntityMap. e nil))))
 
 (defn- emap-update-empty
   [keychain]
   (let [k (apply keychain-to-key keychain)
-        e (try (.get (ds/datastore) k)
+        e (try (.get store-map k)
                (catch EntityNotFoundException e nil)
                (catch DatastoreFailureException e (throw e))
                (catch java.lang.IllegalArgumentException e (throw e)))]
         (if (emap? e)
           (PersistentEntityMap. e nil)
           (let [e (Entity. k)]
-            (.put (ds/datastore) e)
+            (.put store-map e)
             (PersistentEntityMap. e nil)))))
 
 ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
@@ -249,9 +249,9 @@
     ;; (log/trace "emap-update-map key: " k)
     (let [e (if (keyword? k)
               (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
-                (.put (ds/datastore) e)
+                (.put store-map e)
                 e)
-              (try (.get (ds/datastore) k)
+              (try (.get store-map k)
                    (catch EntityNotFoundException e nil)
                    (catch DatastoreFailureException e (throw e))
                    (catch java.lang.IllegalArgumentException e (throw e))))]
@@ -265,19 +265,19 @@
   [keychain f]
   (if (nil? (namespace (first keychain)))
     ;; if first link in keychain has no namespace, it cannot be an ancestor node
-    (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
+    (let [txn (.beginTransaction store-map) ;; else new entity
           e (Entity. (name (first keychain)))
           em (PersistentEntityMap. e nil)]
       (try
         (f em)
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (.commit txn)
         (finally
           (if (.isActive txn)
             (.rollback txn))))
       em)
     (let [k (apply keychain-to-key keychain)
-          e (try (.get (ds/datastore) k)
+          e (try (.get store-map k)
                  (catch EntityNotFoundException e
                    ;;(log/trace (.getMessage e))
                    e)
@@ -288,7 +288,7 @@
                    ;;(log/trace (.getMessage e))
                    nil))]
       (if (emap? e) ;; existing entity
-        (let [txn (.beginTransaction (ds/datastore))]
+        (let [txn (.beginTransaction store-map)]
           (try
             (f e)
             (.commit txn)
@@ -296,12 +296,12 @@
               (if (.isActive txn)
                 (.rollback txn))))
           (PersistentEntityMap. e nil))
-        (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
+        (let [txn (.beginTransaction store-map) ;; else new entity
               e (Entity. k)
               em (PersistentEntityMap. e nil)]
           (try
             (f em)
-            (.put (ds/datastore) e)
+            (.put store-map e)
             (.commit txn)
             (finally
               (if (.isActive txn)

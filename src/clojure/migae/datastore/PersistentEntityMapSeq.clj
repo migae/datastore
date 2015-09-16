@@ -1,6 +1,6 @@
 (in-ns 'migae.datastore)
 
-(clojure.core/println "loading PersistentEntityMapSeq")
+;; (clojure.core/println "loading PersistentEntityMapSeq")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

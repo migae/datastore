@@ -1,4 +1,3 @@
-(clojure.core/println "loading test.equality")
 (ns test.equality
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing

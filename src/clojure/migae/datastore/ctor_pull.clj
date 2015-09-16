@@ -64,7 +64,7 @@
     (let [ancestor-key (keychain-to-key (vec (butlast keychain)))
           kind (name (last keychain))
           q (Query. kind ancestor-key)
-          prepared-query (.prepare (ds/datastore) q)
+          prepared-query (.prepare store-map q)
           iterator (.asIterator prepared-query)
           seq (iterator-seq iterator)
           res (PersistentEntityMapSeq. seq)]
@@ -73,7 +73,7 @@
     ;; kinded query
     (let [kind (name (last keychain))
           q (Query. kind)
-          prepared-query (.prepare (ds/datastore) q)
+          prepared-query (.prepare store-map q)
           iterator (.asIterator prepared-query)
            seq (iterator-seq iterator)
           res (PersistentEntityMapSeq. seq)]
@@ -97,7 +97,7 @@
   ;;   (when (not (empty? em))
   ;;     (doseq [[k v] (seq em)]
   ;;       (.setProperty e (subs (str k) 1) (get-val-ds v))))
-  ;;   (.put (ds/datastore) e)
+  ;;   (.put store-map e)
   ;;   (PersistentEntityMap. e nil)))
 
 (defn get-prefix-matches
@@ -106,14 +106,14 @@
   ;; (log/trace "get-prefix-matches" keychain)
   (let [prefix (apply keychain-to-key keychain)
         q (.setAncestor (Query.) prefix)
-        prepared-query (.prepare (ds/datastore) q)
+        prepared-query (.prepare store-map q)
         iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
         seq  (iterator-seq iterator)
         res (PersistentEntityMapSeq. seq)]
     res))
 
 ;;   (let [k (keychain-to-key keychain)
-;;         e (.get (ds/datastore) k)]
+;;         e (.get store-map k)]
 ;; ;;               (catch EntityNotFoundException e nil))]
 ;;     (PersistentEntityMap. e nil)))
 
@@ -122,7 +122,7 @@
   ;; precon: keychain has already been validated
   ;; (log/trace "get-proper-emap" keychain)
   (let [k (keychain-to-key keychain)
-        e (.get (ds/datastore) k)]
+        e (.get store-map k)]
 ;;               (catch EntityNotFoundException e nil))]
     (PersistentEntityMap. e nil)))
 
@@ -146,7 +146,7 @@
    ;; (if (empty? keychain)
    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
    ;;   (let [k (keychain-to-key keychain)
-   ;;         e (.get (ds/datastore) k)]
+   ;;         e (.get store-map k)]
    ;;     (log/trace "key: " k)
    ;;     (log/trace "e: " e)
    ;;     ;; throw  EntityNotFoundException
@@ -176,7 +176,7 @@
               (apply keychain-to-key keylinks)
               (apply keychain-to-key [keylinks]))
           ;; foo (log/trace "emap?? kw keylinks: " k)
-          e (try (.get (ds/datastore) k)
+          e (try (.get store-map k)
                  (catch EntityNotFoundException e (throw e))
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
@@ -213,7 +213,7 @@
 
 
      ;; (let [k (apply keychain-to-key keychain)
-     ;;       e (try (.get (ds/datastore) k)
+     ;;       e (try (.get store-map k)
      ;;              (catch EntityNotFoundException e
      ;;                ;;(log/trace (.getMessage e))
      ;;                e)
@@ -227,7 +227,7 @@
      ;;   ;; (log/trace "emap! got e: " e)
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
-     ;;       (.put (ds/datastore) e)
+     ;;       (.put store-map e)
      ;;       (PersistentEntityMap. e nil))
      ;;     (PersistentEntityMap. e nil))))))
 
@@ -243,7 +243,7 @@
 ;;      (if (every? keylink? keylinks)
 ;;        (let [k (apply keychainer keylinks)
 ;;              e ;;(try
-;;                  (.get (ds/datastore) k)]
+;;                  (.get store-map k)]
 ;;                     ;; (catch EntityNotFoundException ex (throw ex))
 ;;                     ;; (catch DatastoreFailureException ex (throw ex))
 ;;                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]

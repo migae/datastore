@@ -1,13 +1,12 @@
 (in-ns 'migae.datastore)
 
-;; (clojure.core/println "loading PersistentEntityMap")
+;; (clojure.core/println "loading PersistentStoreMap")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PersistentEntityMap
+;;  PersistentStoreMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftype PersistentEntityMap [content ^IPersistentMap em-meta]
+(deftype PersistentStoreMap [^DatastoreService content ds-meta] ;; TODO: add  txns
 
-  ;; migae.datastore.PEntityMap ;; clojure-defined protocol
 
   migae.datastore.IPersistentEntityMap
   ;; java.lang.Iterable
@@ -28,32 +27,32 @@
   ;; boolean equals(Object o)
   ;; V get(Object key)
   (get [_ k]
-    (log/trace "PersistentEntityMap.get: " k)
+    (log/trace "PersistentStoreMap.get: " k)
     ;; (let [prop (name k)
     ;;       r    (.hasProperty content prop)]
     (get (.getProperties content) (name k)))
   ;; int hashCode()
   (hashCode [_]
-    (log/trace "PersistentEntityMap.hashCode")
+    (log/trace "PersistentStoreMap.hashCode")
     (.hashCode content))
   ;; boolean isEmpty()
   (isEmpty [_]
-    (log/trace "PersistentEntityMap.hashCode")
+    (log/trace "PersistentStoreMap.hashCode")
     (.isEmpty (.getProperties content)))
   ;; Set<K> keySet()
   (keySet [_]
-    (log/trace "PersistentEntityMap.keySet")
+    (log/trace "PersistentStoreMap.keySet")
     (.keySet (.getProperties content)))
   ;; V put(K key, V value)
   ;; void putAll(Map<? extends K,? extends V> m)
   ;; V remove(Object key)
   ;; int size()
   (size [_]
-    (log/trace "PersistentEntityMap.SIZE ")
+    (log/trace "PersistentStoreMap.SIZE ")
     (.size (.getProperties content)))
   ;; Collection<V> values()
   (values [_]
-    (log/trace "PersistentEntityMap.size")
+    (log/trace "PersistentStoreMap.size")
     (.values (.getProperties content)))
   ;;j8 default V compute(K key, BiFunction<? super K,? super V,? extends V> remappingFunction)
   ;;j8 default V computeIfAbsent(K key, Function<? super K,? extends V> mappingFunction)
@@ -86,10 +85,10 @@
   ;; clojure.lang.IMapEntry
   ;; key, val
   ;; (key [this]  ; -> Object
-  ;;   (log/trace "PersistentEntityMap.IMapEntry key")
+  ;;   (log/trace "PersistentStoreMap.IMapEntry key")
   ;;   (keychain content))
   ;; (val [this]  ; -> Object
-  ;;   (log/trace "PersistentEntityMap.IMapEntry val")
+  ;;   (log/trace "PersistentStoreMap.IMapEntry val")
   ;;   (.printStackTrace (Exception.))
   ;;   (let [props (.getProperties content)
   ;;         coll (into {} (for [[k v] props]
@@ -105,11 +104,11 @@
   ;; withMeta; meta
   (^IPersistentMap meta [this]
     ;; (log/trace "IObj.meta" (keychain content))
-    (into (some identity [em-meta {}]) {:migae/keychain (keychain content)}))
+    (into (some identity [ds-meta {}]) {:migae/keychain (keychain content)}))
   ;;;; extends IMeta
   (^IObj withMeta [this ^IPersistentMap md]
     (log/trace "IObj withMeta" md)
-    (let [em (PersistentEntityMap. (.clone content) md)]
+    (let [em (PersistentStoreMap. (.clone content) md)]
       ;; (log/trace "entity with meta" em)
       em))
 
@@ -131,7 +130,7 @@
       (with-meta res {:migae/keychain key-chain}))))
   (assocEx [_ k v]
     (log/trace "assocEx")
-    (PersistentEntityMap. (.assocEx content k v) nil))
+    (PersistentStoreMap. (.assocEx content k v) nil))
   (without [this k]                     ; = dissoc!, return new datum with k removed
     (let [prop (name k)]
       (log/trace "without: removing prop " k "->" prop)
@@ -141,19 +140,19 @@
   ;;;; extends Counted
   (count [_]  ; -> int
     "number of properties in container, plus one for the keychain"
-    (log/trace "PersistentEntityMap.count")
+    (log/trace "PersistentStoreMap.count")
     (let [props (.getProperties content)
           c (.size props)]
       c))
   ;;;; extends Associative extends IPersistentCollection, ILookup
   ;; containsKey, entryAt, assoc
   ;; (containsKey [_ k]
-  ;;   (log/trace "PersistentEntityMap.containsKey: " k)
+  ;;   (log/trace "PersistentStoreMap.containsKey: " k)
   ;;   (.containsKey (.getProperties content) k))
   (containsKey [_ k] ; -> boolean
     (let [prop (name k)
           r    (.hasProperty content prop)]
-      ;; (log/trace "PersistentEntityMap.containsKey: " k r)
+      ;; (log/trace "PersistentStoreMap.containsKey: " k r)
       r))
   (entryAt [this k] ; -> IMapEntry
     (do (log/trace "Associative.entryAt " k)
@@ -166,7 +165,7 @@
   ;;;; extends ILookup
   ;; valAt(Object key), valAt(Object key, Object notFound)
   (valAt [_ k]  ; -> Object
-    (log/trace "PersistentEntityMap.ILookup.valAt: " k)
+    (log/trace "PersistentStoreMap.ILookup.valAt: " k)
    (if (= k :migae/keychain)
       (keychain content)
       (let [prop (ds-to-clj (subs (str k) 1))]
@@ -175,7 +174,7 @@
               (ds-to-clj v))
           nil))))
   (valAt [_ k not-found]  ; -> Object
-    (log/trace "PersistentEntityMap.ILookup.valAt w/notfound: " k)
+    (log/trace "PersistentStoreMap.ILookup.valAt w/notfound: " k)
     ;; FIXME: is k a keyword or a string?
     (.getProperty content (str k) not-found))
 
@@ -183,12 +182,12 @@
   ;; cons(Object o), count(), empty(), equiv(Object o);
   (cons [this o] ; -> IPersistentCollection
     ;; this is called on:  (into em {:a }); not called on (into em1 em2)
-    (log/trace "PersistentEntityMap.cons: " o (type o))
+    (log/trace "PersistentStoreMap.cons: " o (type o))
     ;; (log/trace "IPersistentCollection this: " this (type this))
     (cond
-      (= (type o) PersistentEntityMap)
+      (= (type o) PersistentStoreMap)
       (do
-        ;; (log/trace "cons PersistentEntityMap to this")
+        ;; (log/trace "cons PersistentStoreMap to this")
         ;; (log/trace "this:" this)
         ;; (log/trace "that:" o)
         (let [props (.getProperties (.content o))
@@ -196,7 +195,7 @@
           (.setPropertiesFrom newe content) ;; is this needed, or is clone enough?
           (doseq [[k v] props]
             (.setProperty newe k v))
-          (PersistentEntityMap. newe em-meta)))
+          (PersistentStoreMap. newe ds-meta)))
       ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
       (nil? o)
       (do
@@ -207,16 +206,16 @@
         (log/trace "cons clojure.lang.MapEntry" o " to emap" this)
         (let [new-entity (.clone content)]
           (.setProperty new-entity (subs (str (first o)) 1) (get-val-ds (second o)))
-          (PersistentEntityMap. new-entity nil)))
+          (PersistentStoreMap. new-entity nil)))
       (= (type o) clojure.lang.PersistentArrayMap)
       (do
         (log/trace "cons PersistentArrayMap to emap")
         (let [newe (.clone content)
-              newm (into {} em-meta)]
+              newm (into {} ds-meta)]
           (doseq [[k v] o]
             (.setProperty newe (subs (str k) 1) (get-val-ds v)))
           ;; (.put (datastore) content)
-          (PersistentEntityMap. newe newm)))
+          (PersistentStoreMap. newe newm)))
       (= (type o) java.util.Map$Entry)
       (do
         (log/trace "cons java.util.Map$Entry to emap")
@@ -227,17 +226,17 @@
   ;;int count();
   ;; (count  overridden by Counted
   (empty [this]  ; -> IPersistentCollection
-    (log/trace "PersistentEntityMap.empty")
+    (log/trace "PersistentStoreMap.empty")
     (let [k (.getKey (.content this))
           e (Entity. k)]
-      (PersistentEntityMap. e nil)))
+      (PersistentStoreMap. e nil)))
   (equiv [this o]  ; -> boolean
-    (log/trace "PersistentEntityMap.equiv") ;;
+    (log/trace "PersistentStoreMap.equiv") ;;
     ;; (throw (RuntimeException. "clojure.core/= not supported; use one of key=?, map=? or entity-map?")))
     ;; FIXME: test for equality of values?
-    (if (instance? migae.datastore.IPersistentEntityMap o)
+    (if (instance? PersistentStoreMap o)
       (do
-        (log/trace "comparing PersistentEntityMap")
+        (log/trace "comparing PersistentStoreMap")
         (if (.equals content (.content o))
           (do ;; the entities are key=
             (log/trace "(.equals content (.content o)) is true: key=")
@@ -266,7 +265,7 @@
   ;;;;;;;;;;;;;;;; extends Seqable
   (^ISeq seq [this]
     ;; seq is called by: into, merge, "print", e.g. (log/trace em)
-    (log/trace "PersistentEntityMap.seq:" (type this)) ;; (.hashCode this) (.getKey content))
+    (log/trace "PersistentStoreMap.seq:" (type this)) ;; (.hashCode this) (.getKey content))
     ;; (log/trace "    on content" content)
     (let [props (.getProperties content)
           ;; foo (log/trace "props" props)
@@ -301,14 +300,14 @@
       (do
         (log/trace "to-map:  clojure.lang.PersistentVector")
         )
-      (= (class to-map) PersistentEntityMap)
+      (= (class to-map) PersistentStoreMap)
       (do
-        ;; (log/trace "to-map:  PersistentEntityMap")
+        ;; (log/trace "to-map:  PersistentStoreMap")
         (let [k (.getKey content)
               e (Entity. k)]
           (.setPropertiesFrom e (.content to-map))
           (.setPropertiesFrom e content)
-          (PersistentEntityMap. e nil)))
+          (PersistentStoreMap. e nil)))
       ;; f = cons, so we can just use the native into
       ;; (let [from-props (.getProperties content)
       ;;       from-coll (into {} (for [[k v] from-props]
@@ -323,14 +322,14 @@
       ;;                                {prop val})))
       ;;       res (with-meta (into to-coll from-coll)
       ;;             {:migae/keychain (:migae/key (meta to-map))
-      ;;              :type PersistentEntityMap})]
+      ;;              :type PersistentStoreMap})]
       ;;   ;; (log/trace "to-coll: " res (type res))
       ;;   to-map)
       (= (class to-map) clojure.lang.PersistentArrayMap$TransientArrayMap)
       (do
         (log/trace "to-map:  PersistentArrayMap$TransientArrayMap")
         ;; we use a ghastly hack in order to retain metadata
-        ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentEntityMap metadata)
+        ;; FIXME: handle case where to-map is a clj-emap (map with ^:PersistentStoreMap metadata)
         (let [from-props (.getProperties content)
               from-coll (into {} (for [[k v] from-props]
                                        (let [prop (keyword k)
@@ -351,11 +350,11 @@
               (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
           ;; (let [m1 (persistent! to-map)
           ;;       m2 (with-meta m1 {:migae/keychain keychain
-          ;;                         :type PersistentEntityMap})
+          ;;                         :type PersistentStoreMap})
           ;;       to-coll (transient m2)]
           ;;   (log/trace "m2: " (meta m2) m2 (class m2))
           ;;   (log/trace "to-coll: " (meta to-coll) to-coll (class to-coll))
-          (PersistentEntityMap. to-ent nil)))
+          (PersistentStoreMap. to-ent nil)))
       :else (log/trace "HELP! reduce!" (class to-map)))
       )
 
@@ -397,7 +396,7 @@
                                     val (ds-to-clj v)]
                                 {prop val})))
           res (with-meta coll {:migae/keychain kch
-                               :type PersistentEntityMap})]
+                               :type PersistentStoreMap})]
       (log/trace "persistent result: " res (class res))
       res))
 
@@ -425,4 +424,4 @@
 ;;    (next em-iter)) ;; HACK
   (nth [this i not-found]
     )
-  ) ;; end deftype PersistentEntityMap
+  ) ;; end deftype PersistentStoreMap

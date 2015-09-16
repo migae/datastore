@@ -1,6 +1,6 @@
 (in-ns 'migae.datastore)
 
-(clojure.core/println "loading PersistentEntityHashMap")
+;; (clojure.core/println "loading PersistentEntityHashMap")
 
 ;; (declare ds-to-clj get-val-ds)
 ;; (declare props-to-map get-next-emap-prop)

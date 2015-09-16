@@ -1,4 +1,4 @@
-(defproject org.mobileink/migae.datastore "0.3.2-SNAPSHOT"
+(defproject org.mobileink/migae.datastore "0.3.3-SNAPSHOT"
   :description "migae - MobileInk Google App Engine sdk for Clojure."
   :url "https://github.com/migae/datastore"
   :min-lein-version "2.0.0"

@@ -27,6 +27,7 @@ In no particular order:
 * <<co-ctors,co-construction>>
 * <<queries,queries>>
 * <<mutation,mutation>>
+* <<comparisons,comparing GAE datastore to other databases>>
 
 == [[start]]getting started
 
@@ -511,3 +512,9 @@ $ lein repl  ;; runs dev/user.clj
 
 You can also use leiningen to run tests, but the repl is faster by
 orders of magnitude.
+
+= [[comparisons]] comparisons
+
+* link:http://redis.io/topics/data-types-intro[redis]
+* link:http://clojuremongodb.info/[monger] clojure client for link:https://www.mongodb.org/[mongodb]
+* link:http://www.datomic.com/[datomic]

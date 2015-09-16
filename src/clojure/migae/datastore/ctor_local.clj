@@ -1,6 +1,6 @@
 (in-ns 'migae.datastore)
 
-(clojure.core/println "loading ctor_local")
+;(clojure.core/println "loading ctor_local")
 
 ;; no put - PersistentEntityMap only
 (defn entity-map
@@ -52,7 +52,7 @@
    (if (empty? keychain)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [k (apply keychain-to-key keychain)
-           e (try (.get (ds/datastore) k)
+           e (try (.get store-map k)
                   (catch EntityNotFoundException e nil))
                   ;; (catch DatastoreFailureException e (throw e))
                   ;; (catch java.lang.IllegalArgumentException e (throw e)))
@@ -66,20 +66,20 @@
          (let [e (Entity. k)]
            (doseq [[k v] em]
              (.setProperty e (subs (str k) 1) (get-val-ds v)))
-           (.put (ds/datastore) e)
+           (.put store-map e)
            (PersistentEntityMap. e nil))
          (throw (RuntimeException. (str "key already exists: " keychain)))))))
   ([keychain] ;; create empty entity
    (if (empty? keychain)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [k (apply keychain-to-key keychain)
-           e (try (.get (ds/datastore) k)
+           e (try (.get store-map k)
                   (catch EntityNotFoundException e nil)
                   (catch DatastoreFailureException e (throw e))
                   (catch java.lang.IllegalArgumentException e (throw e)))]
        (if (nil? e) ;; not found
          (let [e (Entity. k)]
-           (.put (ds/datastore) e)
+           (.put store-map e)
            (PersistentEntityMap. e nil))
          (throw (RuntimeException. "key already exists: " keychain)))))))
 

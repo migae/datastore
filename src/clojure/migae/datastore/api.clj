@@ -68,7 +68,7 @@
       (let [props (first propmap)]
         (doseq [[k v] props]
           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-    (.put (ds/datastore) e)
+    (.put store-map e)
     (migae.datastore.PersistentEntityMap. e nil)))
 
 (defn- emap-indefinite!!
@@ -84,7 +84,7 @@
         ;; (log/trace "props" propmap)
         (doseq [[k v] propmap]
           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-    (.put (ds/datastore) e)
+    (.put store-map e)
     (migae.datastore.PersistentEntityMap. e nil)))
 
 
@@ -93,7 +93,7 @@
   (log/trace "find-definite-necessarily" keylinks propmap)
   (if (every? keylink? keylinks)
     (let [akey (apply keychain-to-key keylinks)
-          e (try (.get (ds/datastore) akey)
+          e (try (.get store-map akey)
                  (catch EntityNotFoundException ex nil))]
       (if (nil? e) ;; not found
         (let [newe  (Entity. akey)]
@@ -104,7 +104,7 @@
                       val (get-val-ds v)]
                   ;; (log/trace "PROP" p val)
                   (.setProperty newe p val)))))
-          (.put (ds/datastore) newe)
+          (.put store-map newe)
           (migae.datastore.PersistentEntityMap. newe nil))
         ;; entity found:
         (let [em (migae.datastore.PersistentEntityMap. e nil)]
@@ -134,7 +134,7 @@
                     val (get-val-ds v)]
                 ;; (log/trace "PROP" p val)
                 (.setProperty e p val)))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil)))
 ;; (throw-bad-keylinks keylinks)))
 
@@ -149,7 +149,7 @@
 ;; ;;             val (get-val-ds v)]
 ;; ;;         ;; (log/trace "emap-new setting prop: " k prop v val)
 ;; ;;         (.setProperty e prop val)))
-;; ;;     (.put (ds/datastore) e)
+;; ;;     (.put store-map e)
 ;; ;;     (PersistentEntityMap. e nil)))
 
 ;; ;; (defn- emap-old
@@ -185,21 +185,21 @@
 ;; ;;               ;; (log/trace "setting val" val (type val))
 ;; ;;               ;; (flush)
 ;; ;;               (.setProperty e prop val)))))
-;; ;;       (.put (ds/datastore) e)
+;; ;;       (.put store-map e)
 ;; ;;       ;; (log/trace "saved entity " e)
 ;; ;;       (PersistentEntityMap. e nil))))
 
 ;; ;; (defn- emap-update-empty
 ;; ;;   [keylinks]
 ;; ;;   (let [k (apply keychain-to-key keylinks)
-;; ;;         e (try (.get (ds/datastore) k)
+;; ;;         e (try (.get store-map k)
 ;; ;;                (catch EntityNotFoundException ex nil)
 ;; ;;                (catch DatastoreFailureException ex (throw ex))
 ;; ;;                (catch java.lang.IllegalArgumentException ex (throw ex)))]
 ;; ;;         (if (emap? e)
 ;; ;;           (PersistentEntityMap. e nil)
 ;; ;;           (let [e (Entity. k)]
-;; ;;             (.put (ds/datastore) e)
+;; ;;             (.put store-map e)
 ;; ;;             (PersistentEntityMap. e nil)))))
 
 ;; ;; ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
@@ -211,9 +211,9 @@
 ;; ;;     ;; (log/trace "emap-update-map key: " k)
 ;; ;;     (let [e (if (keyword? k)
 ;; ;;               (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
-;; ;;                 (.put (ds/datastore) e)
+;; ;;                 (.put store-map e)
 ;; ;;                 e)
-;; ;;               (try (.get (ds/datastore) k)
+;; ;;               (try (.get store-map k)
 ;; ;;                    (catch EntityNotFoundException ex nil)
 ;; ;;                    (catch DatastoreFailureException ex (throw ex))
 ;; ;;                    (catch java.lang.IllegalArgumentException ex (throw ex))))]
@@ -228,19 +228,19 @@
 ;;   [keylinks f]
 ;;   (if (nil? (namespace (first keylinks)))
 ;;     ;; if first link in keychain has no namespace, it cannot be an ancestor node
-;;     (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
+;;     (let [txn (.beginTransaction store-map) ;; else new entity
 ;;           e (Entity. (name (first keylinks)))
 ;;           em (PersistentEntityMap. e nil)]
 ;;       (try
 ;;         (f em)
-;;         (.put (ds/datastore) e)
+;;         (.put store-map e)
 ;;         (.commit txn)
 ;;         (finally
 ;;           (if (.isActive txn)
 ;;             (.rollback txn))))
 ;;       em)
 ;;     (let [k (apply keychain-to-key keylinks)
-;;           e (try (.get (ds/datastore) k)
+;;           e (try (.get store-map k)
 ;;                  (catch EntityNotFoundException e
 ;;                    ;;(log/trace (.getMessage e))
 ;;                    e)
@@ -251,7 +251,7 @@
 ;;                    ;;(log/trace (.getMessage e))
 ;;                    nil))]
 ;;       (if (emap? e) ;; existing entity
-;;         (let [txn (.beginTransaction (ds/datastore))]
+;;         (let [txn (.beginTransaction store-map)]
 ;;           (try
 ;;             (f e)
 ;;             (.commit txn)
@@ -259,12 +259,12 @@
 ;;               (if (.isActive txn)
 ;;                 (.rollback txn))))
 ;;           (PersistentEntityMap. e nil))
-;;         (let [txn (.beginTransaction (ds/datastore)) ;; else new entity
+;;         (let [txn (.beginTransaction store-map) ;; else new entity
 ;;               e (Entity. k)
 ;;               em (PersistentEntityMap. e nil)]
 ;;           (try
 ;;             (f em)
-;;             (.put (ds/datastore) e)
+;;             (.put store-map e)
 ;;             (.commit txn)
 ;;             (finally
 ;;               (if (.isActive txn)
@@ -304,7 +304,7 @@
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
-            e (try (.get (ds/datastore) akey)
+            e (try (.get store-map akey)
                    (catch EntityNotFoundException ex (Entity. akey)))]
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -315,7 +315,7 @@
                 ;; (log/trace "prop" k v)
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
@@ -329,7 +329,7 @@
      (if (every? keylink? keylinks)
        (let [k (apply keychain-to-key keylinks)
              e ;; (try
-                 (.get (ds/datastore) k)]
+                 (.get store-map k)]
                     ;; (catch EntityNotFoundException ex (throw ex))
                     ;; (catch DatastoreFailureException ex (throw ex))
                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -340,7 +340,7 @@
                 ;; (log/trace "prop" k v)
                 (if (nil? p)
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
        (throw-bad-keylinks keylinks)))))
 
@@ -354,7 +354,7 @@
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
-            e (try (.get (ds/datastore) akey)
+            e (try (.get store-map akey)
                    (catch EntityNotFoundException ex nil))]
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -364,7 +364,7 @@
               (let [props (first propmap)]
                 (doseq [[k v] props]
                       (.setProperty newe (subs (str k) 1) (get-val-ds v)))))
-            (.put (ds/datastore) newe)
+            (.put store-map newe)
             (migae.datastore.PersistentEntityMap. newe nil))
           (if (not (nil? propmap))
             (let [props (first propmap)]
@@ -373,7 +373,7 @@
                   ;; (log/trace "prop" k v)
                   (if (not (nil? p))
                     (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-              (.put (ds/datastore) e)
+              (.put store-map e)
               (migae.datastore.PersistentEntityMap. e nil)))))
       (throw-bad-keylinks keylinks))))
 
@@ -387,7 +387,7 @@
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
             e ;;(try
-                (.get (ds/datastore) akey)]
+                (.get store-map akey)]
                    ;; (catch EntityNotFoundException ex (throw ex))
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -398,7 +398,7 @@
                 ;; (log/trace "prop" k v)
                 (if (not (nil? p))
                   (.setProperty e (subs (str k) 1) (get-val-ds v)))))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
@@ -411,7 +411,7 @@
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
-            e (try (.get (ds/datastore) akey)
+            e (try (.get store-map akey)
                    (catch EntityNotFoundException ex (Entity. akey)))]
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -419,7 +419,7 @@
           (let [props (first propmap)]
             (doseq [[k v] props]
               (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
@@ -433,7 +433,7 @@
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
             e ;;(try
-                (.get (ds/datastore) akey)]
+                (.get store-map akey)]
                    ;; (catch EntityNotFoundException ex  (throw ex))
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -441,7 +441,7 @@
           (let [props (first propmap)]
             (doseq [[k v] props]
               (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
@@ -453,7 +453,7 @@
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
-            e (try (.get (ds/datastore) akey)
+            e (try (.get store-map akey)
                    (catch EntityNotFoundException ex nil))]
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
@@ -462,7 +462,7 @@
           (do
             (doseq [[k v] props]
               (.removeProperty e (subs (str k) 1)))
-            (.put (ds/datastore) e)
+            (.put store-map e)
             (migae.datastore.PersistentEntityMap. e nil))))
       (throw-bad-keylinks keylinks))))
 
@@ -475,13 +475,13 @@
     (if (every? keylink? keylinks)
       (let [akey (apply keychain-to-key keylinks)
             e ;;(try
-                (.get (ds/datastore) akey)]
+                (.get store-map akey)]
                    ;; (catch EntityNotFoundException ex (throw ex))
                    ;; (catch DatastoreFailureException ex (throw ex))
                    ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]
         (doseq [[k v] props]
           (.removeProperty e (subs (str k) 1)))
-        (.put (ds/datastore) e)
+        (.put store-map e)
         (migae.datastore.PersistentEntityMap. e nil))
       (throw-bad-keylinks keylinks))))
 
@@ -494,14 +494,14 @@
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (every? keylink? keylinks)
       (let [k (apply keychain-to-key keylinks)
-            e (.get (ds/datastore) k)] ;; throws EntityNotFoundException
+            e (.get store-map k)] ;; throws EntityNotFoundException
         ;; e was found; replace it
         (let [newe (Entity. k)]
           (if (not (nil? propmap))
             (let [props (first propmap)]
               (doseq [[k v] props]
                 (.setProperty newe (subs (str k) 1) (get-val-ds v)))))
-          (.put (ds/datastore) newe)
+          (.put store-map newe)
           (migae.datastore.PersistentEntityMap. newe nil)))
       (throw-bad-keylinks keylinks))))
 
@@ -641,13 +641,13 @@
   (log/trace "emaps?? Keychain:" keylinks pm)
 ;; <<<<<<< HEAD
   (let [dskey (keychain-to-key (first keylinks) (second keylinks))
-        e (try (.get (ds/datastore) dskey)
+        e (try (.get store-map dskey)
          (catch EntityNotFoundException e (throw e))
          (catch Exception e (throw e)))]
 ;; =======
 ;;   (let [dskey (keychain-to-key (first keylinks) (second keylinks))
 ;;         e ;;(try
-;;             (.get (ds/datastore) dskey)]
+;;             (.get store-map dskey)]
 ;;                ;; (catch EntityNotFoundException ex (throw ex))
 ;;                ;; (catch Exception ex (throw ex)))]
 ;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
@@ -656,7 +656,7 @@
 (defn- finish-q
   [q]
   ;; (log/trace "finish-q")
-  (let [pq (.prepare (ds/datastore) q)
+  (let [pq (.prepare store-map q)
         it (.asIterator pq)
         em-seq (emap-seq it)]
     ;; (log/trace "em-seq " em-seq)
@@ -718,7 +718,7 @@
               q (.setFilter q filter)]))
       (finish-q q))))
 
-      ;; (let [pq (.prepare (ds/datastore) q)
+      ;; (let [pq (.prepare store-map q)
       ;;       it (.asIterator pq)
       ;;       emseq (emap-seq it)]
       ;;   emseq))))
@@ -755,7 +755,7 @@
   ;; (log/trace "emaps?? Kindless:" k filter-map)
   (if (nil? filter-map)
     (let [q (Query.)
-          pq (.prepare (ds/datastore) q)
+          pq (.prepare store-map q)
           it (.asIterator pq)
           emseq (emap-seq it)]
       emseq)
@@ -788,7 +788,7 @@
                                                ;; (keychain-to-key (first (second op)) (rest (second op))))
                                                k)
                 q (.setFilter (Query.) filter)
-                pq (.prepare (ds/datastore) q)
+                pq (.prepare store-map q)
                 it (.asIterator pq)
                 emseq (emap-seq it)]
             emseq)
@@ -801,7 +801,7 @@
   [^clojure.lang.Keyword kind]
   (log/trace "emaps?? Kind")
   (let [q (Query. (name kind))
-        pq (.prepare (ds/datastore) q)
+        pq (.prepare store-map q)
         it (.asIterator pq)
         emseq (emap-seq it)]
     ;; (log/trace "EMSeq: " emseq)
@@ -815,7 +815,7 @@
   [[^clojure.lang.Keyword kind]]
   (log/trace "emapss?? KindVec:")
   (let [q (Query. (name kind))
-        pq (.prepare (ds/datastore) q)
+        pq (.prepare store-map q)
         it (.asIterator pq)
         em-seq (emap-seq it)]
     em-seq))
@@ -826,7 +826,7 @@
   (log/trace "emapss?? Key:")
   (let [;; dskey (key k)
         e ;;(try
-            (.get (ds/datastore) k)]
+            (.get store-map k)]
          ;; (catch EntityNotFoundException ex (throw ex))
          ;; (catch Exception ex (throw ex)))]
     (migae.datastore.PersistentEntityMap. e nil)))
@@ -849,7 +849,7 @@
           e (Entity. k)]
       (doseq [[k v] content]
         (.setProperty e (subs (str k) 1) v))
-      (.put (ds/datastore) e)
+      (.put store-map e)
       ;; (log/trace "created and put entity " e)
       (PersistentEntityMap. e nil))))
 
@@ -857,7 +857,7 @@
 ;;   "unsafe assoc with save but no txn for DS Entities"
 ;;   [m k v & kvs]
 ;;   ;; (log/trace "assoc! " m k v  "&" kvs)
-;;    (let [txn (.beginTransaction (ds/datastore))
+;;    (let [txn (.beginTransaction store-map)
 ;;          coll (if (emap? m)
 ;;                 (.content m)
 ;;                 (if (= (class m) Entity)
@@ -867,7 +867,7 @@
 ;;        (.setProperty coll (subs (str k) 1) v)
 ;;        (if (nil? (first kvs))
 ;;          (try
-;;            (.put (ds/datastore) coll)
+;;            (.put store-map coll)
 ;;            (.commit txn)
 ;;            (finally
 ;;              (if (.isActive txn)
@@ -883,7 +883,7 @@
   "safe assoc with save and txn for DS Entities"
   [m k v & kvs]
   {:pre [(nil? (namespace k))]}
-   (let [txn (.beginTransaction (ds/datastore))
+   (let [txn (.beginTransaction store-map)
          coll (if (emap? m)
                 (.content m)
                 (if (= (class m) Entity)
@@ -893,7 +893,7 @@
        (.setProperty coll (subs (str k) 1) v)
        (if (nil? (first kvs))
          (try
-           (.put (ds/datastore) coll)
+           (.put store-map coll)
            (.commit txn)
            (finally
              (if (.isActive txn)
@@ -922,7 +922,7 @@
   ;;             (apply keychain-to-key keylinks)
   ;;             (apply keychain-to-key [keylinks]))
   ;;         ;; foo (log/trace "emap?? kw keylinks: " k)
-  ;;         e (try (.get (ds/datastore) k)
+  ;;         e (try (.get store-map k)
   ;;                (catch EntityNotFoundException ex (throw ex))
   ;;                (catch DatastoreFailureException ex (throw ex))
   ;;                (catch java.lang.IllegalArgumentException ex (throw ex)))]

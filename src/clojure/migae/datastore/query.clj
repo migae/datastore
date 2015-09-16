@@ -32,7 +32,7 @@
   []
   ;; (log/trace "pull-all")
   (let [q  (Query.)
-        prepared-query (.prepare (ds/datastore) q)
+        prepared-query (.prepare store-map q)
         iterator (.asIterator prepared-query)
         res (PersistentEntityMapSeq. (iterator-seq iterator))
         ]
@@ -78,7 +78,7 @@
 
 (defn prepare
   [query]
-  (.prepare (ds/datastore) query))
+  (.prepare store-map query))
 
 (defn run
   [prepared-query]
