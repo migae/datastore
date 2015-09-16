@@ -59,13 +59,18 @@
 
 (load "datastore/PersistentStoreMap")
 
-(defonce store-map (DatastoreServiceFactory/getDatastoreService))
+(def store-map
+  (let [dsm (DatastoreServiceFactory/getDatastoreService)
+        ;; foo (log/debug "dsm: " dsm (type dsm))
+        psm (PersistentStoreMap. dsm nil nil)]
+    ;; (log/debug "psm: " psm (type psm))
+    psm))
+
+;; (log/debug "store-map: " store-map (type store-map))
 
 (load "datastore/PersistentEntityMapSeq")
 (load "datastore/PersistentEntityMap")
 (load "datastore/PersistentEntityHashMap")
-
-
 
 (defn- get-next-emap-prop [this]
   ;; (log/debug "get-next-emap-prop" (.query this))
@@ -102,16 +107,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftype PersistentEntityMapCollIterator [query]
-  java.util.Iterator
-  (hasNext [this]
-    (log/debug "PersistentEntityMapCollIterator hasNext")
-    (.hasNext query))
-  (next    [this]
-    (log/debug "PersistentEntityMapCollIterator next")
-    (->PersistentEntityMap (.next query) nil))
-  ;; (remove  [this])
-  )
+;; (deftype PersistentEntityMapCollIterator [query]
+;;   java.util.Iterator
+;;   (hasNext [this]
+;;     (log/debug "PersistentStoreMap hasNext")
+;;     (.hasNext query))
+;;   (next    [this]
+;;     (log/debug "PersistentStoreMap next")
+;;     (->PersistentEntityMap (.next query) nil))
+;;   ;; (remove  [this])
+;;   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -288,6 +293,7 @@
 (defn proper-keychain?
   [k]
   {:pre [(and (vector? k) (not (empty? k)))]}
+  ;; (log/debug "proper-keychain?: " k)
   (if (every? keylink? k)
       true
       false))

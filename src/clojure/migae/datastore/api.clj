@@ -7,18 +7,18 @@
   [keypred & valpred]
   (apply emaps?? keypred valpred))
 
-(defn emap-seq? [arg]
-  (and
-   (seq? arg))
-  (= (type arg) migae.datastore.PersistentEntityMapCollIterator))
+;; (defn emap-seq? [arg]
+;;   (and
+;;    (seq? arg))
+;;   (= (type arg) migae.datastore.PersistentEntityMapCollIterator))
 
-(defn emap-seq [ds-iter]
-  "Returns a seq on a com.google.appengine.api.datastore.QueryResultIterator"
-  (let [em-iter (migae.datastore.PersistentEntityMapCollIterator. ds-iter)
-        clj-iter (clojure.lang.IteratorSeq/create em-iter)]
-    (if (nil? clj-iter)
-      nil
-      (with-meta clj-iter {:type migae.datastore.PersistentEntityMapCollIterator}))))
+;; (defn emap-seq [ds-iter]
+;;   "Returns a seq on a com.google.appengine.api.datastore.QueryResultIterator"
+;;   (let [em-iter (migae.datastore.PersistentEntityMapCollIterator. ds-iter)
+;;         clj-iter (clojure.lang.IteratorSeq/create em-iter)]
+;;     (if (nil? clj-iter)
+;;       nil
+;;       (with-meta clj-iter {:type migae.datastore.PersistentEntityMapCollIterator}))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;;  emaps stuff
@@ -656,7 +656,7 @@
 (defn- finish-q
   [q]
   ;; (log/trace "finish-q")
-  (let [pq (.prepare store-map q)
+  (let [pq (.prepare (.content store-map) q)  ;; FIXME
         it (.asIterator pq)
         em-seq (emap-seq it)]
     ;; (log/trace "em-seq " em-seq)
@@ -723,118 +723,118 @@
       ;;       emseq (emap-seq it)]
       ;;   emseq))))
 
-(defmethod emaps?? 'Kinded
-  [keylinks & filter-map]
-  (log/trace "emaps?? Kinded:" keylinks filter-map (type filter-map))
-  (let [kind (name (last keylinks)) ;; we already know last link has form :Foo
-        ;; foo (log/trace "kind:" kind (type kind))
-        q (Query. kind)
-        pfx (butlast keylinks)
-        ;; foo (log/trace "pfx" pfx (type pfx))
-        ]
-    (if (nil? pfx)
-      (if (map? filter-map)
-        (do
-          (kinded-no-ancestor q filter-map))
-        (do
-          (kinded-no-ancestor q (first filter-map))))
-      ;; we have a prefix keychain, so set it as ancestor constraint
-      (let [k (apply keychain-to-key pfx)
-            ;; kf (log/trace "K:" k (type k))
-            qq (.setAncestor q k)]
-        (if (not (nil? filter-map))
-          (do-filter qq filter-map)
-          (finish-q q))))
-    ))
+;; (defmethod emaps?? 'Kinded
+;;   [keylinks & filter-map]
+;;   (log/trace "emaps?? Kinded:" keylinks filter-map (type filter-map))
+;;   (let [kind (name (last keylinks)) ;; we already know last link has form :Foo
+;;         ;; foo (log/trace "kind:" kind (type kind))
+;;         q (Query. kind)
+;;         pfx (butlast keylinks)
+;;         ;; foo (log/trace "pfx" pfx (type pfx))
+;;         ]
+;;     (if (nil? pfx)
+;;       (if (map? filter-map)
+;;         (do
+;;           (kinded-no-ancestor q filter-map))
+;;         (do
+;;           (kinded-no-ancestor q (first filter-map))))
+;;       ;; we have a prefix keychain, so set it as ancestor constraint
+;;       (let [k (apply keychain-to-key pfx)
+;;             ;; kf (log/trace "K:" k (type k))
+;;             qq (.setAncestor q k)]
+;;         (if (not (nil? filter-map))
+;;           (do-filter qq filter-map)
+;;           (finish-q q))))
+;;     ))
 
-(defmethod emaps?? 'Kindless
-  [[k] & filter-map]           ; e.g [] {:migae/gt :Foo/Bar}
-  "Kindless queries take a null keychain and an optional map specifying a key filter, of the form
+;; (defmethod emaps?? 'Kindless
+;;   [[k] & filter-map]           ; e.g [] {:migae/gt :Foo/Bar}
+;;   "Kindless queries take a null keychain and an optional map specifying a key filter, of the form
 
-    {:migae/gt [:Foo/Bar]}"
-  ;; (log/trace "emaps?? Kindless:" k filter-map)
-  (if (nil? filter-map)
-    (let [q (Query.)
-          pq (.prepare store-map q)
-          it (.asIterator pq)
-          emseq (emap-seq it)]
-      emseq)
-    (if (> (count filter-map) 1)
-      (throw (IllegalArgumentException. "only one filter expr, for now"))
-      (let [constraint (first filter-map)
-            op (first constraint)
-            keylinks  (last constraint)]
-        (log/trace "constraint:" constraint op keylinks)
-        (if (keylink? (last keylinks))
-          (let [;f (ffirst filter-map)
-;; <<<<<<< HEAD
-                ;; k (apply keychain-to-key keychain)
-;; =======
-                 k (apply keychain-to-key keylinks)
-;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
-                foo (log/trace "KEY: " k)
-                filter (Query$FilterPredicate. Entity/KEY_RESERVED_PROPERTY
-                                               (cond
-                                                 (= op '<)
-                                                 Query$FilterOperator/LESS_THAN
-                                                 (= op '<=)
-                                                 Query$FilterOperator/LESS_THAN_OR_EQUAL
-                                                 (= op '=)
-                                                 Query$FilterOperator/EQUAL
-                                                 (= op '>)
-                                                 Query$FilterOperator/GREATER_THAN
-                                                 (= op '>=)
-                                                 Query$FilterOperator/GREATER_THAN_OR_EQUAL)
-                                               ;; (keychain-to-key (first (second op)) (rest (second op))))
-                                               k)
-                q (.setFilter (Query.) filter)
-                pq (.prepare store-map q)
-                it (.asIterator pq)
-                emseq (emap-seq it)]
-            emseq)
-          (throw (IllegalArgumentException.
-                  "emaps?? kindless query key filter: all elements must be keylinks (not kind only)")))
-        ))))
+;;     {:migae/gt [:Foo/Bar]}"
+;;   ;; (log/trace "emaps?? Kindless:" k filter-map)
+;;   (if (nil? filter-map)
+;;     (let [q (Query.)
+;;           pq (.prepare store-map q)
+;;           it (.asIterator pq)
+;;           emseq (emap-seq it)]
+;;       emseq)
+;;     (if (> (count filter-map) 1)
+;;       (throw (IllegalArgumentException. "only one filter expr, for now"))
+;;       (let [constraint (first filter-map)
+;;             op (first constraint)
+;;             keylinks  (last constraint)]
+;;         (log/trace "constraint:" constraint op keylinks)
+;;         (if (keylink? (last keylinks))
+;;           (let [;f (ffirst filter-map)
+;; ;; <<<<<<< HEAD
+;;                 ;; k (apply keychain-to-key keychain)
+;; ;; =======
+;;                  k (apply keychain-to-key keylinks)
+;; ;; >>>>>>> 8a635036bed39e4333e2b5b3d62e69d5ddbde433
+;;                 foo (log/trace "KEY: " k)
+;;                 filter (Query$FilterPredicate. Entity/KEY_RESERVED_PROPERTY
+;;                                                (cond
+;;                                                  (= op '<)
+;;                                                  Query$FilterOperator/LESS_THAN
+;;                                                  (= op '<=)
+;;                                                  Query$FilterOperator/LESS_THAN_OR_EQUAL
+;;                                                  (= op '=)
+;;                                                  Query$FilterOperator/EQUAL
+;;                                                  (= op '>)
+;;                                                  Query$FilterOperator/GREATER_THAN
+;;                                                  (= op '>=)
+;;                                                  Query$FilterOperator/GREATER_THAN_OR_EQUAL)
+;;                                                ;; (keychain-to-key (first (second op)) (rest (second op))))
+;;                                                k)
+;;                 q (.setFilter (Query.) filter)
+;;                 pq (.prepare store-map q)
+;;                 it (.asIterator pq)
+;;                 emseq (emap-seq it)]
+;;             emseq)
+;;           (throw (IllegalArgumentException.
+;;                   "emaps?? kindless query key filter: all elements must be keylinks (not kind only)")))
+;;         ))))
 
-;; Kind query
-(defmethod emaps?? 'Kind               ; e.g. :Foo
-  [^clojure.lang.Keyword kind]
-  (log/trace "emaps?? Kind")
-  (let [q (Query. (name kind))
-        pq (.prepare store-map q)
-        it (.asIterator pq)
-        emseq (emap-seq it)]
-    ;; (log/trace "EMSeq: " emseq)
-    ;; (log/trace "EMSeq es: " emseq)
-        ;; res (seq (.asIterable pq))]
-        ;; res (iterator-seq (.asIterator pq))]
-    ;; (iterator-seq it)))
-    emseq))
+;; ;; Kind query
+;; (defmethod emaps?? 'Kind               ; e.g. :Foo
+;;   [^clojure.lang.Keyword kind]
+;;   (log/trace "emaps?? Kind")
+;;   (let [q (Query. (name kind))
+;;         pq (.prepare store-map q)
+;;         it (.asIterator pq)
+;;         emseq (emap-seq it)]
+;;     ;; (log/trace "EMSeq: " emseq)
+;;     ;; (log/trace "EMSeq es: " emseq)
+;;         ;; res (seq (.asIterable pq))]
+;;         ;; res (iterator-seq (.asIterator pq))]
+;;     ;; (iterator-seq it)))
+;;     emseq))
 
-(defmethod emaps?? 'KindVec               ; e.g. [:Foo]
-  [[^clojure.lang.Keyword kind]]
-  (log/trace "emapss?? KindVec:")
-  (let [q (Query. (name kind))
-        pq (.prepare store-map q)
-        it (.asIterator pq)
-        em-seq (emap-seq it)]
-    em-seq))
+;; (defmethod emaps?? 'KindVec               ; e.g. [:Foo]
+;;   [[^clojure.lang.Keyword kind]]
+;;   (log/trace "emapss?? KindVec:")
+;;   (let [q (Query. (name kind))
+;;         pq (.prepare store-map q)
+;;         it (.asIterator pq)
+;;         em-seq (emap-seq it)]
+;;     em-seq))
 
-(defmethod emaps?? 'Key
-  ;; [^clojure.lang.Keyword k]             ; e.g. :Foo/Bar
-  [^Key k]
-  (log/trace "emapss?? Key:")
-  (let [;; dskey (key k)
-        e ;;(try
-            (.get store-map k)]
-         ;; (catch EntityNotFoundException ex (throw ex))
-         ;; (catch Exception ex (throw ex)))]
-    (migae.datastore.PersistentEntityMap. e nil)))
+;; (defmethod emaps?? 'Key
+;;   ;; [^clojure.lang.Keyword k]             ; e.g. :Foo/Bar
+;;   [^Key k]
+;;   (log/trace "emapss?? Key:")
+;;   (let [;; dskey (key k)
+;;         e ;;(try
+;;             (.get store-map k)]
+;;          ;; (catch EntityNotFoundException ex (throw ex))
+;;          ;; (catch Exception ex (throw ex)))]
+;;     (migae.datastore.PersistentEntityMap. e nil)))
 
-(defmethod emaps?? 'Multikey
-  [key-set]
-  (log/trace "emapss?? Multikey:")
-  )
+;; (defmethod emaps?? 'Multikey
+;;   [key-set]
+;;   (log/trace "emapss?? Multikey:")
+;;   )
 
 ;; <<<<<<< HEAD
 ;; =======

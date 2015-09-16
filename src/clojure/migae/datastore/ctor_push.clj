@@ -12,7 +12,9 @@
           (vector? keychain)
           (not (empty? keychain))
           (every? keyword? keychain)]}
-   (into-ds! keychain em))
+   (do
+     (into-ds! keychain em)
+     ))
   ([force keychain em]
    {:pre [(or (map? em) (vector? em))
           (vector? keychain)
@@ -24,176 +26,166 @@
 ;; entity, so we might as well stick with PersistentEntityMap.
 ;; (defn entity-hashmap!
 ;;   ([keyvec]
-;;    (log/trace "entity-hashmap! push ctor 1")
+;;    (log/debug "entity-hashmap! push ctor 1")
 ;;    (into-ds! :hashmap keyvec))
 ;;   ([keyvec em]
 ;;    {:pre [(map? em)
 ;;           (vector? keyvec)
 ;;           (not (empty? keyvec))
 ;;           (every? keyword? keyvec)]}
-;;    (log/trace "entity-hashmap! push ctor 2")
+;;    (log/debug "entity-hashmap! push ctor 2")
 ;;    (into-ds! :hashmap keyvec em))
 ;;   ([force keyvec em]
 ;;    {:pre [(or (map? em) (vector? em))
 ;;           (vector? keyvec)
 ;;           (not (empty? keyvec))
 ;;           (every? keyword? keyvec)]}
-;;    (log/trace "entity-hashmap! push ctor 3")
+;;    (log/debug "entity-hashmap! push ctor 3")
 ;;    (into-ds! :hashmap force keyvec em)))
 
 (defn put-kinded-emap
   [keyvec & data]
   ;; precon: improper keychain is validated
-  ;; (log/trace "put-kinded-emap: " keyvec data)
-  ;; (log/trace "data" data)
+  (println (str "put-kinded-emap: " keyvec data))
+  ;; (log/debug "data" data)
   (let [em (first data)
         kind (name (last keyvec))
         parent-keychain (vec (butlast keyvec))
-        ;; foo (log/trace "foo" parent-keychain)
+        ;; foo (log/debug "foo" parent-keychain)
         e (if (empty? parent-keychain)
             (Entity. kind)
-            (do #_(log/trace "parent-keychain" parent-keychain)
-                #_(log/trace "parent-key" (keychain-to-key parent-keychain))
+            (do #_(log/debug "parent-keychain" parent-keychain)
+                #_(log/debug "parent-key" (keychain-to-key parent-keychain))
                 (Entity. kind  (keychain-to-key parent-keychain))
                 ))]
     (when (not (empty? em))
       (doseq [[k v] (seq em)]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put store-map e)
-    (PersistentEntityMap. e nil)))
+    ;; (.put (.content store-map) e)
+    (let [pem (PersistentEntityMap. e nil)
+          foo (log/debug "store-map " (type store-map))
+          foo (log/debug "store-map IReduce? " (instance? clojure.lang.IReduce store-map))
+          ;; foo (log/debug "store-map IReduceInit? " (instance? clojure.lang.IReduceInit store-map))
+          ;; foo (log/debug "store-map IEditableCollection? " (instance? clojure.lang.IEditableCollection store-map))
+          ds (into store-map pem)]
+      pem)))
 
 (defn- put-proper-emap
   [& {:keys [keyvec propmap force] :or {force false,}}]
   ;; precon: keychain has already been validated
-  (log/trace "keychain" keyvec)
-  ;; (log/trace "propmap" propmap)
-  ;; (log/trace "force" force)
+  (log/debug "keychain" keyvec)
+  ;; (log/debug "propmap" propmap)
+  ;; (log/debug "force" force)
   (let [k (keychain-to-key keyvec)
         e (if (not force)
-            (do #_(log/trace "not force")
+            (do #_(log/debug "not force")
             (let [ent (try (.get store-map k)
                            (catch EntityNotFoundException ex ex))]
               (if (= (type ent) Entity) ;; found
                 (throw (RuntimeException. "Key already used"))
                 (Entity. k))))
-            (do #_(log/trace "force push")
+            (do #_(log/debug "force push")
                 (Entity. k)))]
     (when (not (empty? propmap))
       (doseq [[k v] propmap]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put store-map e)
-    (PersistentEntityMap. e nil)))
-
-(declare into-ds!)
-;; FIXME:  replace emap! with entity-map!
-;; TODO: support nil data map, e.g. (entity-map! [:A/B])
+    (let [pem (PersistentEntityMap. e nil)
+          ds (.content store-map)]
+      (log/debug "put-proper-emap ds: " ds (type ds))
+      (into store-map pem)
+      pem)))
+      ;; (.put ds e))))
 
 (defn into-ds!
   ;; FIXME: convert to [keychain & em]???
   ([arg]
-   (cond
-     (map? arg)
-     (do
-       ;; edn, e.g.  (entity-map! ^{:migae/keychain [:a/b]} {:a 1})
-       (let [k (:migae/keychain (meta arg))]
-          ;; (log/debug "edn key: " k " improper?" (improper-keychain? k))
+   (do
+     (log/debug "into-ds! 1" arg)
+     (cond
+       (map? arg)
+       (do
+         ;; edn, e.g.  (entity-map! ^{:migae/keychain [:a/b]} {:a 1})
+         (let [k (:migae/keychain (meta arg))]
+           ;; (log/debug "edn key: " k " improper?" (improper-keychain? k))
+           (cond
+             (improper-keychain? k)
+             (put-kinded-emap k arg)
+             (proper-keychain? k)
+             (put-proper-emap :keyvec k :propmap arg :force true)
+             :else (throw (IllegalArgumentException. (str "INVALID KEYCHAIN!: " k)))))
+         )
+       (keychain? arg)
+       (do
          (cond
-           (improper-keychain? k)
-           (put-kinded-emap k arg)
-           (proper-keychain? k)
-           (put-proper-emap :keyvec k :propmap arg :force true)
-           :else (throw (IllegalArgumentException. (str "INVALID KEYCHAIN!: " k)))))
-       )
-     (keychain? arg)
-     (do
-       (cond
-         (improper-keychain? arg)
-         (put-kinded-emap arg {})
-         (proper-keychain? arg)
-         (put-proper-emap :keyvec arg :propmap {} :force true)
-         :else (throw (IllegalArgumentException. (str "Invalid keychain" arg)))))
-     :else (throw (IllegalArgumentException.))))
+           (improper-keychain? arg)
+           (put-kinded-emap arg {})
+           (proper-keychain? arg)
+           (put-proper-emap :keyvec arg :propmap {} :force true)
+           :else (throw (IllegalArgumentException. (str "Invalid keychain" arg)))))
+       :else (throw (IllegalArgumentException.)))))
   ([keychain em]
   "Put entity-map to datastore unless already there; use :force true to replace existing"
-  ;; (log/trace "into-ds! " keychain em)
-  ;; (if (empty? keychain)
-  ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-  (cond
-    (improper-keychain? keychain)
-    (put-kinded-emap keychain em)
-    (proper-keychain? keychain)
-    (put-proper-emap :keyvec keychain :propmap em)
-    :else
-    (throw (IllegalArgumentException. (str "Invalid keychain : " keychain)))))
-  ([mode keychain em]
-  "Modally put entity-map to datastore.  Modes: :force, :multi"
-  ;; (log/trace "force into-ds! " force keychain em)
-  ;; (if (empty? keychain)
-  ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-  ;; (if (not= force :force)
-  ;;   (throw (IllegalArgumentException. force)))
-  (cond
-    (= mode :force)
+  (do
+    ;; (log/debug "into-ds! 2" keychain em)
+    ;; (if (empty? keychain)
+    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
     (cond
       (improper-keychain? keychain)
       (put-kinded-emap keychain em)
       (proper-keychain? keychain)
-      (put-proper-emap :keyvec keychain :propmap em :force true)
+      (put-proper-emap :keyvec keychain :propmap em)
       :else
-      (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
-    (= mode :multi)
-    (do
-      ;; (log/trace "entity-map! :multi processing...")
-      (if (improper-keychain? keychain)
-        (if (vector? em)
-          (do
-            (for [emap em]
-              (do
-                ;; (log/trace "ctoring em" (print-str emap))
-                (entity-map! keychain emap))))
-          (throw (IllegalArgumentException. ":multi ctor requires vector of maps")))
-        (throw (IllegalArgumentException. ":multi ctor requires improper keychain"))))
-    :else
+      (throw (IllegalArgumentException. (str "Invalid keychain : " keychain))))))
+  ([mode keychain em]
+  "Modally put entity-map to datastore.  Modes: :force, :multi"
+  (do
+    ;; (log/debug "force into-ds! 3" force keychain em)
+    ;; (if (empty? keychain)
+    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+    ;; (if (not= force :force)
+    ;;   (throw (IllegalArgumentException. force)))
+    (cond
+      (= mode :force)
+      (cond
+        (improper-keychain? keychain)
+        (put-kinded-emap keychain em)
+        (proper-keychain? keychain)
+        (put-proper-emap :keyvec keychain :propmap em :force true)
+        :else
+        (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
+      (= mode :multi)
+      (do
+        ;; (log/debug "entity-map! :multi processing...")
+        (if (improper-keychain? keychain)
+          (if (vector? em)
+            (do
+              (for [emap em]
+                (do
+                  ;; (log/debug "ctoring em" (print-str emap))
+                  (entity-map! keychain emap))))
+            (throw (IllegalArgumentException. ":multi ctor requires vector of maps")))
+          (throw (IllegalArgumentException. ":multi ctor requires improper keychain"))))
+      :else
       (throw (IllegalArgumentException. (str "Invalid mode keyword:" force))))
-    ))
-
-
-     ;; (let [k (apply keychain-to-key keychain)
-     ;;       e (try (.get store-map k)
-     ;;              (catch EntityNotFoundException e
-     ;;                ;;(log/trace (.getMessage e))
-     ;;                e)
-     ;;              (catch DatastoreFailureException e
-     ;;                ;;(log/trace (.getMessage e))
-     ;;                nil)
-     ;;              (catch java.lang.IllegalArgumentException e
-     ;;                ;;(log/trace (.getMessage e))
-     ;;                nil))
-     ;;       ]
-     ;;   ;; (log/trace "emap! got e: " e)
-     ;;   (if (nil? e)
-     ;;     (let [e (Entity. k)]
-     ;;       (.put store-map e)
-     ;;       (PersistentEntityMap. e nil))
-     ;;     (PersistentEntityMap. e nil))))))
+    )))
 
 (defn- emap-new
   [^Key k content]
   {:pre [(map? content)]}
-  ;; (log/trace "emap-new " k content)
+  ;; (log/debug "emap-new " k content)
   (let [e (Entity. k)]
     (doseq [[k v] content]
       (let [prop (subs (str k) 1)
             val (get-val-ds v)]
-        ;; (log/trace "emap-new setting prop: " k prop v val)
+        ;; (log/debug "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
-    (.put store-map e)
+    (.put (.content store-map) e)
     (PersistentEntityMap. e nil)))
 
 (defn- emap-old
   [^Key k ^Entity e content]
   {:pre [(map? content)]}
-  ;; (log/trace "emap old " k content)
+  ;; (log/debug "emap old " k content)
   (if (empty? content)
     (PersistentEntityMap. e nil)
     (do
@@ -207,24 +199,24 @@
                 (do
                   (.add propval v)
                   (.setProperty e prop propval)
-                  ;;(log/trace "added val to collection prop")
+                  ;;(log/debug "added val to collection prop")
                   )
                 ;; if its not a collection, make a collection and add both vals
                 (let [newval (ArrayList.)]
                   (.add newval propval)
                   (.add newval v)
                   (.setProperty e (str prop) newval)
-                  ;;(log/trace "created new collection prop")
+                  ;;(log/debug "created new collection prop")
                   ))
-              ;;(log/trace "modified entity " e)
+              ;;(log/debug "modified entity " e)
               (PersistentEntityMap. e nil))
             ;; new property
             (let [val (get-val-ds v)]
-              ;; (log/trace "setting val" val (type val))
+              ;; (log/debug "setting val" val (type val))
               ;; (flush)
               (.setProperty e prop val)))))
-      (.put store-map e)
-      ;; (log/trace "saved entity " e)
+      (.put (.content store-map) e)
+      ;; (log/debug "saved entity " e)
       (PersistentEntityMap. e nil))))
 
 (defn- emap-update-empty
@@ -237,19 +229,19 @@
         (if (emap? e)
           (PersistentEntityMap. e nil)
           (let [e (Entity. k)]
-            (.put store-map e)
+            (.put (.content store-map) e)
             (PersistentEntityMap. e nil)))))
 
 ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
 ;; technique: store them as embedded entities
 (defn- emap-update-map
   [keychain content]
-  ;; (log/trace "emap-update-map " keychain content)
+  ;; (log/debug "emap-update-map " keychain content)
   (let [k (apply keychain-to-key keychain)]
-    ;; (log/trace "emap-update-map key: " k)
+    ;; (log/debug "emap-update-map key: " k)
     (let [e (if (keyword? k)
               (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
-                (.put store-map e)
+                (.put (.content store-map) e)
                 e)
               (try (.get store-map k)
                    (catch EntityNotFoundException e nil)
@@ -270,7 +262,7 @@
           em (PersistentEntityMap. e nil)]
       (try
         (f em)
-        (.put store-map e)
+        (.put (.content store-map) e)
         (.commit txn)
         (finally
           (if (.isActive txn)
@@ -279,13 +271,13 @@
     (let [k (apply keychain-to-key keychain)
           e (try (.get store-map k)
                  (catch EntityNotFoundException e
-                   ;;(log/trace (.getMessage e))
+                   ;;(log/debug (.getMessage e))
                    e)
                  (catch DatastoreFailureException e
-                   ;;(log/trace (.getMessage e))
+                   ;;(log/debug (.getMessage e))
                    nil)
                  (catch java.lang.IllegalArgumentException e
-                   ;;(log/trace (.getMessage e))
+                   ;;(log/debug (.getMessage e))
                    nil))]
       (if (emap? e) ;; existing entity
         (let [txn (.beginTransaction store-map)]
@@ -301,7 +293,7 @@
               em (PersistentEntityMap. e nil)]
           (try
             (f em)
-            (.put store-map e)
+            (.put (.content store-map) e)
             (.commit txn)
             (finally
               (if (.isActive txn)
@@ -312,7 +304,7 @@
 ;;   "Replace, necessarily.  Create new, discarding old even if found (so
 ;;   don't bother searching)."
 ;;   [keylinks & propmap]
-;;   (log/trace "emap!!" keylinks propmap)
+;;   (log/debug "emap!!" keylinks propmap)
 ;;   (if (empty? keylinks)
 ;;     (throw (IllegalArgumentException. "keychain vector must not be empty"))
 ;;     (if (keylink? (last keylinks))
@@ -344,7 +336,7 @@
   ;; content may be a map or a function taking one arg, which is the entitye whose key is ^keychain
   ;; map: update absolutely; current state of entity irrelevant
   ;; function: use if updating depends on current state
-  ;; (log/trace "args: " keychain content)
+  ;; (log/debug "args: " keychain content)
   (if (empty? keychain)
     (throw (IllegalArgumentException. "keychain vector must not be empty"))
     (if (empty? content)

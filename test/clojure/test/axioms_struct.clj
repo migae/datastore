@@ -1,6 +1,7 @@
 (ns test.axioms-struct
   "entity-map axioms for structural operations:  conj, into, assoc, etc."
-  (:refer-clojure :exclude [name hash])
+  (:refer-clojure :exclude [print println print-str println-str])
+;;  (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.api.datastore
             Email
             EntityNotFoundException
@@ -16,12 +17,7 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
-            ;; [migae.datastore.api :as ds]
-            ;; [migae.datastore.service :as dss]
-            ;; [migae.datastore.entity :as dse]
-            ;; [migae.datastore.query  :as dsqry]
-            ;; [migae.datastore.key    :as dskey]
+            [migae.datastore :as ds :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -31,11 +27,6 @@
        ~body)
      (testing "should fail"
        (is (= @report-type# :fail )))))
-
-(defn dump
-  [msg datum & data]
-  (binding [*print-meta* true]
-    (log/trace msg (pr-str datum) (pr-str data))))
 
 ;  (:require [migae.migae-datastore.PersistentEntityMap])
   ;; (:use clojure.test
@@ -99,15 +90,16 @@
 
 (deftest ^:into into-axiom-1
   (testing "entity-map into axiom 1: into produces new entity-map"
-    (let [em1 (ds/entity-map [:A/B] {:a/b 1})
-          em2 (ds/entity-map [:C/D] {:c/d 2 :e/f 3})]
+    (let [em1 (ds/entity-map! [:A/B] {:a/b 1})
+          em2 (ds/entity-map! [:C/D] {:c/d 2 :e/f 3})]
+      (log/debug "construction done")
+      (log/debug "em1:" (ds/print-str em1))
+      (log/debug "em2:" (ds/print-str em2))
       (let [em3 (into em1 em2)]
-        (log/trace "em1:" (ds/print em1))
-        (log/trace "em2:" (ds/print em2))
-        (log/trace "em3:" (ds/print em3))
-        (log/trace "em3:" em3)
-        (log/trace "seq em3:" (seq em3))
-        (log/trace "type em3:" (type em3))
+        (log/debug "em3:" (ds/print-str em3))
+        (log/debug "em3:" em3)
+        (log/debug "seq em3:" (seq em3))
+        (log/debug "type em3:" (type em3))
         (is (map? em3))
         (is (ds/emap? em3))
         (is (= (type em3) migae.datastore.PersistentEntityMap))
@@ -115,7 +107,7 @@
         (is (not= em1 em2 em3))
         (is (not= em3 em2)))
       ;; (let [em3 (into em1 {:a/b 2})]
-      ;;   (log/trace "em1" (ds/print em1))
+      ;;   (log/debug "em1" (ds/print em1))
       ;;   (is (map? em3))
       ;;   (is (ds/emap? em3))
       ;;   (is (= (type em3) migae.datastore.PersistentEntityMap))
@@ -137,10 +129,10 @@
   (testing "entity-map into axiom 3: from fields replace to fields")
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:a 2})]
-      ;; (log/trace "em1" (ds/print em1))
-      ;; (log/trace "em2" (ds/print em2))
+      ;; (log/debug "em1" (ds/print em1))
+      ;; (log/debug "em2" (ds/print em2))
       (let [em3 (into em1 em2)]
-        ;; (log/trace "(into em1 em2) => " (ds/print em3))
+        ;; (log/debug "(into em1 em2) => " (ds/print em3))
         (is (ds/key=? em3 em2))
         (is (not (ds/key=? em3 em1)))
         (is (= (:a em3) (:a em2)))
@@ -151,10 +143,10 @@
   (testing "entity-map into axiom 4: from fields augment to fields")
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:b 2})]
-      ;; (log/trace "em1" (ds/print em1))
-      ;; (log/trace "em2" (ds/print em2))
+      ;; (log/debug "em1" (ds/print em1))
+      ;; (log/debug "em2" (ds/print em2))
       (let [em3 (into em1 em2)]
-        ;; (log/trace "em3" (ds/print em3))
+        ;; (log/debug "em3" (ds/print em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) (:b em2))))
       ))
@@ -163,85 +155,87 @@
   (testing "entity-map into axiom 5: from obj may be plain clojure map")
     (let [em1 (ds/entity-map [:A/B] {:a 1})]
       (let [em3 (into em1 {:b 2})]
-        ;; (log/trace "em3" (ds/print em3))
+        ;; (log/debug "em3" (ds/print em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) 2)))
       ))
 
 (deftest ^:intoX emap-into-cljmap
   (testing "clojure map api: into"
-    (log/trace "test: clojure map api: into")
+    (log/debug "test: clojure map api: into")
     (let [em1 (ds/entity-map! [:A/B] {:a/b 1})
           em2 (ds/entity-map! [:A/B :C/D] {:c/d 1})
           em3 (ds/entity-map! [:A/B :C/D :E/F] {:e/f 1})]
-      (dump "em1:" em1 (type em1))
-      (dump "em2:" em2 (type em2))
-      (dump "em3:" em3 (type em3))
+      (log/debug "em1:" em1 (type em1))
+      (log/debug "em2:" em2 (type em2))
+      (log/debug "em3:" em3 (type em3))
       (let [em11 (with-meta (into {:x :y} em1) (meta em1))
             ;; em22 (ds/into {} em2)
             ;; em33 (ds/into {} em3)
             ]
-        (log/trace "em11:" (meta em11) em11 (type em11))
-      ;;   (dump "em22:" em22 (type em22))
-      ;;   (dump "em33:" em33 (type em33))
+        (log/debug "em11:" (meta em11) em11 (type em11))
+      ;;   (log/debug "em22:" em22 (type em22))
+      ;;   (log/debug "em33:" em33 (type em33))
       ;;   (is (= em33 em3))
       ;;   (should-fail (is (= em1 em2))))
       ;; (let [em11 (ds/into {:em1/a 1} em1)
       ;;       em22 (ds/into {:em2/a 1} em2)
       ;;       em33 (ds/into {:em3/a 1} em3)
       ;;       ]
-      ;;   (dump "em11:" em11 (type em11))
-      ;;   (dump "em22:" em22 (type em22))
-      ;;   (dump "em33:" em33 (type em33))
+      ;;   (log/debug "em11:" em11 (type em11))
+      ;;   (log/debug "em22:" em22 (type em22))
+      ;;   (log/debug "em33:" em33 (type em33))
       ;;   (should-fail (is (= em1 em2)))
         ))))
 
 
-(deftest ^:intoX emap-seq-into
-  (testing "clojure map api: put an emap-seq into a map"
-    (do ;; construct elements of kind :A
-      (ds/entity-map! [:A] {:a 1})
-      (ds/entity-map! [:A] {:b 2})
-      (ds/entity-map! [:A] {:c 3})
-      (ds/entity-map! [:A] {:d 4})
-      (ds/entity-map! [:A] {:d 4})           ; a dup
-      ;; now do a Kind query, yielding an emap-seq
-      (let [ems (ds/emaps?? [:A])
-            foo (do (log/trace "ems" ems)
-                    (log/trace "(type ems)" (type ems))
-                    (log/trace "(class ems)" (class ems))
-                    (is (seq? ems))
-                    (is (= (count ems) 5))
-                    )
-            em (into {} ems)]
-        (log/trace "em" em))
-
-      (let [ems (ds/emaps?? [:A])
-            foo (do ;; (log/trace "ems" ems)
-                    (is (= (count ems) 5))
-                    )
-            em1 {:as (into {} ems)}
-            em2 {:bs ems}
-            em3 {:cs (into #{} ems)}
-            ]
-        (log/trace "em1" em1 (type em1))
-        (log/trace "em2" em2 (type em2))
-        (log/trace "em3" em3 (type em3))
-        (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
-        )))
+;; (deftest ^:intoX emap-seq-into
+;;   (testing "clojure map api: put an emap-seq into a map"
+;;     (log/debug "store-map " (.content store-map))
+;;     (let [em1 (ds/entity-map! [:A] {:a 1})
+;;           em2 (ds/entity-map! [:A] {:b 2})
+;;           em3 (ds/entity-map! [:A] {:c 3})
+;;           em4 (ds/entity-map! [:A] {:d 4})
+;;           em5 (ds/entity-map! [:A] {:d 4})]
+;; ;;      (log/debug "em1: " em1 (type em1))
+;;       ;; now do a Kind query, yielding an emap-seq
+;;       ;; (let [ems (ds/entity-map* [:A])
+;;       ;;       foo (do (log/debug "ems" ems)
+;;       ;;               (log/debug "(type ems)" (type ems))
+;;       ;;               (log/debug "(class ems)" (class ems))
+;;       ;;               (is (seq? ems))
+;;       ;;               (is (= (count ems) 5))
+;;       ;;               )
+;;       ;;       em (into {} ems)]
+;;       ;;   (log/debug "em" em))
+;;       (let [ems (ds/entity-map* [:A])
+;;             foo (log/debug "NEXT" (count ems))
+;;             ;; foo (do ;; (log/debug "ems" ems)
+;;             ;;         (is (= (count ems) 5))
+;;             ;;         )
+;;             em1 {:as (into {} ems)}
+;;             foo (log/debug "em1" (count em1))
+;;             em2 {:bs ems}
+;;             em3 {:cs (into #{} ems)}
+;;             ]
+;;         (log/debug "em1" em1 (type em1))
+;;         (log/debug "em2" em2 (type em2))
+;;         (log/debug "em3" em3 (type em3))
+;;         (log/debug "(:cs em3)" (:cs em3) (type (:cs em3))))
+;;         )))
 
 (deftest ^:meta meta-axiom-1
   (testing "entity-maps support metadata")
     (let [;;em1 (with-meta (ds/entity-map [:A/B] {:a/b 1})
             ;;    {:foo "bar"})
           em2 ^{:x 999}(ds/entity-map [:C/D] {:a 1})]
-;;      (log/trace "em1:" (ds/print em1))
-      (log/trace "seq em2:" (seq em2))
-      (log/trace "em2:" (ds/print em2))
+;;      (log/debug "em1:" (ds/print em1))
+      (log/debug "seq em2:" (seq em2))
+      (log/debug "em2:" (ds/print em2))
       (let [em3 ^{:foo "buz"} em2]
-        (log/trace "em3:" em3)
-        (log/trace "seq em3:" (seq em3))
-        (log/trace "meta em3:" (meta em3)))
+        (log/debug "em3:" em3)
+        (log/debug "seq em3:" (seq em3))
+        (log/debug "meta em3:" (meta em3)))
       ))
 
 (deftest ^:meta interfaces

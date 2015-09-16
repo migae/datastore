@@ -15,13 +15,13 @@
 ;;   ;; FIXME:  implement map matching
 ;;   ;; FIXME:  throw notfound exception
 ;;     (fn [keychain & valmap]
-;;       ;; (log/trace "entity-map*")
-;;       ;; (log/trace "keychain: " keychain)
-;;       ;; (log/trace "type keychain: " (type keychain))
-;;       ;; (log/trace "valmap: " valmap)
-;;       ;; (log/trace "type valmap: " (type valmap))
-;;       ;; (log/trace "first valmap: " (first valmap))
-;;       ;; (log/trace "type first valmap: " (type (first valmap)))
+;;       ;; (log/debug "entity-map*")
+;;       ;; (log/debug "keychain: " keychain)
+;;       ;; (log/debug "type keychain: " (type keychain))
+;;       ;; (log/debug "valmap: " valmap)
+;;       ;; (log/debug "type valmap: " (type valmap))
+;;       ;; (log/debug "first valmap: " (first valmap))
+;;       ;; (log/debug "type first valmap: " (type (first valmap)))
 ;;       ;; (flush)
 ;;       [(type keychain) (type (first valmap))]))
 
@@ -29,69 +29,73 @@
 (defn entity-map*
   ;; (defmethod entity-map* [clojure.lang.PersistentVector nil]
   ([keychain]
-   ;; (log/trace "entity-map* PersistentEntityMap")
+   ;; (log/debug "entity-map* PersistentEntityMap")
    (get-ds keychain))
 
   ;; (defmethod entity-map* [clojure.lang.Keyword clojure.lang.PersistentVector]
   ([arg1 arg2]
-   ;; (log/trace "entity-map* 1" arg1 arg2)
+   ;; (log/debug "entity-map* 1" arg1 arg2)
    (if (keyword? arg1)
      ;; mode keyword:  :prefix, :iso, etc.
-     (do ;; (log/trace "mode " arg1 " keychain: " arg2)
+     (do ;; (log/debug "mode " arg1 " keychain: " arg2)
          (get-ds arg1 arg2))
      ;; else keychain
      (if (improper-keychain? arg1)
        (get-ds arg1 arg2))))
   ;; modal keychain + propmap filters
   ([arg1 arg2 arg3]
-   (log/trace "entity-map* 3" arg1 arg2 arg3)
+   (log/debug "entity-map* 3" arg1 arg2 arg3)
    (if (keyword? arg1)
      ;; mode keyword:  :prefix, :iso, etc.
-     (log/trace "mode " arg1 " keychain: " arg2)
+     (log/debug "mode " arg1 " keychain: " arg2)
      (throw (RuntimeException. "bad args")))))
 
 ;; ;; (defmethod entity-map* [clojure.lang.PersistentVector clojure.lang.PersistentArrayMap]
 ;;   ([keychain & valmap]
-;;   ;; (log/trace "entity-map* PersistentVector")
+;;   ;; (log/debug "entity-map* PersistentVector")
 ;;   (get-ds keychain))
 
 (defn get-kinded-emap
   [keychain & data]
   ;; precon: improper keychain is validated
-  ;; (log/trace "get-kinded-emap " keychain)
+  (log/debug "get-kinded-emap " keychain)
+  (log/debug "store-map " (.content store-map))
   (if (> (count keychain) 1)
     ;; kinded descendant query
     (let [ancestor-key (keychain-to-key (vec (butlast keychain)))
           kind (name (last keychain))
           q (Query. kind ancestor-key)
-          prepared-query (.prepare store-map q)
+          prepared-query (.prepare (.content store-map) q)
           iterator (.asIterator prepared-query)
           seq (iterator-seq iterator)
           res (PersistentEntityMapSeq. seq)]
-      ;; (log/trace "seq1: " (type seq))
+      ;; (log/debug "seq1: " (type seq))
       res)
     ;; kinded query
     (let [kind (name (last keychain))
           q (Query. kind)
-          prepared-query (.prepare store-map q)
-          iterator (.asIterator prepared-query)
-           seq (iterator-seq iterator)
+          foo (log/debug "query: " q)
+          pq (.prepare (.content store-map) q) ;; FIXME
+          foo (log/debug "p query: " pq)
+          foo (log/debug "p query count: " (.countEntities pq (FetchOptions$Builder/withDefaults)))
+          iterator (.asIterator pq)
+          seq (iterator-seq iterator)
           res (PersistentEntityMapSeq. seq)]
-      ;; (log/trace "seq2: " (type seq))
+      (log/debug "res: " (count res) (type res))
       res)))
 
 
 
-  ;; (log/trace "keychain" keychain)
-  ;; (log/trace "data" data)
+  ;; (log/debug "keychain" keychain)
+  ;; (log/debug "data" data)
   ;; (let [em (first data)
   ;;       kind (name (last keychain))
-  ;;       ;; foo (log/trace "kind" kind)
+  ;;       ;; foo (log/debug "kind" kind)
   ;;       parent-keychain (vec (butlast keychain))
   ;;       e (if (nil? parent-keychain)
   ;;           (Entity. kind)
-  ;;           (do #_(log/trace "parent-keychain" parent-keychain)
-  ;;               #_(log/trace "parent-key" (keychain-to-key parent-keychain))
+  ;;           (do #_(log/debug "parent-keychain" parent-keychain)
+  ;;               #_(log/debug "parent-key" (keychain-to-key parent-keychain))
   ;;               (Entity. kind  (keychain-to-key parent-keychain))
   ;;               ))]
   ;;   (when (not (empty? em))
@@ -103,7 +107,7 @@
 (defn get-prefix-matches
   [keychain]
   ;; precon: keychain has already been validated
-  ;; (log/trace "get-prefix-matches" keychain)
+  ;; (log/debug "get-prefix-matches" keychain)
   (let [prefix (apply keychain-to-key keychain)
         q (.setAncestor (Query.) prefix)
         prepared-query (.prepare store-map q)
@@ -113,23 +117,23 @@
     res))
 
 ;;   (let [k (keychain-to-key keychain)
-;;         e (.get store-map k)]
+;;         e (.get (.content store-map) k)]
 ;; ;;               (catch EntityNotFoundException e nil))]
 ;;     (PersistentEntityMap. e nil)))
 
 (defn get-proper-emap
   [keychain & data]
   ;; precon: keychain has already been validated
-  ;; (log/trace "get-proper-emap" keychain)
+  ;; (log/debug "get-proper-emap" keychain)
   (let [k (keychain-to-key keychain)
-        e (.get store-map k)]
+        e (.get (.content store-map) k)]
 ;;               (catch EntityNotFoundException e nil))]
     (PersistentEntityMap. e nil)))
 
 ;; getter
 (defn get-ds
   [keychain & args]
-  ;; (log/trace "get-ds " keychain args)
+  ;; (log/debug "get-ds " keychain args)
    (cond
      (= :prefix keychain)
      (if (apply proper-keychain? args)
@@ -146,9 +150,9 @@
    ;; (if (empty? keychain)
    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
    ;;   (let [k (keychain-to-key keychain)
-   ;;         e (.get store-map k)]
-   ;;     (log/trace "key: " k)
-   ;;     (log/trace "e: " e)
+   ;;         e (.get (.content store-map) k)]
+   ;;     (log/debug "key: " k)
+   ;;     (log/debug "e: " e)
    ;;     ;; throw  EntityNotFoundException
    ;;                ;; (catch EntityNotFoundException e nil)
    ;;                ;; (catch DatastoreFailureException e (throw e))
@@ -159,24 +163,24 @@
   "return matching emaps"
   [keylinks & filter-map]  ; keychain and predicate-map
   ;; {:pre []} ;; check types
-  (log/trace "emap?? keylinks" keylinks (type keylinks))
-  (log/trace "emap?? filter-map" filter-map (type filter-map))
+  (log/debug "emap?? keylinks" keylinks (type keylinks))
+  (log/debug "emap?? filter-map" filter-map (type filter-map))
 ;; )
   (if (empty? keylinks)
     (do
-      (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
+      (log/debug "emap?? predicate-map filter" filter-map (type filter-map))
       )
       ;; (let [ks (keylinks filter-map)
       ;;       vs (vals filter-map)
       ;;       k  (subs (str (first ks)) 1)
       ;;       v (last vs)
       ;;       f (Query$FilterPredicate. k Query$FilterOperator/EQUAL v)]
-      ;;   (log/trace (format "key: %s, val: %s" k v))))
+      ;;   (log/debug (format "key: %s, val: %s" k v))))
     (let [k (if (coll? keylinks)
               (apply keychain-to-key keylinks)
               (apply keychain-to-key [keylinks]))
-          ;; foo (log/trace "emap?? kw keylinks: " k)
-          e (try (.get store-map k)
+          ;; foo (log/debug "emap?? kw keylinks: " k)
+          e (try (.get (.content store-map) k)
                  (catch EntityNotFoundException e (throw e))
                  (catch DatastoreFailureException e (throw e))
                  (catch java.lang.IllegalArgumentException e (throw e)))]
@@ -194,7 +198,7 @@
   entity; if found, returns it, otherwise creates and returns new
   entity."
   [keylinks & propmap]
-  (log/trace "emap?!" keylinks propmap)
+  (log/debug "emap?!" keylinks propmap)
   (if (empty? keylinks)
     (throw (IllegalArgumentException. "key vector must not be empty"))
     (if (keyword? (last keylinks))
@@ -208,23 +212,23 @@
 ;;   what's passed as props arg.
 (defn emap?!
   [keylinks & propmap]
-  (log/trace "emap?!" keylinks propmap)
+  (log/debug "emap?!" keylinks propmap)
   (entity-map?! keylinks propmap))
 
 
      ;; (let [k (apply keychain-to-key keychain)
-     ;;       e (try (.get store-map k)
+     ;;       e (try (.get (.content store-map) k)
      ;;              (catch EntityNotFoundException e
-     ;;                ;;(log/trace (.getMessage e))
+     ;;                ;;(log/debug (.getMessage e))
      ;;                e)
      ;;              (catch DatastoreFailureException e
-     ;;                ;;(log/trace (.getMessage e))
+     ;;                ;;(log/debug (.getMessage e))
      ;;                nil)
      ;;              (catch java.lang.IllegalArgumentException e
-     ;;                ;;(log/trace (.getMessage e))
+     ;;                ;;(log/debug (.getMessage e))
      ;;                nil))
      ;;       ]
-     ;;   ;; (log/trace "emap! got e: " e)
+     ;;   ;; (log/debug "emap! got e: " e)
      ;;   (if (nil? e)
      ;;     (let [e (Entity. k)]
      ;;       (.put store-map e)
@@ -237,13 +241,13 @@
 ;;   throw exception."
 ;;   ;; [keylinks & propmap]
 ;;   [keylinks]
-;;    (log/trace "emap??" keylinks)
+;;    (log/debug "emap??" keylinks)
 ;;    (if (empty? keylinks)
 ;;      (throw (IllegalArgumentException. "keychain vector must not be empty"))
 ;;      (if (every? keylink? keylinks)
 ;;        (let [k (apply keychainer keylinks)
 ;;              e ;;(try
-;;                  (.get store-map k)]
+;;                  (.get (.content store-map) k)]
 ;;                     ;; (catch EntityNotFoundException ex (throw ex))
 ;;                     ;; (catch DatastoreFailureException ex (throw ex))
 ;;                     ;; (catch java.lang.IllegalArgumentException ex (throw ex)))]

@@ -32,7 +32,7 @@
   []
   ;; (log/trace "pull-all")
   (let [q  (Query.)
-        prepared-query (.prepare store-map q)
+        prepared-query (.prepare (.content store-map) q) ;; FIXME
         iterator (.asIterator prepared-query)
         res (PersistentEntityMapSeq. (iterator-seq iterator))
         ]

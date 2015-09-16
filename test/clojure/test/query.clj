@@ -94,23 +94,23 @@
     (ds/entity-map! :multi [:A/C :B] [{:a 1} {:a 2} {:a 3}])
     (ds/entity-map! :multi [:A/C :C] [{:a 1} {:a 2} {:a 3}])
 
-    (let [ems (ds/emaps?? [])]
+    (let [ems (ds/entity-map* [])]
       ;; ems: all entities (6)
       (log/trace "ems" ems)
       (doseq [em ems] (log/trace (meta em) em)))
 
 ;; FIXME
-    ;; (let [ems (ds/emaps?? [] {:migae/gt [:A/B :B/A]})]
-    ;; (let [ems (ds/emaps?? [] '(> [:A/B :B/A]))]
+    ;; (let [ems (ds/entity-map* [] {:migae/gt [:A/B :B/A]})]
+    ;; (let [ems (ds/entity-map* [] '(> [:A/B :B/A]))]
     ;;   (log/trace "ems" ems)
     ;;   (doseq [em ems] (log/trace (meta em) em)))
 
-    ;; (let [ems (ds/emaps?? [] '(< [:A/B :B/d1 :C/d2]))]
+    ;; (let [ems (ds/entity-map* [] '(< [:A/B :B/d1 :C/d2]))]
     ;;   (log/trace "ems" ems)
     ;;   (doseq [em ems] (log/trace (meta em) em)))
 
     ;; ;; illegal: no filters allowed on kindless queries
-    ;; (let [ems2 (ds/emaps?? [] {:a 2})]
+    ;; (let [ems2 (ds/entity-map* [] {:a 2})]
     ;;   )
     ))
 
@@ -133,14 +133,14 @@
     (ds/entity-map! :multi [:A/C :B] [{:a 1} {:a 2} {:a 3}])
     (ds/entity-map! :multi [:A/C :C] [{:a 1} {:a 2} {:a 3}])
 
-    (let [ems1 (ds/emaps?? [:A])
-          ems2 (ds/emaps?? [:A] {:a '(= 2)})]
+    (let [ems1 (ds/entity-map* [:A])
+          ems2 (ds/entity-map* [:A] {:a '(= 2)})]
       (log/trace "ems1" ems1)
       (log/trace "ems2" ems2)
       )
 
-;; FIXME    (let [ems1 (ds/emaps?? [:A/B :A] {:a 2})
-;;           ems2 (ds/emaps?? [:A/B :B] {:a 2})]
+;; FIXME    (let [ems1 (ds/entity-map* [:A/B :A] {:a 2})
+;;           ems2 (ds/entity-map* [:A/B :B] {:a 2})]
 ;;           )
     ))
 
@@ -150,17 +150,17 @@
 ;;     ;; populate ds with test entities
 ;;     (ds/entity-map! :force [:A/B]{})
 ;;     (ds/entity-map! :multi [:A/B :C] [{:a 1} {:a 2} {:a 3}])
-;; FIXME     (let [parent (try (ds/emaps?? [:A/B]{})
+;; FIXME     (let [parent (try (ds/entity-map* [:A/B]{})
 ;;                       (catch EntityNotFoundException e
 ;;                         (log/trace (.getMessage e))
 ;;                         (throw e)))
-;;           childs (try (ds/emaps?? [:A/B :C])
+;;           childs (try (ds/entity-map* [:A/B :C])
 ;;                       (catch EntityNotFoundException e
 ;;                         (log/trace (.getMessage e))
 ;;                         nil))
 ;;           k (key parent) ;; k is a keychain (vector) of keylinks (keywords)
 ;;           foo (log/trace "k:" k (type k) (class k))
-;;           children (try (ds/emaps?? (merge k :C)) ; <- merge keylinks into [] keychain
+;;           children (try (ds/entity-map* (merge k :C)) ; <- merge keylinks into [] keychain
 ;;                       (catch EntityNotFoundException e
 ;;                         (log/trace (.getMessage e))
 ;;                         nil))
@@ -181,7 +181,7 @@
     (ds/entity-map! :multi [:X/Y :A] [{:a 1} {:a 2} {:a 3}])
     (ds/entity-map! :multi [:A/C :A] [{:a 1 :b 2} {:a 2} {:a 3}])
 
-    (let [ems (ds/emaps?? [])]
+    (let [ems (ds/entity-map* [])]
       (log/trace "all ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
@@ -189,36 +189,36 @@
     ;;  (:: (:a = 1 & :b > 2) | (:a < 5))
 
 ;; better: use a reader to mimic function
-;;     (ds/emaps?? [:A] {:a #migae/fn (= % 2)})
-;; or: (ds/emaps?? [:A] {:a '(= % 2)})
+;;     (ds/entity-map* [:A] {:a #migae/fn (= % 2)})
+;; or: (ds/entity-map* [:A] {:a '(= % 2)})
 
-    (let [ems (ds/emaps?? [:A] {:a '(= 2)})]
-    ;; (let [ems (ds/emaps?? [:A] (& :a = 1 ;  and
+    (let [ems (ds/entity-map* [:A] {:a '(= 2)})]
+    ;; (let [ems (ds/entity-map* [:A] (& :a = 1 ;  and
     ;;                               :b = 2))
-    ;;       ems2 (ds/emaps?? [:A] (| :a = 1 ; or
+    ;;       ems2 (ds/entity-map* [:A] (| :a = 1 ; or
     ;;                                :b = 2))]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
 
-    (let [ems (ds/emaps?? [:A] {:a '(>= 2)})]
+    (let [ems (ds/entity-map* [:A] {:a '(>= 2)})]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
 
-    (let [ems (ds/emaps?? [:A] {:a '(> 2)})]
+    (let [ems (ds/entity-map* [:A] {:a '(> 2)})]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
 
     (let [m {:a "foo@example.org"}
-          ems (ds/emaps?? [:A] {:a (list '= (:a m))})]
+          ems (ds/entity-map* [:A] {:a (list '= (:a m))})]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
 
     ;; default is '=;  {:a "foo@example.org"} as predicate
-    (let [ems (ds/emaps?? [:A] {:a "foo@example.org"})]
+    (let [ems (ds/entity-map* [:A] {:a "foo@example.org"})]
       (log/trace "ems:")
       (doseq [em ems]
         (log/trace (ds/print em))))
@@ -273,10 +273,10 @@
 
 ;; ################################################################
 ;; (deftest ^:query emaps-q
-;;   (testing "emaps?? 1"
+;;   (testing "entity-map* 1"
 ;;     (let [em1 (ds/entity-map! :force [:Group] {:name "Acme"})
 ;; FIXME          em2 (ds/entity-map! :force [:Group] (fn [e] (assoc e :name "Tekstra")))
-;;           ems (ds/emaps?? [:Group])]
+;;           ems (ds/entity-map* [:Group])]
 ;;       (log/trace "ems " ems)
 ;;       (log/trace "ems type " (type ems))
 ;;       (log/trace (format "(seq? ems) %s\n" (seq? ems)))
@@ -291,7 +291,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (deftest ^:query ancestor-path
-;;   (testing "emaps?? ancestor query"
+;;   (testing "entity-map* ancestor query"
 ;;     (let [e1 (ds/entity-map! :force [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
 ;;           f1 (ds/emap?? [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
 ;;           ;; f2 (ds/emap?? [:Species/Felis_catus])
@@ -303,21 +303,21 @@
 ;;       )))
 
 (deftest ^:query ancestor-query
-  (testing "emaps?? ancestor query"
+  (testing "entity-map* ancestor query"
     (let [acme (ds/entity-map! :force [:Group] {:name "Acme"})
           k (ds/keychain acme)        ; FIXME
           foo (log/trace "ancestor-query key: " k)
           foo (flush)
           ;; id (ds/id k)
           joe (ds/entity-map! :force (merge k :Member/Joe) {:fname "Joe" :lname "Cool"})
-          ;; joeq  (ds/emaps?? [:Group/Acme :Member/Joe])
-          ;; joev  (ds/emaps?? :Member/Joe)
+          ;; joeq  (ds/entity-map* [:Group/Acme :Member/Joe])
+          ;; joev  (ds/entity-map* :Member/Joe)
 ;          jane (ds/entity-map! :force [k :Member/Jane] {:fname "Jane" :lname "Hip"})
           frank (ds/entity-map! :force [:Member/Frank] {:fname "Frank" :lname "Funk"})
-;; FIXME          root (ds/emaps?? k {})
-          members (ds/emaps?? [:Member])
-          membersV (ds/emaps?? [:Member])
-;; FIXME          members-acme (ds/emaps?? (merge k :Member))
+;; FIXME          root (ds/entity-map* k {})
+          members (ds/entity-map* [:Member])
+          membersV (ds/entity-map* [:Member])
+;; FIXME          members-acme (ds/entity-map* (merge k :Member))
           ] ; ancestor query
       ;; (log/trace "root: " root)
       ;; (log/trace "all members: " members)
@@ -326,12 +326,12 @@
       (log/trace "joe " joe)
       ;; (log/trace "joeq " joeq)
       ;; (log/trace "joev " joev)
-      ;; (is (=  (ds/emaps?? :Group/Acme)  (ds/emaps?? [:Group/Acme])))
-      ;; (is (ds/key=  (first (ds/emaps?? [:Group/Acme :Member/Joe])) joe))
-      (log/trace "FOO" (ds/emaps?? [:Member]))
-      (is (=  (count (ds/emaps?? [:Member])) 2))
-;; FIXME      (log/trace ":Group" (ds/emaps?? (merge k :Member)))
-;; FIXME      (is (=  (count (ds/emaps?? (merge k :Member))) 1))
+      ;; (is (=  (ds/entity-map* :Group/Acme)  (ds/entity-map* [:Group/Acme])))
+      ;; (is (ds/key=  (first (ds/entity-map* [:Group/Acme :Member/Joe])) joe))
+      (log/trace "FOO" (ds/entity-map* [:Member]))
+      (is (=  (count (ds/entity-map* [:Member])) 2))
+;; FIXME      (log/trace ":Group" (ds/entity-map* (merge k :Member)))
+;; FIXME      (is (=  (count (ds/entity-map* (merge k :Member))) 1))
       )))
 
 ;; ################################################################

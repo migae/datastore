@@ -44,20 +44,20 @@
 (use-fixtures :each ds-fixture)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;        emap create funcs
+;;        entity-map create funcs
 ;;  !   throw exception if already exists
 ;;  ?-!  ignore em arg if already exists
 ;;  ?+!  merge em arg if already exists
 ;;  !!  replace if existant (i.e. discard existing)
 
-(deftest ^:emap emap!
+(deftest ^:entity-map entity-map!
   (testing "create or fetch"
     (ds/entity-map! [:Foo/Bar] {})
     (try (ds/entity-map! [:Foo/Bar] {})
          (catch RuntimeException e (do (log/trace "entity already exists"))))
          ;; (catch EntityNotFoundException e
          ;;   (throw e)))
-    ;; (is (= (try (ds/emap?? [:A/B 'C/D])
+    ;; (is (= (try (ds/entity-map?? [:A/B 'C/D])
     ;;                   (catch IllegalArgumentException e
     ;;                     (log/trace "Exception:" (.getMessage e))
     ;;                     (.getClass e)))
@@ -66,14 +66,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FIXME
-;; (deftest ^:emap emap??
-;;   (testing "emap?!"
-;;     (try (ds/emap?? [:Foo/Baz])
+;; (deftest ^:entity-map entity-map??
+;;   (testing "entity-map?!"
+;;     (try (ds/entity-map?? [:Foo/Baz])
 ;;          (catch EntityNotFoundException ex))
 ;;     ))
 
-(deftest ^:emaps emap-def
-  (testing "emap!! definite"
+(deftest ^:entity-maps entity-map-def
+  (testing "entity-map!! definite"
     (let [e1 (ds/entity-map! [:Foo/Bar] {:a 1})
           e2 (ds/entity-map! [:Foo/Bar :Baz/Buz] {:b 1})
           e3 (ds/entity-map! [:Foo/Bar :Baz/Buz :X/Y] {:b 1})]
@@ -82,7 +82,7 @@
       (log/trace "e3" (ds/print e3))
     )))
 
-(deftest ^:emaps emap-indef
+(deftest ^:entity-maps entity-map-indef
   (testing "entity-map! indefinite"
     (let [e1 (ds/entity-map! [:Foo] {:a 1 :b "Foobar"})
           e2 (ds/entity-map! [:Foo/Bar :Baz] {:b 1})
@@ -92,75 +92,75 @@
       (log/trace "e3" (ds/print e3))
     )))
 
-(deftest ^:emaps emaps-multi
-  (testing "use emaps!! to create multiple PersistentEntityMaps of a kind in one stroke"
+(deftest ^:entity-maps entity-maps-multi
+  (testing "use entity-maps!! to create multiple PersistentEntityMaps of a kind in one stroke"
 ;; FIXME: support :multi
     ;; (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])
     ;; (ds/entity-map! :multi [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
     ))
 
-(deftest ^:emap emap1
-  (testing "emap key vector must not be empty"
+(deftest ^:entity-map entity-map1
+  (testing "entity-map key vector must not be empty"
     (let [e (try (ds/entity-map [] {})
                  (catch java.lang.AssertionError ex ex))]
       (is (= "Assert failed: (not (empty? keychain))"
              (.getMessage e))))))
 
-(deftest ^:emap emap?
+(deftest ^:entity-map entity-map?
   (testing "entitymap deftype"
     (binding [*print-meta* true]
-      (let [em1 (ds/emap [:Species/Felis_catus] {:name "Chibi"})
-            em2 (ds/emap [:Genus/d99 :Species/Felis_catus] {:name "Chibi"})
-            em2b (ds/emap [(keyword "Genus" "999") :Species/Felis_catus] {:name "Chibi"})
-            em2c (ds/emap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
+      (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
+            em2 (ds/entity-map [:Genus/d99 :Species/Felis_catus] {:name "Chibi"})
+            em2b (ds/entity-map [(keyword "Genus" "999") :Species/Felis_catus] {:name "Chibi"})
+            em2c (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
         (log/trace "em1" em1)
-        (is (ds/emap? em1))
+        (is (ds/entity-map? em1))
         (log/trace "em2" em2)
-        (is (ds/emap? em2))
+        (is (ds/entity-map? em2))
         (log/trace "em3" em3)
-        (is (ds/emap? em3))
+        (is (ds/entity-map? em3))
         (log/trace "em4" em4)
-        (is (ds/emap? em4))
+        (is (ds/entity-map? em4))
         ))))
 
-(deftest ^:emap emap?!
+(deftest ^:entity-map entity-map?!
   (testing "entitymap deftype"
     (binding [*print-meta* true]
       (let [em1 (ds/entity-map! [:Species/Felis_catus] {})
-            em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
-            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
-            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
-        (is (ds/emap? em1))
-        (is (ds/emap? em2))
-        (is (ds/emap? em3))
-        (is (ds/emap? em4)))
+            em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {})
+            em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
+            em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
+        (is (ds/entity-map? em1))
+        (is (ds/entity-map? em2))
+        (is (ds/entity-map? em3))
+        (is (ds/entity-map? em4)))
 
       (let [k [:Genus/Felis :Species/Felis_catus]]
 ;; FIXME: support this stuff?
-        ;; (log/trace "?!"   (ds/emap?!  k {:name "Chibi" :size "small" :eyes 1}))
-        ;; ;; (try              (ds/emap?!  k {:name "Chibi" :size "small" :eyes 1})
+        ;; (log/trace "?!"   (ds/entity-map?!  k {:name "Chibi" :size "small" :eyes 1}))
+        ;; ;; (try              (ds/entity-map?!  k {:name "Chibi" :size "small" :eyes 1})
         ;; ;;      (catch Exception e (log/trace "Exception:" (.getMessage e))))
 
         ;; ;; =? override maybe
-        ;; (log/trace "=?" (ds/emap=? k  {:name "Chibi" :size "large"}))
+        ;; (log/trace "=?" (ds/entity-map=? k  {:name "Chibi" :size "large"}))
 
         ;; ;; +? - extend maybe
-        ;; (log/trace "+?" (ds/emap+? k  {:name "Chibi" :size "large" :foo "bar"}))
+        ;; (log/trace "+?" (ds/entity-map+? k  {:name "Chibi" :size "large" :foo "bar"}))
 
         ;; ;; =! - override necessarily
-        ;; (log/trace "=!" (ds/emap=! k  {:name "Chibi" :size "large"}))
+        ;; (log/trace "=!" (ds/entity-map=! k  {:name "Chibi" :size "large"}))
 
         ;; ;; !!  - replace necessarily i.e. discard old and create new
         ;; (log/trace "!!" (ds/entity-map! k  {:name "Booger" :size "medium"}))
 
         ;; ;; ?? - find maybe
-        ;; (log/trace "??" (ds/emap?? k))
+        ;; (log/trace "??" (ds/entity-map?? k))
         )
       )))
 
-(deftest ^:emap emap-props-1
+(deftest ^:entity-map entity-map-props-1
   (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus]
@@ -176,7 +176,7 @@
         (is (ds/key=? e1 e2))
         )))
 
-(deftest ^:emap emap-fetch
+(deftest ^:entity-map entity-map-fetch
   (testing "entity-map! new, update, replace"
     ;; ignore new if exists
     (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
@@ -212,18 +212,18 @@
     ;;   (log/trace "em6" em6))
     ))
 
-(deftest ^:emap emap-fn
-  (testing "emap fn"
+(deftest ^:entity-map entity-map-fn
+  (testing "entity-map fn"
     (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
       (log/trace em1))
       ))
 
 ;; ################################################################
-;; NB:  the emaps! family does not (yet) create entities
-;; (deftest ^:emap emaps
-;;   (testing "emaps"
-;;     (let [em1 (ds/emaps! :Species (>= :weight 5))
-;;           ;; em2 (ds/emaps! :Species (and (>= :weight 5)
+;; NB:  the entity-maps! family does not (yet) create entities
+;; (deftest ^:entity-map entity-maps
+;;   (testing "entity-maps"
+;;     (let [em1 (ds/entity-maps! :Species (>= :weight 5))
+;;           ;; em2 (ds/entity-maps! :Species (and (>= :weight 5)
 ;;           ;;                              (<= :weight 7)))
 ;;           ]
 ;;       (log/trace em1)

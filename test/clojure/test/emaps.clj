@@ -41,64 +41,64 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:coll emap-axiom1
-  (testing "emap axiom 1: an entity-map is a map"
+(deftest ^:coll entity-map-axiom1
+  (testing "entity-map axiom 1: an entity-map is a map"
     (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
       ;; (log/trace "e1 " (ds/print e1))
       (is (coll? e1))
       (is (map? e1))
-      (is (ds/emap? e1))
+      (is (ds/entity-map? e1))
       (is (= (keys e1) '(:a :b)))
       (is (= (vals e1) '(1 2)))
       )))
 
-(deftest ^:coll emap-axiom2
-  (testing "emap axiom 2: an entity-map is seqable"
+(deftest ^:coll entity-map-axiom2
+  (testing "entity-map axiom 2: an entity-map is seqable"
     (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
       (is (not (seq? e1)))
       (is (seq? (seq e1)))
       )))
 
-(deftest ^:emap emap1
-  (testing "emap key vector must not be empty"
-    (let [ex (try (ds/emap [] {})
+(deftest ^:entity-map entity-map1
+  (testing "entity-map key vector must not be empty"
+    (let [ex (try (ds/entity-map [] {})
                   (catch java.lang.AssertionError x x))]
       (is (= "Assert failed: (not (empty? keychain))"
              (.getMessage ex))))))
 
-(deftest ^:emap emap?
+(deftest ^:entity-map entity-map?
   (testing "entitymap deftype"
     (binding [*print-meta* true]
-      (let [em1 (ds/emap [:Species/Felis_catus] {:name "Chibi"})
-            em2 (ds/emap [:Genus/d99 :Species/Felis_catus] {:name "Chibi"})
-            em2b (ds/emap [(keyword "Genus" "999") :Species/Felis_catus] {:name "Chibi"})
-            em2c (ds/emap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
+      (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
+            em2 (ds/entity-map [:Genus/d99 :Species/Felis_catus] {:name "Chibi"})
+            em2b (ds/entity-map [(keyword "Genus" "999") :Species/Felis_catus] {:name "Chibi"})
+            em2c (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+            em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
         (log/trace "em1" em1)
-        (is (ds/emap? em1))
+        (is (ds/entity-map? em1))
         (log/trace "em2" em2)
-        (is (ds/emap? em2))
+        (is (ds/entity-map? em2))
         (log/trace "em3" em3)
-        (is (ds/emap? em3))
+        (is (ds/entity-map? em3))
         (log/trace "em4" em4)
-        (is (ds/emap? em4))
+        (is (ds/entity-map? em4))
         ))))
 
-(deftest ^:emap emap!
+(deftest ^:entity-map entity-map!
   (testing "entitymap deftype"
     (binding [*print-meta* true]
       (let [em1 (ds/entity-map! [:Species/Felis_catus] {})
-            em2 (ds/emap [:Genus/Felis :Species/Felis_catus] {})
-            em3 (ds/emap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
-            em4 (ds/emap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
-        (is (ds/emap? em1))
-        (is (ds/emap? em2))
-        (is (ds/emap? em3))
-        (is (ds/emap? em4))
+            em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {})
+            em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})
+            em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {})]
+        (is (ds/entity-map? em1))
+        (is (ds/entity-map? em2))
+        (is (ds/entity-map? em3))
+        (is (ds/entity-map? em4))
         ))))
 
-(deftest ^:emap emap-props-1
+(deftest ^:entity-map entity-map-props-1
   (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus :Cat]
@@ -116,7 +116,7 @@
         ;; FIXME (is (ds/key=? e1 e2))
         )))
 
-(deftest ^:emap emap-fetch
+(deftest ^:entity-map entity-map-fetch
   (testing "entity-map! new, update, replace"
     ;; ignore new if exists
     (let [em1 (ds/entity-map! [:Species/Felis_catus :Cat] {:name "Chibi"})
@@ -136,8 +136,8 @@
 
     ;; !! - update existing
     ;; FIXME
-    ;; (let [em3 (ds/emap!! [:Species/Felis_catus] {:name "Booger"})
-    ;;       em3 (ds/emap!! [:Species/Felis_catus] {:name 4})]
+    ;; (let [em3 (ds/entity-map!! [:Species/Felis_catus] {:name "Booger"})
+    ;;       em3 (ds/entity-map!! [:Species/Felis_catus] {:name 4})]
     ;;   (log/trace "em3 " em3)
     ;;   (log/trace "em3: " (.entity em3))
     ;;   (log/trace "em3 key: " (:migae/key (meta em3)))
@@ -158,18 +158,18 @@
     ;;   (log/trace "em6" em6))
     ))
 
-(deftest ^:emap emap-fn
-  (testing "emap fn"
+(deftest ^:entity-map entity-map-fn
+  (testing "entity-map fn"
     (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
       (log/trace em1))
       ))
 
 ;; ################################################################
-;; NB:  the emaps! family does not (yet) create entities
-;; (deftest ^:emap emaps
-;;   (testing "emaps"
-;;     (let [em1 (ds/emaps! :Species (>= :weight 5))
-;;           ;; em2 (ds/emaps! :Species (and (>= :weight 5)
+;; NB:  the entity-maps! family does not (yet) create entities
+;; (deftest ^:entity-map entity-maps
+;;   (testing "entity-maps"
+;;     (let [em1 (ds/entity-maps! :Species (>= :weight 5))
+;;           ;; em2 (ds/entity-maps! :Species (and (>= :weight 5)
 ;;           ;;                              (<= :weight 7)))
 ;;           ]
 ;;       (log/trace em1)
@@ -177,8 +177,8 @@
 
 
 ;; FIXME
-;; (deftest ^:emaps emaps
-;;   (testing "use emaps!! to create multiple PersistentEntityMaps of a kind in one stroke"
+;; (deftest ^:entity-maps entity-maps
+;;   (testing "use entity-maps!! to create multiple PersistentEntityMaps of a kind in one stroke"
 ;;     (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])
 ;;     (ds/entity-map! :multi [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
 ;;     ))

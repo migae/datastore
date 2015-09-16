@@ -80,6 +80,8 @@
 (gen-interface
  :name migae.datastore.IPersistentEntityMapSeq
  :extends [clojure.lang.Indexed
-           clojure.lang.ISeq]
+           clojure.lang.IReduce ; support into
+           clojure.lang.ISeq
+           java.util.Iterator]
  ;; :methods []
  ) ;; end gen-interface IPersistentEntityMapSeq
