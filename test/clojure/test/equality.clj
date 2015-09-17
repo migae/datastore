@@ -13,7 +13,7 @@
             EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 

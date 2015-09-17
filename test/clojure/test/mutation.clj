@@ -10,7 +10,7 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -41,7 +41,7 @@
 
 (deftest ^:emap get-ds-fail-1
   (testing "get-ds fail 1"
-    (try (ds/get-ds [:A/B])
+    (try (get ds/store-map [:A/B])
          (catch com.google.appengine.api.datastore.EntityNotFoundException e
            (is (= "No entity was found matching the key: A(\"B\")"
                   (.getMessage e)))))))

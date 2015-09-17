@@ -14,7 +14,7 @@
             EntityNotFoundException]
            [com.google.apphosting.api ApiProxy])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -227,9 +227,9 @@
 ;; (deftest ^:query by-key
 ;;   (testing "entitymap get by key")
 ;;   (let [em1 (ds/entity-map! :force [:Species/Felis_catus] {:nm "Chibi"})
-;; FIXME        em2 (ds/emap?? [:Species/Felis_catus])
-;;         ;; em3 (ds/emap?? :Species/Felis_catus)
-;;         em4 (ds/emap?? [(keyword "Species" "Felis_catus")])]
+;; FIXME        em2 (ds/entity-map?? [:Species/Felis_catus])
+;;         ;; em3 (ds/entity-map?? :Species/Felis_catus)
+;;         em4 (ds/entity-map?? [(keyword "Species" "Felis_catus")])]
 ;;     (log/trace "em1 " (ds/print em1))
 ;;     (log/trace "key em1 " (key em1))
 ;;     (log/trace "em2 " em2 (type em1))
@@ -239,32 +239,32 @@
 ;;     ;; FIXME:
 ;;     ;; (is (= (ds/key em1) (ds/key getit) (ds/key em4))) ; (ds/key em3)
 ;;     (is (= (type em1) migae.datastore.PersistentEntityMap))
-;;     (is (= (try (ds/emap?? [(keyword "Group" "foo")])
+;;     (is (= (try (ds/entity-map?? [(keyword "Group" "foo")])
 ;;                       (catch EntityNotFoundException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         EntityNotFoundException))
 ;;            EntityNotFoundException))
-;;     (is (= (try (ds/emap?? [:A])
+;;     (is (= (try (ds/entity-map?? [:A])
 ;;                       (catch IllegalArgumentException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         (.getClass e)))
 ;;            IllegalArgumentException))
-;;     (is (= (try (ds/emap?? [:A/B :C])
+;;     (is (= (try (ds/entity-map?? [:A/B :C])
 ;;                       (catch IllegalArgumentException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         (.getClass e)))
 ;;            IllegalArgumentException))
-;;     (is (= (try (ds/emap?? [:A/B 9])
+;;     (is (= (try (ds/entity-map?? [:A/B 9])
 ;;                       (catch IllegalArgumentException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         (.getClass e)))
 ;;            IllegalArgumentException))
-;;     (is (= (try (ds/emap?? [:A/B 'C/D])
+;;     (is (= (try (ds/entity-map?? [:A/B 'C/D])
 ;;                       (catch IllegalArgumentException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         (.getClass e)))
 ;;            IllegalArgumentException))
-;;     (is (= (try (ds/emap?? [:A/B "C/D"])
+;;     (is (= (try (ds/entity-map?? [:A/B "C/D"])
 ;;                       (catch IllegalArgumentException e
 ;;                         (log/trace "Exception:" (.getMessage e))
 ;;                         (.getClass e)))
@@ -293,8 +293,8 @@
 ;; (deftest ^:query ancestor-path
 ;;   (testing "entity-map* ancestor query"
 ;;     (let [e1 (ds/entity-map! :force [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
-;;           f1 (ds/emap?? [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
-;;           ;; f2 (ds/emap?? [:Species/Felis_catus])
+;;           f1 (ds/entity-map?? [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]{})
+;;           ;; f2 (ds/entity-map?? [:Species/Felis_catus])
 ;;           e2 (ds/entity-map! :force [:Species/Felis_catus]{})]
 ;;       (log/trace "e1 " e1)
 ;;       (log/trace "f1 " f1)

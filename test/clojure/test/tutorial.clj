@@ -15,7 +15,7 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -81,12 +81,12 @@
     (let [e (ds/entity-map! [:Foo/bar] {})]
       (log/trace "test: emap-predicates")
       (log/trace "entity: " (.content e))
-      (log/trace "(ds/emap? e): " (ds/emap? e))
-      (log/trace "(ds/entity? (.content e)): " (ds/entity? (.content e)))
+      (log/trace "(ds/entity-map? e): " (ds/entity-map? e))
+      ;; FIXME (log/trace "(ds/entity? (.content e)): " (ds/entity? (.content e)))
       (log/trace "(empty? e): " (empty? e))
       (log/trace "(ds/keychain? (ds/keychain e)): " (ds/keychain? (ds/keychain e)))
-      (is (ds/emap? e))
-      (is (ds/entity? (.content e)))
+      (is (ds/entity-map? e))
+      ;; FIXME (is (ds/entity? (.content e)))
       (is (ds/keychain? (ds/keychain e)))
       (is (empty? e))
       )))
@@ -104,7 +104,7 @@
       (log/trace "(ifn? e) " (ifn? e))
       (log/trace "(fn? e) " (fn? e))
       (log/trace "(seq? e) " (seq? e))
-      (is (ds/emap? e))
+      (is (ds/entity-map? e))
       (is (coll? e))
       (is (associative? e))
       (should-fail (is (list? e)))
@@ -186,13 +186,13 @@
           employees  (try (ds/entity-map* (conj k :Employee)) ; ancestory query
                         (catch EntityNotFoundException e (log/trace (.getMessage e))))]
       (is (map? e1))
-      (is (ds/emap? e1))
+      (is (ds/entity-map? e1))
       (is (map? emp1))
-      (is (ds/emap? emp1))
+      (is (ds/entity-map? emp1))
       (is (map? emp2))
-      (is (ds/emap? emp2))
+      (is (ds/entity-map? emp2))
       (is (map? emp3))
-      (is (ds/emap? emp3))
+      (is (ds/entity-map? emp3))
       (is (seq? employees))
       ;; (is (ds/emap-seq? employees))
       (is (= (count employees) 3))
@@ -297,7 +297,7 @@
 (deftest ^:meta emap-meta
   (testing "emap meta"
     (let [e (ds/entity-map! [:Foo/d3] {:a 1 :b 2})]
-      (is (ds/emap? e))
+      (is (ds/entity-map? e))
       (is (= (type e) migae.datastore.PersistentEntityMap))
       (is (= (type (:migae/key (meta e))) clojure.lang.PersistentVector))
       (is (= (type (.getKey (.content e))) com.google.appengine.api.datastore.Key))

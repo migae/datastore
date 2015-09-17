@@ -15,7 +15,7 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,26 +69,26 @@
   (testing "empty axiom 1: empty works"
     (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})
           e2 (empty e1)]
-      (is (ds/emap? e2))
+      (is (ds/entity-map? e2))
       (is (empty? e2))
       (is (ds/key=? e1 e2)) ; an entity-map must have a key
       )))
 
 (deftest ^:coll empty-axiom2
-  (testing "empty axiom 2: not-empty works on non-empty emaps"
+  (testing "empty axiom 2: not-empty works on non-empty entity-maps"
     (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})
           e2 (not-empty e1)]
-      (is (ds/emap? e2))
+      (is (ds/entity-map? e2))
       (is (not (empty? e2)))
       (is (ds/key=? e1 e2))
       (is (= e1 e2))
       )))
 
 (deftest ^:coll empty-axiom3
-  (testing "empty axiom 3: not-empty works on empty emaps"
+  (testing "empty axiom 3: not-empty works on empty entity-maps"
     (let [e1 (ds/entity-map [:A/B] {})]
       (is (nil? (not-empty e1)))
-      (is (ds/emap? e1)) ;; FIXME:  entity-map?
+      (is (ds/entity-map? e1)) ;; FIXME:  entity-map?
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -152,7 +152,7 @@
       ;; (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
       ;; (log/trace "assoc! literal " (ds/assoc! (ds/entity-map! [:Species/Felis_catus :Cat/Booger]{})
       ;;                                         :name "Niki" :weight 7))
-      ;; (log/trace "emap!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
+      ;; (log/trace "entity-map!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
                           )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -170,7 +170,7 @@
       ;; (log/trace "assoc! em1 " (ds/assoc!! em1 :weight 7))
       ;; (log/trace "assoc! literal " (ds/assoc! (ds/entity-map! [:Species/Felis_catus :Cat/Booger]{})
       ;;                                         :name "Niki" :weight 7))
-      ;; (log/trace "emap!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
+      ;; (log/trace "entity-map!" (ds/entity-map! [:Species/Felis_catus :Cat/Booger]))
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -220,7 +220,7 @@
       ))
 
 (deftest ^:merge merge-3
-  (testing "merge 2: emaps"
+  (testing "merge 2: entity-maps"
     (is (= (ds/keychain (merge (ds/entity-map [:A/B] {:a 1})
                                (ds/entity-map [:X/Y] {:b 1})))
            [:A/B])
@@ -238,16 +238,16 @@
            clojure.lang.PersistentArrayMap))
     ))
 
-;; (deftest ^:merge emap-merge-4
-;;   (testing "merge map with an emap-seq"
+;; (deftest ^:merge entity-map-merge-4
+;;   (testing "merge map with an entity-map-seq"
 ;;     (do ;; construct elements of kind :A
 ;;       (ds/entity-map [:A] {:a 1})
 ;;       (ds/entity-map [:A] {:b 2})
 ;;       (ds/entity-map [:A] {:c 3})
 ;;       (ds/entity-map [:A] {:d 4})
 ;;       (ds/entity-map [:A] {:d 4})           ; a dup
-;;       ;; now do a Kind query, yielding an emap-seq
-;;       (let [ems (ds/emaps?? [:A])
+;;       ;; now do a Kind query, yielding an entity-map-seq
+;;       (let [ems (ds/entity-maps?? [:A])
 ;;             foo (do (log/trace "ems" ems)
 ;;                     (log/trace "(type ems)" (type ems))
 ;;                     (log/trace "(class ems)" (class ems))
@@ -260,7 +260,7 @@
 ;;         (doseq [em ems]
 ;;           (log/trace "em" (ds/print em))))
 
-;;       (let [ems (ds/emaps?? [:A])
+;;       (let [ems (ds/entity-maps?? [:A])
 ;;             foo (do ;; (log/trace "ems" ems)
 ;;                     (is (= (count ems) 5))
 ;;                     )
@@ -274,18 +274,18 @@
 ;;         (log/trace "(:cs em3)" (:cs em3) (type (:cs em3))))
 ;;         )))
 
-(deftest ^:merge merge-cljmap-emap
+(deftest ^:merge merge-cljmap-entity-map
   (testing "clojure map api: merge entity-map to clj-map"
-    (log/trace "test: clojure map api: merge-cljmap-emap")
+    (log/trace "test: clojure map api: merge-cljmap-entity-map")
     (let [em1 (ds/entity-map [:A/B] {:a 1 :b 2})]
       ;; (log/trace "em1" em1)
       (let [cljmap (merge {} em1)]
         (log/trace "em1" em1 (class em1)))
         ;; (log/trace "cljmap" cljmap (class cljmap))
         ;; (is (map? em1))
-        ;; (is (ds/emap? em1))
+        ;; (is (ds/entity-map? em1))
         ;; (is (map? cljmap))
-        ;; (should-fail (is (ds/emap? cljmap)))
+        ;; (should-fail (is (ds/entity-map? cljmap)))
 
       (let [em2 (merge {:x 9} em1)]
         (log/trace "em1" (ds/print em1))
@@ -293,9 +293,9 @@
         )
       )))
 
-(deftest ^:merge merge-emap-cljmap
+(deftest ^:merge merge-entity-map-cljmap
   (testing "clojure map api: merge entity-map to clj-map"
-    (log/trace "test: clojure map api: merge-cljmap-emap")
+    (log/trace "test: clojure map api: merge-cljmap-entity-map")
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:b 2 :c 7})
           foo (do

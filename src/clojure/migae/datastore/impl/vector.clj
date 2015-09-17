@@ -19,7 +19,7 @@
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]))
 
-(clojure.core/println "loading migae.datastore.impl.map")
+(clojure.core/println "loading migae.datastore.impl.vector")
 
 (defn entity-map? [m]
   (log/debug "IPersistentVector.entity-map?" (meta m) m (type m))
@@ -270,27 +270,24 @@
        (PersistentEntityMap. e nil))))
   )
 
-;; (defn entity-map
-;;   "PersistentEntityMap local constructor"
-;;   ([k]
-;;    "Construct empty entity-map"
-;;    (log/debug "ctor-local.entity-map k" k (type k))
-;;    (if (empty? k)
-;;      (throw (IllegalArgumentException. "keychain vector must not be empty"))
-;;      (let [k (keychain-to-key k)
-;;            e (Entity. k)]
-;;        (->PersistentEntityMap e nil))))
-;;   ([keychain em]
-;;    {:pre [(map? em)
-;;           (vector? keychain)
-;;           (not (empty? keychain))
-;;           (every? keylink? keychain)]}
-;;    (log/debug "ctor-local.entity-map " keychain em)
-;;    (if (empty? keychain)
-;;      (throw (IllegalArgumentException. "keychain vector must not be empty"))
-;;      (let [k (keychain-to-key keychain)
-;;            ;; foo (log/trace "k: " k)
-;;            e (Entity. k)]
-;;        (doseq [[k v] em]
-;;          (.setProperty e (subs (str k) 1) (get-val-ds v)))
-;;        (->PersistentEntityMap e nil)))))
+(defn kind
+  "IPersistentVector.entity-map.kind co-ctor"
+  [v]
+  (log/debug "IPersistentVector.entity-map.kind co-ctor" v)
+  ;; FIXME validate
+  ;; FIXME throw an exception on empty arg?
+  (let [dogtag (last v)]
+    (if-let [ns (namespace dogtag)]
+      (keyword ns)
+      dogtag)))
+
+(defn identifier
+  "IPersistentVector.entity-map.identifier co-ctor"
+  [v]
+  (log/debug "IPersistentVector.entity-map.identifier co-ctor" v)
+  ;; FIXME validate
+  (let [dogtag (last v)]
+    (if-let [ns (namespace dogtag)]
+      (keyword (name dogtag))
+      dogtag)))
+

@@ -16,7 +16,7 @@
            [com.google.appengine.api.datastore
             Key KeyFactory KeyFactory$Builder])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
+            [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -100,7 +100,7 @@
       (is (= (ds/kind  (ds/entity-key [:A/B])) :A)) ;; migae kinds are keywords
       (is (= (.getName k2) "B"))
       (is (= (ds/kind [:A/B]) :A))
-      (is (= (ds/ename [:A/B]) "B"))
+      (is (= (ds/identifier [:A/B]) "B"))
       (is (= (ds/kind (ds/keychain (ds/entity-map [:A/B] {:a 1}))) :A))
     )))
 
@@ -111,12 +111,12 @@
           k2 (ds/entity-key :Employee/d15)
           k3 (ds/entity-key :Employee/x0F)]
     (log/trace "k1: " k1)
-    (is (ds/ekey? k1) true)
+    (is (ds/entity-key? k1) true)
     (is (= (type k1) com.google.appengine.api.datastore.Key))
     (log/trace k2)
-    (is (ds/ekey? k2) true)
+    (is (ds/entity-key? k2) true)
     (log/trace k3)
-    (is (ds/ekey? k3) true)
+    (is (ds/entity-key? k3) true)
     (is (= k2 k3))
     )))
 
@@ -128,7 +128,7 @@
     (log/trace "e1 key: " (ds/entity-key e1))
     (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
     (log/trace "keys2 e1 keychain:" (ds/keychain e1))
-    (is (ds/ekey? (ds/entity-key e1)))
+    (is (ds/entity-key? (ds/entity-key e1)))
     (is (= (ds/entity-key e1)) (ds/entity-key [:A/B]))
     (is (= (ds/entity-key e2)) (ds/entity-key :A/B))
     )))
@@ -141,7 +141,7 @@
     (log/trace "e1 key: " (ds/entity-key e1))
     (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
     (log/trace "keys2 e1 keychain:" (ds/keychain e1))
-    (is (ds/ekey? (ds/entity-key e1)))
+    (is (ds/entity-key? (ds/entity-key e1)))
     (is (= (ds/entity-key e1)) (ds/entity-key :A/B))
     )))
 
@@ -224,30 +224,30 @@
 
 ;; (deftest ^:keysym keysym2
 ;;   (testing "keymap literals: name"
-;;     (is (ds/ekey? (ds/entity-key :Employee :asalieri)) true)
-;;     (is (ds/ekey? (ds/entity-key "Employee" "asalieri")) true)))
+;;     (is (ds/entity-key? (ds/entity-key :Employee :asalieri)) true)
+;;     (is (ds/entity-key? (ds/entity-key "Employee" "asalieri")) true)))
 
     ;; (is (= (type (dskey/make 'Employee/x0F)) com.google.appengine.api.datastore.Key)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest ^:keychain dogtags-1
-  (testing "dogtags 1"
-    (let [;; create three entities with same dogtag :X/Y,
-          ;; but distinct keychain ancestry; they all have the same
-          ;; dogtag [:X/Y], Kind (:X) and Identifier ("Y")
-          e1 (ds/entity-map [:X/Y]{})
-          e3 (ds/entity-map [:A/B :C/D :X/Y]{})
-          e2 (ds/entity-map [:A/B :X/Y]{})]
-      (log/trace "e1 (dogtag - keychain): (" (ds/dogtag e1) "-" (ds/keychain e1) ")")
-      (log/trace "e2 (dogtag - keychain): (" (ds/dogtag e2) "-" (ds/keychain e2) ")")
-      (log/trace "e3 (dogtag - keychain): (" (ds/dogtag e3) "-" (ds/keychain e3) ")")
-      (is (= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B])))
-      (is (= (ds/dogtag e1) (ds/dogtag e2) (ds/dogtag e3)))
-      (is (= (ds/kind e1) (ds/kind e2) (ds/kind e3)))
-      (is (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B])))
-      (is (= (ds/ename e1) (ds/ename e2) (ds/ename e3)))
-      (is (= (ds/identifier [:A/B]) (ds/identifier [:X/Y :A/B])))
-      )))
+;; (deftest ^:keychain dogtags-1
+;;   (testing "dogtags 1"
+;;     (let [;; create three entities with same dogtag :X/Y,
+;;           ;; but distinct keychain ancestry; they all have the same
+;;           ;; dogtag [:X/Y], Kind (:X) and Identifier ("Y")
+;;           e1 (ds/entity-map [:X/Y]{})
+;;           e3 (ds/entity-map [:A/B :C/D :X/Y]{})
+;;           e2 (ds/entity-map [:A/B :X/Y]{})]
+;;       (log/trace "e1 (dogtag - keychain): (" (ds/dogtag e1) "-" (ds/keychain e1) ")")
+;;       (log/trace "e2 (dogtag - keychain): (" (ds/dogtag e2) "-" (ds/keychain e2) ")")
+;;       (log/trace "e3 (dogtag - keychain): (" (ds/dogtag e3) "-" (ds/keychain e3) ")")
+;;       (is (= (ds/dogtag [:A/B]) (ds/dogtag [:X/Y :A/B])))
+;;       (is (= (ds/dogtag e1) (ds/dogtag e2) (ds/dogtag e3)))
+;;       (is (= (ds/kind e1) (ds/kind e2) (ds/kind e3)))
+;;       (is (= (ds/kind [:A/B]) (ds/kind [:X/Y :A/B])))
+;;       (is (= (ds/identifier e1) (ds/identifier e2) (ds/identifier e3)))
+;;       (is (= (ds/identifier [:A/B]) (ds/identifier [:X/Y :A/B])))
+;;       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest ^:keychain keychain-1
@@ -267,29 +267,29 @@
 (deftest ^:keychain keychain1a
   (testing "keychain sym key literals 1a"
     (log/trace (ds/entity-key [:Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/entity-key [:Genus/Felis :Species/Felis_catus]))))
+    (ds/entity-key? (ds/entity-key [:Genus/Felis :Species/Felis_catus]))))
 
 (deftest ^:keychain keychain1b
   (testing "keychain sym key literals 1b"
     (log/trace (ds/entity-key [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/entity-key [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
+    (ds/entity-key? (ds/entity-key [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
 
 (deftest ^:keychain keychain1c
   (testing "keychain sym key literals 1c"
     (log/trace (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))
-    (ds/ekey? (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
+    (ds/entity-key? (ds/entity-key [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus]))))
 
 
 ;; (deftest ^:keychain keychain20
 ;;   (testing "keychain string key literals 2"
-;;     (ds/ekey? (ds/entity-key [:Subfamily :Felinae :Genus :Felis]))
-;;     (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" "Genus" "Felis"]))))
+;;     (ds/entity-key? (ds/entity-key [:Subfamily :Felinae :Genus :Felis]))
+;;     (ds/entity-key? (ds/entity-key ["Subfamily" "Felinae" "Genus" "Felis"]))))
 
 ;; TODO: support string syntax:
 ;; (deftest ^:keychain keychain30
 ;;   (testing "keychain - mixed key literals 30"
-;;     (ds/ekey? (ds/entity-key [:Subfamily/Felinae :Genus :Felis]))))
-;;     (ds/ekey? (ds/entity-key ["Subfamily" "Felinae" :Genus/Felis])))))
+;;     (ds/entity-key? (ds/entity-key [:Subfamily/Felinae :Genus :Felis]))))
+;;     (ds/entity-key? (ds/entity-key ["Subfamily" "Felinae" :Genus/Felis])))))
 
 (deftest ^:keychain keychain3
   (testing "keychain literals 3"

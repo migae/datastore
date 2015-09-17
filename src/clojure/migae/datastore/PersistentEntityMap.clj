@@ -7,16 +7,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftype PersistentEntityMap [content ^IPersistentMap em-meta]
 
-  ;; Entity-Map
-  ;; (entity-map? [em]
-  ;;   ;; true
-  ;;   ;; )
-  ;;   ;;(defn entity-map?
-  ;;   ;; [em]
-  ;;   (log/debug "entity-map?" em (type em)
-  ;;              (instance? migae.datastore.IPersistentEntityMap em))
-  ;;   (instance? migae.datastore.IPersistentEntityMap em))
-
   migae.datastore.IPersistentEntityMap
   ;; java.lang.Iterable
   (iterator [this]

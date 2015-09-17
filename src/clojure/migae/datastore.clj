@@ -40,9 +40,9 @@
             ;; [migae.datastore.service :as ds]
             ;; NB:  trace level not available on gae
             [clojure.tools.logging :as log :only [debug info]]
-            ;;[migae.datastore.protocol :refer :all]
-            [migae.datastore.impl.map :as emap]
-            [migae.datastore.impl.vector :as evec]
+;;            [migae.datastore.api :as ds]
+            ;; [migae.datastore.impl.map :as pmap]
+            ;; [migae.datastore.impl.vector :as pvec]
           )) ;; warn, error, fatal
 
 (clojure.core/println "loading datastore")
@@ -50,33 +50,19 @@
 (declare ->PersistentStoreMap)
 (declare ->PersistentEntityMapSeq)
 (declare ->PersistentEntityMap)
-(declare ->PersistentEntityHashMap)
 
 (declare ds-to-clj get-val-ds)
 (declare make-embedded-entity)
-(declare ename props-to-map get-next-emap-prop)
+(declare props-to-map get-next-emap-prop)
 
 (declare keychain? keylink? keykind? keychain keychain-to-key proper-keychain? improper-keychain?)
 
 (declare store-map store-map?)
-(declare entity-map?)
+(declare entity-map? kind)
 
-(load "datastore/protocol")
+;;(load "datastore/api")
 (load "datastore/PersistentEntityMap")
-(load "datastore/PersistentEntityHashMap")
 (load "datastore/PersistentStoreMap")
-
-(def store-map
-  (let [dsm (DatastoreServiceFactory/getDatastoreService)
-        ;; foo (log/debug "dsm: " dsm (type dsm))
-        psm (PersistentStoreMap. dsm nil nil)]
-    ;; (log/debug "psm: " psm (type psm))
-    psm))
-
-;; (log/debug "store-map: " store-map (type store-map))
-;; (log/debug "store-map IReduce? " (instance? clojure.lang.IReduce store-map))
-;; (log/debug "store-map IReduceInit? " (instance? clojure.lang.IReduceInit store-map))
-;; (log/debug "store-map IEditableCollection? " (instance? clojure.lang.IEditableCollection store-map))
 
 (load "datastore/PersistentEntityMapSeq")
 
@@ -320,72 +306,72 @@
    ;; (and (vector? k) (not (empty? k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti kind class)
-(defmethod kind Key
-  [^Key k]
-  (keyword (.getKind k)))
-(defmethod kind Entity
-  [^Entity e]
-  (keyword (.getKind e)))
-(defmethod kind migae.datastore.IPersistentEntityMap
-  [^migae.datastore.PersistentEntityMap e]
-  (log/debug "IPersistentEntityMap.kind")
-  (keyword (.getKind (.content e))))
-;; (defmethod kind migae.datastore.PersistentEntityHashMap
+;; (defmulti kind class)
+;; (defmethod kind Key
+;;   [^Key k]
+;;   (keyword (.getKind k)))
+;; (defmethod kind Entity
+;;   [^Entity e]
+;;   (keyword (.getKind e)))
+;; (defmethod kind migae.datastore.IPersistentEntityMap
 ;;   [^migae.datastore.PersistentEntityMap e]
-;;   ;; (log/debug "PersistentEntityHashMap.kind")
-;;   (kind (.k e)))
-(defmethod kind clojure.lang.Keyword
-  [^clojure.lang.Keyword kw]
-  (when-let [k (namespace kw)]
-    (keyword k)))
-    ;; (clojure.core/name kw)))
-(defmethod kind clojure.lang.PersistentVector
-  [^clojure.lang.PersistentVector k]
-  ;; FIXME: validate keychain contains only keylinks
-  (if (keychain? k)
-    (keyword (namespace (last k)))))
+;;   (log/debug "IPersistentEntityMap.kind")
+;;   (keyword (.getKind (.content e))))
+;; ;; (defmethod kind migae.datastore.PersistentEntityHashMap
+;; ;;   [^migae.datastore.PersistentEntityMap e]
+;; ;;   ;; (log/debug "PersistentEntityHashMap.kind")
+;; ;;   (kind (.k e)))
+;; (defmethod kind clojure.lang.Keyword
+;;   [^clojure.lang.Keyword kw]
+;;   (when-let [k (namespace kw)]
+;;     (keyword k)))
+;;     ;; (clojure.core/name kw)))
+;; (defmethod kind clojure.lang.PersistentVector
+;;   [^clojure.lang.PersistentVector k]
+;;   ;; FIXME: validate keychain contains only keylinks
+;;   (if (keychain? k)
+;;     (keyword (namespace (last k)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti identifier class)
-(defmethod identifier Key
-  [^Key k]
-  ;; (log/debug "Key identifier" k)
-  (let [nm (.getName k)
-        id (.getId k)]
-    (if (nil? nm) id (str nm))))
-(defmethod identifier migae.datastore.PersistentEntityMap
-  [^migae.datastore.PersistentEntityMap em]
-  ;; (log/debug "PersistentEntityMap.identifier")
-  (let [k (.getKey (.content em))
-        nm (.getName k)
-        id (.getId k)]
-    (if (nil? nm) id (str nm))))
-;; (defmethod identifier migae.datastore.PersistentEntityHashMap
-;;   [^migae.datastore.PersistentEntityHashMap em]
-;;   ;; (log/debug "PersistentEntityHashMap.identifier")
-;;   (let [fob (dogtag (.k em))
-;;         nm (read-string (name fob))]
-;;     nm))
+;; (defmulti identifier class)
+;; (defmethod identifier Key
+;;   [^Key k]
+;;   ;; (log/debug "Key identifier" k)
+;;   (let [nm (.getName k)
+;;         id (.getId k)]
+;;     (if (nil? nm) id (str nm))))
+;; (defmethod identifier migae.datastore.PersistentEntityMap
+;;   [^migae.datastore.PersistentEntityMap em]
+;;   ;; (log/debug "PersistentEntityMap.identifier")
+;;   (let [k (.getKey (.content em))
+;;         nm (.getName k)
+;;         id (.getId k)]
+;;     (if (nil? nm) id (str nm))))
+;; ;; (defmethod identifier migae.datastore.PersistentEntityHashMap
+;; ;;   [^migae.datastore.PersistentEntityHashMap em]
+;; ;;   ;; (log/debug "PersistentEntityHashMap.identifier")
+;; ;;   (let [fob (dogtag (.k em))
+;; ;;         nm (read-string (name fob))]
+;; ;;     nm))
 
-(defmethod identifier clojure.lang.PersistentVector
-  [^clojure.lang.PersistentVector keychain]
-  ;; FIXME: validate vector contains only keylinks
-  (let [k (last keychain)]
-    (if-let [nm (.getName k)]
-      nm
-      (.getId k))))
+;; (defmethod identifier clojure.lang.PersistentVector
+;;   [^clojure.lang.PersistentVector keychain]
+;;   ;; FIXME: validate vector contains only keylinks
+;;   (let [k (last keychain)]
+;;     (if-let [nm (.getName k)]
+;;       nm
+;;       (.getId k))))
 
-(defmulti ename class)
-(defmethod ename Entity
-  [^Entity e]
-  (.getName (.getKey e)))
-(defmethod ename clojure.lang.PersistentVector
-  [^ clojure.lang.PersistentVector keychain]
-  (name (last keychain)))
-(defmethod ename migae.datastore.PersistentEntityMap
-  [^migae.datastore.PersistentEntityMap em]
-  (.getName (.getKey (.content em))))
+;; (defmulti ename class)
+;; (defmethod ename Entity
+;;   [^Entity e]
+;;   (.getName (.getKey e)))
+;; (defmethod ename clojure.lang.PersistentVector
+;;   [^ clojure.lang.PersistentVector keychain]
+;;   (name (last keychain)))
+;; (defmethod ename migae.datastore.PersistentEntityMap
+;;   [^migae.datastore.PersistentEntityMap em]
+;;   (.getName (.getKey (.content em))))
 
 (defmulti id class)
 (defmethod id clojure.lang.PersistentVector
@@ -466,35 +452,35 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (declare keyword-to-key)
-(defn add-child-keylink
-  [^KeyFactory$Builder builder chain]
-  ;; (log/debug "add-child-keylink builder:" builder)
-  ;; (log/debug "add-child-keylink chain:" chain (type chain) (type (first chain)))
-  (doseq [kw chain]
-    (if (nil? kw)
-      nil
-      (if (keylink? kw)
-        (let [k (keyword-to-key kw)]
-          (.addChild builder
-                     (.getKind k)
-                     (identifier k)))
-        (throw (IllegalArgumentException.
-                (str "not a clojure.lang.Keyword: " kw)))))))
+;; (defn add-child-keylink
+;;   [^KeyFactory$Builder builder chain]
+;;   ;; (log/debug "add-child-keylink builder:" builder)
+;;   ;; (log/debug "add-child-keylink chain:" chain (type chain) (type (first chain)))
+;;   (doseq [kw chain]
+;;     (if (nil? kw)
+;;       nil
+;;       (if (keylink? kw)
+;;         (let [k (keyword-to-key kw)]
+;;           (.addChild builder
+;;                      (.getKind k)
+;;                      (ds/identifier k)))
+;;         (throw (IllegalArgumentException.
+;;                 (str "not a clojure.lang.Keyword: " kw)))))))
 ;; (throw (RuntimeException. (str "Bad child keylink (not a clojure.lang.Keyword): " kw)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FIXME: restrict keychain-to-key to proper keychains
-;; (defmethod keychain-to-key clojure.lang.PersistentVector
-(defn keychain-to-key
-  ;; FIXME: validate keychain only keylinks
-  ([keychain]
-  ;; (log/debug "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
-   (if (proper-keychain? keychain)
-     (let [k (keyword-to-key (first keychain))
-           root (KeyFactory$Builder. k)]
-       (.getKey (doto root (add-child-keylink (rest keychain)))))
-     (throw (IllegalArgumentException.
-             (str "Invalid keychain: " keychain))))))
+;; ;; (defmethod keychain-to-key clojure.lang.PersistentVector
+;; (defn keychain-to-key
+;;   ;; FIXME: validate keychain only keylinks
+;;   ([keychain]
+;;   ;; (log/debug "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+;;    (if (proper-keychain? keychain)
+;;      (let [k (keyword-to-key (first keychain))
+;;            root (KeyFactory$Builder. k)]
+;;        (.getKey (doto root (add-child-keylink (rest keychain)))))
+;;      (throw (IllegalArgumentException.
+;;              (str "Invalid keychain: " keychain))))))
 ;; (throw (RuntimeException. (str "Bad keychain (not a vector of keywords): " keychain))))))
 
 
@@ -673,4 +659,4 @@
 (load "datastore/query")
 (load "datastore/ctor_push")
 (load "datastore/ctor_pull")
-(load "datastore/api")
+(load "datastore/impls")

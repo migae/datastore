@@ -20,7 +20,7 @@
           LocalServiceTestConfig
           LocalDatastoreServiceTestConfig))
 
-(require '(migae [datastore :as ds]))
+(require '(migae.datastore [api :as ds]))
 
 (def ds-test-env (.setEnforceApiDeadlines
                   (LocalServiceTestHelper.
@@ -40,7 +40,7 @@
 (def m {:a 1})
 
 (.setUp ds-test-env)
-(def em (ds/entity-map k m))
+;;(def em (ds/entity-map k m))
 
 ;; (.tearDown ds-test-env))))
 

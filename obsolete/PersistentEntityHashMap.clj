@@ -104,11 +104,11 @@
     (log/trace "assocEx")
     (PersistentEntityMap. (.assocEx content k v) nil))
   (without [this k]                     ; = dissoc!, return new datum with k removed
-    (let [prop (ename k)]
-      (log/trace "without: removing prop " k "->" prop)
-      (.removeProperty content prop)
-      this))
-
+    ;; (let [prop (ename k)]
+    ;;   (log/trace "without: removing prop " k "->" prop)
+    ;;   (.removeProperty content prop)
+    ;;   this))
+    )
   ;;;; extends Counted
   (count [_]  ; -> int
     "number of properties in container, plus one for the keychain"
