@@ -126,8 +126,8 @@
           e2 (ds/entity-map [:A/d99]{})
           e3 (ds/entity-map [(keyword "A" "123")]{})]
     (log/trace "e1 key: " (ds/entity-key e1))
-    (log/trace "e1 key to keychain: " (ds/to-keychain (ds/entity-key e1)))
-    (log/trace "keys2 e1 keychain:" (ds/to-keychain e1))
+    (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
+    (log/trace "keys2 e1 keychain:" (ds/keychain e1))
     (is (ds/ekey? (ds/entity-key e1)))
     (is (= (ds/entity-key e1)) (ds/entity-key [:A/B]))
     (is (= (ds/entity-key e2)) (ds/entity-key :A/B))
@@ -139,8 +139,8 @@
           e2 (ds/entity-map [(keyword "A" "99")]{})
           e3 (ds/entity-map [(keyword "A" "B") (keyword "C" "123")]{})]
     (log/trace "e1 key: " (ds/entity-key e1))
-    (log/trace "e1 key to keychain: " (ds/to-keychain (ds/entity-key e1)))
-    (log/trace "keys2 e1 keychain:" (ds/to-keychain e1))
+    (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
+    (log/trace "keys2 e1 keychain:" (ds/keychain e1))
     (is (ds/ekey? (ds/entity-key e1)))
     (is (= (ds/entity-key e1)) (ds/entity-key :A/B))
     )))

@@ -12,6 +12,7 @@
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             [migae.datastore :as ds]
+            ;; [migae.datastore.protocol :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 

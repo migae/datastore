@@ -4,9 +4,6 @@
            [java.util
             Collection
             Collections
-            ;; Collections$UnmodifiableMap
-            ;; Collections$UnmodifiableMap$UnmodifiableEntrySet
-            ;; Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry
             ArrayList
             HashMap HashSet
             Map Map$Entry
@@ -42,7 +39,11 @@
             [clojure.tools.reader.edn :as edn]
             ;; [migae.datastore.service :as ds]
             ;; NB:  trace level not available on gae
-            [clojure.tools.logging :as log :only [debug info]])) ;; warn, error, fatal
+            [clojure.tools.logging :as log :only [debug info]]
+            ;;[migae.datastore.protocol :refer :all]
+            [migae.datastore.impl.map :as emap]
+            [migae.datastore.impl.vector :as evec]
+          )) ;; warn, error, fatal
 
 (clojure.core/println "loading datastore")
 
@@ -57,6 +58,12 @@
 
 (declare keychain? keylink? keykind? keychain keychain-to-key proper-keychain? improper-keychain?)
 
+(declare store-map store-map?)
+(declare entity-map?)
+
+(load "datastore/protocol")
+(load "datastore/PersistentEntityMap")
+(load "datastore/PersistentEntityHashMap")
 (load "datastore/PersistentStoreMap")
 
 (def store-map
@@ -67,10 +74,11 @@
     psm))
 
 ;; (log/debug "store-map: " store-map (type store-map))
+;; (log/debug "store-map IReduce? " (instance? clojure.lang.IReduce store-map))
+;; (log/debug "store-map IReduceInit? " (instance? clojure.lang.IReduceInit store-map))
+;; (log/debug "store-map IEditableCollection? " (instance? clojure.lang.IEditableCollection store-map))
 
 (load "datastore/PersistentEntityMapSeq")
-(load "datastore/PersistentEntityMap")
-(load "datastore/PersistentEntityHashMap")
 
 (defn- get-next-emap-prop [this]
   ;; (log/debug "get-next-emap-prop" (.query this))
@@ -267,10 +275,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (declare keychain? keychain=? key? key=? map=? entity-map=? dogtag)
 
-(defn entity-map?
-  [em]
-  (= (instance? migae.datastore.IPersistentEntityMap em)))
-
 (defn emap? ;; OBSOLETE - use entity-map?
   [em]
   (entity-map? em))
@@ -310,8 +314,10 @@
 
 (defn keychain?
   [k]
-  {:pre [(and (vector? k) (not (empty? k)))]}
-  (or (proper-keychain? k) (improper-keychain? k)))
+  (and
+   (vector? k)
+   (or (proper-keychain? k) (improper-keychain? k))))
+   ;; (and (vector? k) (not (empty? k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti kind class)
@@ -399,13 +405,13 @@
 (defn ekey? [^com.google.appengine.api.datastore.Key k]
   (= (type k) com.google.appengine.api.datastore.Key))
 
-(defmulti to-keychain class)
-(defmethod to-keychain Key
-  [k]
-  (keychain k))
-(defmethod to-keychain migae.datastore.PersistentEntityMap
-  [em]
-  (keychain (.getKey (.content em))))
+;; (defmulti to-keychain class)
+;; (defmethod to-keychain Key
+;;   [k]
+;;   (keychain k))
+;; (defmethod to-keychain migae.datastore.PersistentEntityMap
+;;   [em]
+;;   (keychain (.getKey (.content em))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti keychain
@@ -443,8 +449,8 @@
 
 (defmethod keychain migae.datastore.PersistentEntityMap
   [^PersistentEntityMap e]
-  (log/debug "to-keychain IPersistentEntityMap: " e)
-  (to-keychain (.getKey (.content e))))
+  (log/debug "keychain IPersistentEntityMap: " e)
+  (keychain (.getKey (.content e))))
 
 ;; (defmethod keychain migae.datastore.PersistentEntityHashMap
 ;;   [^PersistentEntityHashMap e]

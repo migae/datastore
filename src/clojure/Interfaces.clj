@@ -79,6 +79,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (gen-interface
  :name migae.datastore.IPersistentEntityMapSeq
+
+;; ASeq extends Obj implements ISeq, Sequential, List, Serializable, IHashEq {
+ ;; LazySeq extends Obj implements ISeq, Sequential, List, IPending, IHashEq{
+
+
  :extends [clojure.lang.Indexed
            clojure.lang.IReduce ; support into
            clojure.lang.ISeq

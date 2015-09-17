@@ -101,20 +101,20 @@
       (is (ds/entity-map? em4))
       )))
 
-(deftest ^:emap hashmap-axioms
-  (testing "entity-hashmap axioms"
-    (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
-          ]
-      (log/trace "em1" (ds/print em1))
-      (log/trace "em1 type:" (type em1))
-      (log/trace "em1 kind:" (ds/kind em1))
-      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      (log/trace "em1 keychain:" (.k em1))
-      (log/trace "em1 keychain type:" (type (.k em1)))
-      (log/trace "em1 content:" (.content em1))
-      (log/trace "em1 content type:" (type (.content em1)))
-      (is (ds/entity-map? em1))
-      )))
+;; (deftest ^:emap hashmap-axioms
+;;   (testing "entity-hashmap axioms"
+;;     (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
+;;           ]
+;;       (log/trace "em1" (ds/print em1))
+;;       (log/trace "em1 type:" (type em1))
+;;       (log/trace "em1 kind:" (ds/kind em1))
+;;       (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+;;       (log/trace "em1 keychain:" (.k em1))
+;;       (log/trace "em1 keychain type:" (type (.k em1)))
+;;       (log/trace "em1 content:" (.content em1))
+;;       (log/trace "em1 content type:" (type (.content em1)))
+;;       (is (ds/entity-map? em1))
+;;       )))
 
 (deftest ^:emap emap-axioms
   (testing "entity-map axioms"
@@ -133,26 +133,26 @@
       (is (ds/entity-map? em1))
       )))
 
-(deftest ^:emap hashmap-ctor-2
-  (testing "entity-hashmap ctor"
-    (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
-          em2 (ds/entity-hashmap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-          em3 (ds/entity-hashmap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-          em4 (ds/entity-hashmap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
-          ]
-      (log/trace "em1" (ds/print em1))
-      (log/trace "em1 type:" (type em1))
-      (log/trace "em1 kind:" (ds/kind em1))
-;; FIXME      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      (log/trace "em1 keychain:" (.k em1))
-      (log/trace "em1 keychain type:" (type (.k em1)))
-      (log/trace "em1 content:" (.content em1))
-      (log/trace "em1 content type:" (type (.content em1)))
-      (is (ds/entity-map? em1))
-      ;; (is (ds/entity-map? em2))
-      ;; (is (ds/entity-map? em3))
-      ;; (is (ds/entity-map? em4))
-      )))
+;; (deftest ^:emap hashmap-ctor-2
+;;   (testing "entity-hashmap ctor"
+;;     (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
+;;           em2 (ds/entity-hashmap [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+;;           em3 (ds/entity-hashmap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+;;           em4 (ds/entity-hashmap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
+;;           ]
+;;       (log/trace "em1" (ds/print em1))
+;;       (log/trace "em1 type:" (type em1))
+;;       (log/trace "em1 kind:" (ds/kind em1))
+;; ;; FIXME      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+;;       (log/trace "em1 keychain:" (.k em1))
+;;       (log/trace "em1 keychain type:" (type (.k em1)))
+;;       (log/trace "em1 content:" (.content em1))
+;;       (log/trace "em1 content type:" (type (.content em1)))
+;;       (is (ds/entity-map? em1))
+;;       ;; (is (ds/entity-map? em2))
+;;       ;; (is (ds/entity-map? em3))
+;;       ;; (is (ds/entity-map? em4))
+;;       )))
 
 (deftest ^:emap emap-ctor2
   (testing "entity-map ctor2"

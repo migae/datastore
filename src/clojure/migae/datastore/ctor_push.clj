@@ -46,7 +46,7 @@
 (defn put-kinded-emap
   [keyvec & data]
   ;; precon: improper keychain is validated
-  (println (str "put-kinded-emap: " keyvec data))
+  ;; (println (str "put-kinded-emap: " keyvec data))
   ;; (log/debug "data" data)
   (let [em (first data)
         kind (name (last keyvec))
@@ -63,17 +63,13 @@
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     ;; (.put (.content store-map) e)
     (let [pem (PersistentEntityMap. e nil)
-          foo (log/debug "store-map " (type store-map))
-          foo (log/debug "store-map IReduce? " (instance? clojure.lang.IReduce store-map))
-          ;; foo (log/debug "store-map IReduceInit? " (instance? clojure.lang.IReduceInit store-map))
-          ;; foo (log/debug "store-map IEditableCollection? " (instance? clojure.lang.IEditableCollection store-map))
           ds (into store-map pem)]
       pem)))
 
 (defn- put-proper-emap
   [& {:keys [keyvec propmap force] :or {force false,}}]
   ;; precon: keychain has already been validated
-  (log/debug "keychain" keyvec)
+  ;; (log/debug "keychain" keyvec)
   ;; (log/debug "propmap" propmap)
   ;; (log/debug "force" force)
   (let [k (keychain-to-key keyvec)
@@ -91,7 +87,7 @@
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     (let [pem (PersistentEntityMap. e nil)
           ds (.content store-map)]
-      (log/debug "put-proper-emap ds: " ds (type ds))
+      ;; (log/debug "ctor-push.put-proper-emap ds: " ds (type ds))
       (into store-map pem)
       pem)))
       ;; (.put ds e))))
