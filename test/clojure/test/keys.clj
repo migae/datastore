@@ -147,61 +147,61 @@
 
 (deftest ^:keychain keychain-fail
   (testing "keys 3: keychain literals: name"
-    (let [ex (try (ds/keychain-to-key [:A/B :X])
+    (let [ex (try (ds/entity-key [:A/B :X])
                   (catch IllegalArgumentException e e))]
       (is (= (type ex) IllegalArgumentException))
       (is (= (.getMessage ex)
              "Invalid keychain: [:A/B :X]")))
     ;; FIXME: restructure to verifiy exception occurs, as above
-    (try (ds/keychain-to-key [:A/B :Y :D/E])
+    (try (ds/entity-key [:A/B :Y :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B :Y :D/E]"))))
-    (try (ds/keychain-to-key [:A/B 'Z :D/E])
+    (try (ds/entity-key [:A/B 'Z :D/E])
          (catch IllegalArgumentException ex
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B Z :D/E]"))))
-    (try (ds/keychain-to-key [:A/B "C" :D/E])
+    (try (ds/entity-key [:A/B "C" :D/E])
          (catch java.lang.RuntimeException ex
            (is (= (.getMessage ex)
                   "Invalid keychain: [:A/B \"C\" :D/E]"))))
-    (try (ds/keychain-to-key '(:A/B))
+    (try (ds/entity-key '(:A/B))
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                (.getMessage ex)))))
-    (try (ds/keychain-to-key '{:a 1})
+    (try (ds/entity-key '{:a 1})
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                (.getMessage ex)))))
-    (try (ds/keychain-to-key [:A])
+    (try (ds/entity-key [:A])
          (catch IllegalArgumentException ex
            (is (= "missing namespace: :A")
                (.getMessage ex))))
-    (try (ds/keychain-to-key :A)
+    (try (ds/entity-key :A)
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key [9])
+    (try (ds/entity-key [9])
          (catch IllegalArgumentException ex
            (is (=  "Invalid keychain: [9]"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key 9)
+    (try (ds/entity-key 9)
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key ['a])
+    (try (ds/entity-key ['a])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [a]"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key 'a)
+    (try (ds/entity-key 'a)
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key ["a"])
+    (try (ds/entity-key ["a"])
          (catch IllegalArgumentException ex
            (is (= "Invalid keychain: [\"a\"]"
                   (.getMessage ex)))))
-    (try (ds/keychain-to-key "a")
+    (try (ds/entity-key "a")
          (catch java.lang.AssertionError ex
            (is (= "Assert failed: (and (vector? k) (not (empty? k)))"
                   (.getMessage ex)))))
@@ -299,13 +299,13 @@
 (deftest ^:keychain proper
   (testing "keychain literals 20"
     (let [e1 (ds/entity-map [:Foo/Bar] {})]
-      (log/trace "e1" (ds/print e1)))
+      (log/trace "e1" (ds/dump e1)))
     (let [e1 (ds/entity-map [:Foo/Bar] {})]
-      (log/trace "e1" (ds/print e1)))
+      (log/trace "e1" (ds/dump e1)))
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz] {})]
-      (log/trace "e1" (ds/print e1)))
+      (log/trace "e1" (ds/dump e1)))
     (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X/Y] {:a 1 :b 2})]
-      (log/trace "e1" (ds/print e1)))
+      (log/trace "e1" (ds/dump e1)))
       ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -318,5 +318,5 @@
 ;; (deftest ^:reader reader
 ;;   (testing "reader foo"
 ;;     (let [e1 #migae/em [:Foo/Bar] {:a 1}]
-;;       (log/trace "e1" (ds/print e1))
+;;       (log/trace "e1" (ds/dump e1))
 ;;       )))

@@ -49,8 +49,8 @@
   (testing "kinded construction"
     (let [e1 (ds/entity-map! [:A] {})
           e2 (ds/entity-map! [:A] {:a 1})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
+      (log/trace "e1" (ds/dump e1))
+      (log/trace "e2" (ds/dump e2))
       )))
 
 (deftest ^:kinds kind-ctor-fail
@@ -78,10 +78,10 @@
           e2 (ds/entity-map! [:A/B :C] {:a 1})
           e3 (ds/entity-map! [:A/B :C/D :X] {:a 1})
           e4 (ds/entity-map! [:A/B :C/D :X] {:a 1})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
-      (log/trace "e3" (ds/print e3))
-      (log/trace "e4" (ds/print e4))
+      (log/trace "e1" (ds/dump e1))
+      (log/trace "e2" (ds/dump e2))
+      (log/trace "e3" (ds/dump e3))
+      (log/trace "e4" (ds/dump e4))
       )))
 
 ;; TODO: support multi-level kinded construction, e.g. [:A :B :C]
@@ -91,7 +91,7 @@
     (let [e1 (ds/entity-map! [:Foo] {})]
       ;; (log/trace "e1" (type e1) (.getMessage e1)))
     ;; (let [e1 (ds/entity-map [:Foo/Bar :Baz] {})]
-    ;;   (log/trace "e1" (ds/print e1)))
+    ;;   (log/trace "e1" (ds/dump e1)))
     ;; (let [e1 (ds/entity-map [:Foo/Bar :Baz/Buz :X] {:a 1 :b 2})]
-    ;;   (log/trace "e1" (ds/print e1)))
+    ;;   (log/trace "e1" (ds/dump e1)))
       )))

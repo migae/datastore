@@ -186,17 +186,17 @@
         em2 (ds/entity-map [:A/B] {:b 2})
         em3 (ds/entity-map [:A/B] {:a 2})
         em4 (ds/entity-map [:X/Y] {:x 9})]
-    (log/trace "em1: " (ds/print-str em1))
-    (log/trace "em2: " (ds/print-str em2))
-    (log/trace "em3: " (ds/print-str em3))
-    (log/trace "merge em1 em2: " (ds/print-str (merge em1 em2)))
-    (log/trace "merge em1 em3: " (ds/print-str (merge em1 em3)))
-    (log/trace "merge em1 em4: " (ds/print-str (merge em1 em4)))
-    (log/trace "merge em1 {:x 9}: " (ds/print-str (merge em1 {:x 9})))
+    (log/trace "em1: " (ds/dump-str em1))
+    (log/trace "em2: " (ds/dump-str em2))
+    (log/trace "em3: " (ds/dump-str em3))
+    (log/trace "merge em1 em2: " (ds/dump-str (merge em1 em2)))
+    (log/trace "merge em1 em3: " (ds/dump-str (merge em1 em3)))
+    (log/trace "merge em1 em4: " (ds/dump-str (merge em1 em4)))
+    (log/trace "merge em1 {:x 9}: " (ds/dump-str (merge em1 {:x 9})))
     ;; merging into IPersistentMap sheds keychain:
-    (log/trace "merge {}  em1: " (ds/print-str (merge {} em1)))
+    (log/trace "merge {}  em1: " (ds/dump-str (merge {} em1)))
     ;; to retain keychain info:
-    (log/trace "merge {}  em1: " (ds/print-str (merge {:migae/keychain (ds/keychain em1)} em1)))
+    (log/trace "merge {}  em1: " (ds/dump-str (merge {:migae/keychain (ds/keychain em1)} em1)))
     ))
 
 (deftest ^:merge merge-1
@@ -204,16 +204,16 @@
     (is (= (ds/keychain (merge (ds/entity-map [:A/B] {:a 1})
                                (ds/entity-map [:A/B] {:b 2})))
            [:A/B]))
-    (is (= (ds/print-str (merge (ds/entity-map [:A/B] {:a 1})
+    (is (= (ds/dump-str (merge (ds/entity-map [:A/B] {:a 1})
                                 (ds/entity-map [:A/B] {:b 2})))
-           (ds/print-str (ds/entity-map [:A/B] {:a 1 :b 2}))))
+           (ds/dump-str (ds/entity-map [:A/B] {:a 1 :b 2}))))
     ))
 
 (deftest ^:merge merge-2
   (testing "merge 2: from fld content overrides to fld content"
-    (is (= (ds/print-str (merge (ds/entity-map [:A/B] {:a 1})
+    (is (= (ds/dump-str (merge (ds/entity-map [:A/B] {:a 1})
                                 (ds/entity-map [:A/B] {:a 2})))
-           (ds/print-str (ds/entity-map [:A/B] {:a 2}))))
+           (ds/dump-str (ds/entity-map [:A/B] {:a 2}))))
     (is (= (keys (merge (ds/entity-map [:A/B] {:a 1})
                         (ds/entity-map [:A/B] {:a 2})))
            '(:a)))
@@ -258,7 +258,7 @@
 ;;             em (into {} ems)]
 ;;         (log/trace "em" em)
 ;;         (doseq [em ems]
-;;           (log/trace "em" (ds/print em))))
+;;           (log/trace "em" (ds/dump em))))
 
 ;;       (let [ems (ds/entity-maps?? [:A])
 ;;             foo (do ;; (log/trace "ems" ems)
@@ -288,7 +288,7 @@
         ;; (should-fail (is (ds/entity-map? cljmap)))
 
       (let [em2 (merge {:x 9} em1)]
-        (log/trace "em1" (ds/print em1))
+        (log/trace "em1" (ds/dump em1))
         (log/trace "em2" em2 (type em2))
         )
       )))
@@ -299,13 +299,13 @@
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:b 2 :c 7})
           foo (do
-                (log/trace "em1" (ds/print em1))
-                (log/trace "em2" (ds/print em2)))
+                (log/trace "em1" (ds/dump em1))
+                (log/trace "em2" (ds/dump em2)))
           ;; FIXME:  merge is broken
           em3 (merge em2 {:foo "bar"}  em1)
           ]
-      (log/trace "em1" (ds/print em1))
-      (log/trace "em3" (ds/keychain em3) (ds/print em3))
+      (log/trace "em1" (ds/dump em1))
+      (log/trace "em3" (ds/keychain em3) (ds/dump em3))
       (log/trace "em3 type:" (type em3))
       (is (not= em1 em3))
 ;;      (is (ds/key=? em1 em3))

@@ -2,9 +2,136 @@
 
 (clojure.core/println "loading PersistentEntityMap")
 
+(declare clj-to-ds)
+
+(defn ds-to-clj-coll
+  "Type conversion: java datastore to clojure"
+  [coll]
+  ;; (log/debug "ds-to-clj-coll" coll (type coll))
+  (cond
+    (= (type coll) java.util.ArrayList) (into '() (for [item coll]
+                                                       (ds-to-clj item)))
+    (= (type coll) java.util.HashSet)  (into #{} (for [item coll]
+                                                       (ds-to-clj item)))
+    (= (type coll) java.util.Vector)  (into [] (for [item coll]
+                                                       (ds-to-clj item)))
+    :else (log/debug "EXCEPTION: unhandled coll " coll)
+    ))
+
+(defn ds-to-clj
+  [v]
+  ;; (log/debug "ds-to-clj:" v (type v) (class v))
+  (let [val (cond (integer? v) v
+                  (string? v) (str v)
+                  (= (class v) java.lang.Double) v
+                  (= (class v) java.lang.Boolean) v
+                  (= (class v) java.util.Date) v
+
+                  (= (class v) java.util.Collections$UnmodifiableMap)
+                  (let [props v]
+                    (into {} (for [[k v] props]
+                               (let [prop (keyword k)
+                                     val (ds-to-clj v)]
+                                 {prop val}))))
+
+                  (instance? java.util.Collection v) (ds-to-clj-coll v)
+                  (= (type v) Link) (.toString v)
+
+                  (= (type v) Email) (.getEmail v)
+                  (= (type v) EmbeddedEntity) (->PersistentEntityMap v nil)
+                  (= (type v) Key) (let [kind (.getKind v)]
+                                     (if (= kind "Keyword")
+                                       (keyword (.getName v))
+                                       ;; (symbol (.getName v))))
+                                       (str \' (.getName v))))
+                  :else (do
+                          ;; (log/debug "HELP: ds-to-clj else " v (type v))
+                          (throw (RuntimeException. (str "HELP: ds-to-clj else " v (type v))))
+                          (edn/read-string v)))]
+    ;; (log/debug "ds-to-clj result:" v val)
+    val))
+
+(defn clj-to-ds-coll
+  "Type conversion: clojure to java.  The datastore supports a limited
+  number of Java classes (see
+  https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types);
+  e.g. no BigInteger, no HashMap, etc.  Before we can store a
+  collection we have to convert its elements to acceptable types.  In
+  particular, maps must be converted to EmbeddedEntity objects"
+  ;; {:tag "[Ljava.lang.Object;"
+  ;;  :added "1.0"
+  ;;  :static true}
+  [coll]
+  ;; (log/debug "clj-to-ds-coll" coll (type coll))
+  (cond
+    (list? coll) (let [a (ArrayList.)]
+                     (doseq [item coll]
+                       (do
+                         ;; (log/debug "vector item:" item (type item))
+                         (.add a (clj-to-ds item))))
+                     ;; (log/debug "ds converted:" coll " -> " a)
+                     a)
+
+    (map? coll) (make-embedded-entity coll)
+
+    (set? coll) (let [s (java.util.HashSet.)]
+                  (doseq [item coll]
+                    (let [val (clj-to-ds item)]
+                      ;; (log/debug "set item:" item (type item))
+                      (.add s (clj-to-ds item))))
+                  ;; (log/debug "ds converted:" coll " -> " s)
+                  s)
+
+    (vector? coll) (let [a (Vector.)]
+                     (doseq [item coll]
+                       (do
+                         ;; (log/debug "vector item:" item (type item))
+                         (.add a (clj-to-ds item))))
+                     ;; (log/debug "ds converted:" coll " -> " a)
+                     a)
+
+    :else (do
+            (log/debug "HELP" coll)
+            coll))
+    )
+
+(defn- keyword-to-ds
+  [kw]
+   (KeyFactory/createKey "Keyword"
+                         ;; remove leading ':'
+                         (subs (str kw) 1)))
+
+(defn- symbol-to-ds
+  [sym]
+   (KeyFactory/createKey "Symbol" (str sym)))
+
+(defn clj-to-ds
+  [v]
+  ;; (log/debug "clj-to-ds" v (type v))
+  (let [val (cond (integer? v) v
+                  (string? v) (str v)
+                  (coll? v) (clj-to-ds-coll v)
+                  (= (type v) clojure.lang.Keyword) (keyword-to-ds v)
+                  (= (type v) clojure.lang.Symbol) (symbol-to-ds v)
+                  (= (type v) EmbeddedEntity) v
+                  (= (type v) Link) v
+                  (= (type v) Email) v
+                  (= (type v) Key) v
+                  (= (type v) java.lang.Double) v
+                  (= (type v) java.lang.Long) v
+                  (= (type v) java.lang.Boolean) v
+                  (= (type v) java.util.Date) v
+                  (= (type v) java.util.ArrayList) v ;; (into [] v)
+                  :else (do
+                          (log/debug "ELSE: get val type" v (type v))
+                          v))]
+    ;; (log/debug "clj-to-ds result:" v " -> " val "\n")
+    val))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PersistentEntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require '(migae.datastore [keys :as k]))
 (deftype PersistentEntityMap [content ^IPersistentMap em-meta]
 
   migae.datastore.IPersistentEntityMap
@@ -71,7 +198,7 @@
     {:pre [(keyword? k)]}
     (log/debug "IFn.invoke(" k ")")
     (if (= k :migae/keychain)
-      (keychain content)
+      (k/keychain content)
       (let [kw (subs (str k) 1)
             prop (.getProperty content kw)]
         (if (not (nil? prop))
@@ -85,7 +212,7 @@
   ;; key, val
   ;; (key [this]  ; -> Object
   ;;   (log/debug "PersistentEntityMap.IMapEntry key")
-  ;;   (keychain content))
+  ;;   (k/keychain content))
   ;; (val [this]  ; -> Object
   ;;   (log/debug "PersistentEntityMap.IMapEntry val")
   ;;   (.printStackTrace (Exception.))
@@ -94,7 +221,7 @@
   ;;                             (let [prop (keyword k)
   ;;                                   val (ds-to-clj v)]
   ;;                               {prop val})))
-  ;;         keychain (keychain content)
+  ;;         keychain (k/keychain content)
   ;;         ;; res (into coll {:migae/keychain keychain})]
   ;;         ]
   ;;     coll))
@@ -103,8 +230,8 @@
   ;; withMeta; meta
   (^IPersistentMap meta [this]
     (do
-      ;; (log/debug "PersistentEntityMap.meta" (keychain content))
-      (let [md (into (some identity [em-meta {}]) {:migae/keychain (keychain content)})]
+      ;; (log/debug "PersistentEntityMap.meta" (k/keychain content))
+      (let [md (into (some identity [em-meta {}]) {:migae/keychain (k/keychain content)})]
         ;; (log/debug "meta: " md)
         md)))
   ;;;; extends IMeta
@@ -129,7 +256,7 @@
                                  (let [prop (keyword k)
                                        val (ds-to-clj v)]
                                    {prop val})))
-              key-chain (keychain this)
+              key-chain (k/keychain this)
               res (assoc to-coll k v)]
           (log/debug "IPersistentMap assoc res: " res)
           (with-meta res {:migae/keychain key-chain})))))
@@ -178,7 +305,7 @@
   (valAt [_ k]  ; -> Object
     (log/debug "PersistentEntityMap.ILookup.valAt: " k)
    (if (= k :migae/keychain)
-      (keychain content)
+      (k/keychain content)
       (let [prop (ds-to-clj (subs (str k) 1))]
         (if-let [v  (.getProperty content prop)]
           (do ;;(log/debug "prop:" prop ", val:" v)
@@ -216,7 +343,7 @@
       (do
         (log/debug "cons clojure.lang.MapEntry" o " to emap" this)
         (let [new-entity (.clone content)]
-          (.setProperty new-entity (subs (str (first o)) 1) (get-val-ds (second o)))
+          (.setProperty new-entity (subs (str (first o)) 1) (clj-to-ds (second o)))
           (PersistentEntityMap. new-entity nil)))
       (= (type o) clojure.lang.PersistentArrayMap)
       (do
@@ -224,7 +351,7 @@
         (let [newe (.clone content)
               newm (into {} em-meta)]
           (doseq [[k v] o]
-            (.setProperty newe (subs (str k) 1) (get-val-ds v)))
+            (.setProperty newe (subs (str k) 1) (clj-to-ds v)))
           ;; (.put (datastore) content)
           (PersistentEntityMap. newe newm)))
       (= (type o) java.util.Map$Entry)
@@ -287,7 +414,7 @@
                                      val (ds-to-clj v)]
                                  ;; (log/debug "prop " prop " val " val)
                                  {prop val}))))
-          k (keychain content)
+          k (k/keychain content)
           res (with-meta emap {:migae/keychain k})
           ;; res (into r {:migae/keychain k})
           ]
@@ -364,13 +491,13 @@
               ;;                              val (ds-to-clj v)]
               ;;                          {prop val})))
               to-keychain (if (nil? (:migae/keychain seed))
-                            (keychain content)
+                            (k/keychain content)
                             (:migae/keychain seed))]
           (doseq [[k v] from-coll]
             (assoc! seed k v))
           (let [p (persistent! seed)]
             (doseq [[k v] p]
-              (.setProperty to-ent (subs (str k) 1) (get-val-ds v))))
+              (.setProperty to-ent (subs (str k) 1) (clj-to-ds v))))
           ;; (let [m1 (persistent! seed)
           ;;       m2 (with-meta m1 {:migae/keychain keychain
           ;;                         :type PersistentEntityMap})
@@ -413,7 +540,7 @@
     (log/debug "ITransientCollection persistent")
     ;; (try (/ 1 0) (catch Exception e (print-stack-trace e)))
     (let [props (.getProperties content)
-          kch (keychain content)
+          kch (k/keychain content)
           coll (into {} (for [[k v] props]
                               (let [prop (keyword k)
                                     val (ds-to-clj v)]

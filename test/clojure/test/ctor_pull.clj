@@ -63,8 +63,8 @@
     (let [em1 (ds/entity-map* [:A/B])        ; co-ctor
           em2 (ds/entity-map* [:A/B :A/C])
           ]
-      (log/trace "em1:" (ds/print em1))
-      (log/trace "em2:" (ds/print em2))
+      (log/trace "em1:" (ds/dump em1))
+      (log/trace "em2:" (ds/dump em2))
       (is (= (:a em1) 2))         ; previously fetched emap unaffected
       (is (= (:b em2) nil))
       )))

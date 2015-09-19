@@ -45,7 +45,7 @@
 (deftest ^:coll entity-map-axiom1
   (testing "entity-map axiom 1: an entity-map is a map"
     (let [e1 (ds/entity-map [:A/B] {:a 1 :b 2})]
-      ;; (log/trace "e1 " (ds/print e1))
+      ;; (log/trace "e1 " (ds/dump e1))
       (is (coll? e1))
       (is (map? e1))
       (is (ds/entity-map? e1))
@@ -63,8 +63,8 @@
 (deftest ^:entity-map entity-map1
   (testing "entity-map key vector must not be empty"
     (let [ex (try (ds/entity-map [] {})
-                  (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (not (empty? keychain))"
+                  (catch java.lang.IllegalArgumentException x x))]
+      (is (= "Null keychain '[]' not allowed for local ctor"
              (.getMessage ex))))))
 
 (deftest ^:entity-map entity-map?

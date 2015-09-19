@@ -1,7 +1,7 @@
 (in-ns 'migae.datastore)
 
 ;; =======
-(declare #_emap?? emaps?? emap-seq epr #_emap? keychain=)
+(declare #_entity-map?? emaps?? emap-seq epr #_entity-map? keychain=)
 
 (defn dsfilter                            ;defmacro?
   [keypred & valpred]
@@ -196,7 +196,7 @@
 ;; ;;                (catch EntityNotFoundException ex nil)
 ;; ;;                (catch DatastoreFailureException ex (throw ex))
 ;; ;;                (catch java.lang.IllegalArgumentException ex (throw ex)))]
-;; ;;         (if (emap? e)
+;; ;;         (if (entity-map? e)
 ;; ;;           (PersistentEntityMap. e nil)
 ;; ;;           (let [e (Entity. k)]
 ;; ;;             (.put store-map e)
@@ -250,7 +250,7 @@
 ;;                  (catch java.lang.IllegalArgumentException e
 ;;                    ;;(log/trace (.getMessage e))
 ;;                    nil))]
-;;       (if (emap? e) ;; existing entity
+;;       (if (entity-map? e) ;; existing entity
 ;;         (let [txn (.beginTransaction store-map)]
 ;;           (try
 ;;             (f e)
@@ -291,7 +291,7 @@
 
 ;; Modalities:  ! necessarily, ? possibly (exception on not found)
 ;; e.g.
-;;   emap?? = find possibly - return if found (ignoring props arg) else throw exception
+;;   entity-map?? = find possibly - return if found (ignoring props arg) else throw exception
 ;;
 ;;
 (defn emap+!
@@ -520,7 +520,7 @@
   ;;   (doseq [emap maps]
   ;;     (do
   ;;       ;; (log/trace "emap" emap)
-  ;;       (emap?! keylinks emap)))
+  ;;       (entity-map?! keylinks emap)))
   ;;   ;; ]
   ;;     ;; (doseq [item s]
   ;;     ;;   (log/trace "item" (meta item) item)
@@ -552,10 +552,10 @@
   (log/trace "emaps?!" keylinks maps)
   (if (improper-keychain? keylinks)
     (if (map? maps)
-      (emap?! keylinks maps)
+      (entity-map?! keylinks maps)
       (doseq [emap maps]
         (do
-          (emap?! keylinks emap))))
+          (entity-map?! keylinks emap))))
     (throw (IllegalArgumentException. "emaps?! keylinks must end in a Kind keyword (e.g. :Foo); try emap!!"))
     ))
 
@@ -858,7 +858,7 @@
 ;;   [m k v & kvs]
 ;;   ;; (log/trace "assoc! " m k v  "&" kvs)
 ;;    (let [txn (.beginTransaction store-map)
-;;          coll (if (emap? m)
+;;          coll (if (entity-map? m)
 ;;                 (.content m)
 ;;                 (if (= (class m) Entity)
 ;;                   m
@@ -884,7 +884,7 @@
   [m k v & kvs]
   {:pre [(nil? (namespace k))]}
    (let [txn (.beginTransaction store-map)
-         coll (if (emap? m)
+         coll (if (entity-map? m)
                 (.content m)
                 (if (= (class m) Entity)
                   m
@@ -902,7 +902,7 @@
        (finally
          (if (.isActive txn)
            (.rollback txn))))
-     (if (emap? coll)
+     (if (entity-map? coll)
        coll
        (if (= (class coll) Entity)
          (PersistentEntityMap. coll nil)
@@ -911,7 +911,7 @@
 
   ;; (if (empty? keylinks)
   ;;   (do
-  ;;     (log/trace "emap?? predicate-map filter" filter-map (type filter-map))
+  ;;     (log/trace "entity-map?? predicate-map filter" filter-map (type filter-map))
   ;;     (let [ks (keylinks filter-map)
   ;;           vs (vals filter-map)
   ;;           k  (subs (str (first ks)) 1)
@@ -921,7 +921,7 @@
   ;;   (let [k (if (coll? keylinks)
   ;;             (apply keychain-to-key keylinks)
   ;;             (apply keychain-to-key [keylinks]))
-  ;;         ;; foo (log/trace "emap?? kw keylinks: " k)
+  ;;         ;; foo (log/trace "entity-map?? kw keylinks: " k)
   ;;         e (try (.get store-map k)
   ;;                (catch EntityNotFoundException ex (throw ex))
   ;;                (catch DatastoreFailureException ex (throw ex))

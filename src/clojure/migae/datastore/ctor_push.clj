@@ -22,27 +22,6 @@
           (every? keyword? keychain)]}
    (into-ds! force keychain em)))
 
-;; FIXME: we don't need this!  Any time we push an em, we get an
-;; entity, so we might as well stick with PersistentEntityMap.
-;; (defn entity-hashmap!
-;;   ([keyvec]
-;;    (log/debug "entity-hashmap! push ctor 1")
-;;    (into-ds! :hashmap keyvec))
-;;   ([keyvec em]
-;;    {:pre [(map? em)
-;;           (vector? keyvec)
-;;           (not (empty? keyvec))
-;;           (every? keyword? keyvec)]}
-;;    (log/debug "entity-hashmap! push ctor 2")
-;;    (into-ds! :hashmap keyvec em))
-;;   ([force keyvec em]
-;;    {:pre [(or (map? em) (vector? em))
-;;           (vector? keyvec)
-;;           (not (empty? keyvec))
-;;           (every? keyword? keyvec)]}
-;;    (log/debug "entity-hashmap! push ctor 3")
-;;    (into-ds! :hashmap force keyvec em)))
-
 (defn put-kinded-emap
   [keyvec & data]
   ;; precon: improper keychain is validated
@@ -222,7 +201,7 @@
                (catch EntityNotFoundException e nil)
                (catch DatastoreFailureException e (throw e))
                (catch java.lang.IllegalArgumentException e (throw e)))]
-        (if (emap? e)
+        (if (entity-map? e)
           (PersistentEntityMap. e nil)
           (let [e (Entity. k)]
             (.put (.content store-map) e)
@@ -243,10 +222,10 @@
                    (catch EntityNotFoundException e nil)
                    (catch DatastoreFailureException e (throw e))
                    (catch java.lang.IllegalArgumentException e (throw e))))]
-      (if (nil? e)
-        (emap-new k content)
-        (emap-old k e content) ; even a new one hits this if id autogenned by keychain-to-key
-        ))))
+      ;; (if (nil? e)
+      ;;   (emap-new k content)
+      ;;   (emap-old k e content) ; even a new one hits this if id autogenned by keychain-to-key
+        )))
 
 (defn- emap-update-fn
   "Second arg is a function to be applied to the Entity whose key is first arg"
@@ -275,7 +254,7 @@
                  (catch java.lang.IllegalArgumentException e
                    ;;(log/debug (.getMessage e))
                    nil))]
-      (if (emap? e) ;; existing entity
+      (if (entity-map? e) ;; existing entity
         (let [txn (.beginTransaction store-map)]
           (try
             (f e)

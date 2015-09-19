@@ -77,9 +77,9 @@
     (let [e1 (ds/entity-map! [:Foo/Bar] {:a 1})
           e2 (ds/entity-map! [:Foo/Bar :Baz/Buz] {:b 1})
           e3 (ds/entity-map! [:Foo/Bar :Baz/Buz :X/Y] {:b 1})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
-      (log/trace "e3" (ds/print e3))
+      (log/trace "e1" (ds/dump e1))
+      (log/trace "e2" (ds/dump e2))
+      (log/trace "e3" (ds/dump e3))
     )))
 
 (deftest ^:entity-maps entity-map-indef
@@ -87,9 +87,9 @@
     (let [e1 (ds/entity-map! [:Foo] {:a 1 :b "Foobar"})
           e2 (ds/entity-map! [:Foo/Bar :Baz] {:b 1})
           e3 (ds/entity-map! [:Foo/Bar :Baz/Buz :X] {:a "Foo/Bar Baz/Buz Z"})]
-      (log/trace "e1" (ds/print e1))
-      (log/trace "e2" (ds/print e2))
-      (log/trace "e3" (ds/print e3))
+      (log/trace "e1" (ds/dump e1))
+      (log/trace "e2" (ds/dump e2))
+      (log/trace "e3" (ds/dump e3))
     )))
 
 (deftest ^:entity-maps entity-maps-multi
@@ -102,8 +102,8 @@
 (deftest ^:entity-map entity-map1
   (testing "entity-map key vector must not be empty"
     (let [e (try (ds/entity-map [] {})
-                 (catch java.lang.AssertionError ex ex))]
-      (is (= "Assert failed: (not (empty? keychain))"
+                 (catch java.lang.IllegalArgumentException ex ex))]
+      (is (= "Null keychain '[]' not allowed for local ctor"
              (.getMessage e))))))
 
 (deftest ^:entity-map entity-map?

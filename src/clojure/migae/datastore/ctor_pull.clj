@@ -129,7 +129,6 @@
      (do
        (log/debug "proper keychain: " keychain)
        (let [r (get-proper-emap keychain)]
-         (log/debug "result: " (print-str r))
          r))
      :else
       (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))

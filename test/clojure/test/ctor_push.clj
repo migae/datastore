@@ -1,5 +1,3 @@
-(clojure.core/println "loading test.ctor-push")
-
 (ns test.ctor-push
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
@@ -47,16 +45,16 @@
 (deftest ^:ctor-push ctor-push-fail-1.0
   (testing "ctor-push fail: non-empty keychain"
     (let [em (try (ds/entity-map! [] {:a 2})
-                  (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (not (empty? keychain))"
+                  (catch java.lang.IllegalArgumentException x x))]
+      (is (= "Null keychain '[]' not allowed"
          (.getMessage em)))
       )))
 
 (deftest ^:ctor-push ctor-push-fail-1.1
   (testing "ctor-push fail: keychain of keylinks"
     (let [em (try (ds/entity-map! [1 2] {:a 2})
-                  (catch java.lang.AssertionError ex ex))]
-      (is (= "Assert failed: (every? keyword? keychain)"
+                  (catch java.lang.IllegalArgumentException ex ex))]
+      (is (= "Invalid keychain[1 2]"
              (.getMessage em)))
       )))
 
@@ -64,23 +62,23 @@
   (testing "ctor-push fail: keychain of keylinks"
     (let [em (try (ds/entity-map! [:A :B] {:a 2})
                    (catch java.lang.RuntimeException ex ex))]
-      (is (= "Invalid keychain : [:A :B]"
+      (is (= "Invalid keychain: '[:A :B]'"
              (.getMessage em)))
       )))
 
 (deftest ^:ctor-push ctor-push-fail-1.3
   (testing "ctor-push fail: vector keychain"
     (let [em (try (ds/entity-map! 2 {:a 2})
-                  (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (vector? keychain)"
+                  (catch java.lang.IllegalArgumentException x x))]
+      (is (= "No implementation of method: :entity-map! of protocol: #'migae.datastore.api/Entity-Map found for class: java.lang.Long"
              (.getMessage em)))
       )))
 
 (deftest ^:ctor-push ctor-push-fail-1.4
   (testing "ctor-push fail: vector keychain"
     (let [em (try (ds/entity-map! :x {:a 2})
-                  (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (vector? keychain)"
+                  (catch java.lang.IllegalArgumentException x x))]
+      (is (= "Invalid mode keyword: :x"
              (.getMessage em)))
       )))
 
@@ -100,10 +98,10 @@
           em3 (ds/entity-map! [:X/Y :A/A] {})
           em4 (ds/entity-map! [:X/Y :B] {:a 1})
           ]
-      (log/trace "em1:" (ds/print em1))
-      (log/trace "em2:" (ds/print em2))
-      (log/trace "em3:" (ds/print em3))
-      (log/trace "em4:" (ds/print em4))
+      (log/trace "em1:" (ds/dump em1))
+      (log/trace "em2:" (ds/dump em2))
+      (log/trace "em3:" (ds/dump em3))
+      (log/trace "em4:" (ds/dump em4))
       )))
 
 (deftest ^:ctor-push ctor-push-improper
@@ -111,14 +109,14 @@
    (let [em1 (ds/entity-map! [:A/B :C] {:a 1})
          em2 (ds/entity-map! [:A/B :C] {})
           ]
-      (log/trace "em1:" (ds/print em1))
-      (log/trace "em2:" (ds/print em2))
+      (log/trace "em1:" (ds/dump em1))
+      (log/trace "em2:" (ds/dump em2))
       )))
 
 (deftest ^:ctor-push ctor-push-force
   (testing "co-constructor"
     (let [em1  (ds/entity-map! [:A/B] {:a 1})
-          em1a (ds/entity-map* [:A/B] {})
+;; FIXME          em1a (get ds/store-map [:A/B])
           em2  (ds/entity-map! :force [:A/B] {:a 2})
           em2a (ds/entity-map* [:A/B] {})
     ;; (ds/entity-map! :force [:Foo/Bar] {:a 1})
@@ -126,10 +124,10 @@
     ;; (ds/entity-map! :force  [:A/B] {:a 1})
     ;; (ds/entity-map! :force  [:A/C] {:a 1})
           ]
-      (log/trace "em1:" (ds/print em1))
-      (log/trace "em1a:" (ds/print em1a))
-      (log/trace "em2:" (ds/print em2))
-      (log/trace "em2a:" (ds/print em2a))
+      (log/trace "em1:" (ds/dump em1))
+;; FIXME      (log/trace "em1a:" (ds/dump em1a))
+      (log/trace "em2:" (ds/dump em2))
+      (log/trace "em2a:" (ds/dump em2a))
       )))
 
 (deftest ^:ctor-push ctor-kinded-1
@@ -137,8 +135,8 @@
       (let [m {:a 1}
             em1 (ds/entity-map! [:Foo] m)
             em2 (ds/entity-map! [:Foo] m)]
-        (log/trace "em1" (ds/print em1))
-        (log/trace "em2" (ds/print em2))
+        (log/trace "em1" (ds/dump em1))
+        (log/trace "em2" (ds/dump em2))
         (is (ds/entity-map? em1))
         )))
 
@@ -147,7 +145,7 @@
       (let [m {:a 1}
             em1 (ds/entity-map! [:A/B :Foo] m)
             em2 (ds/entity-map! [:A/B :Foo] m)]
-        ;; (log/trace "em1" (ds/print em1))
+        ;; (log/trace "em1" (ds/dump em1))
         ;; (log/trace "em1 kind:" (ds/kind em1))
         ;; (log/trace "em1 identifier:" (ds/identifier em1))
         (is (= (ds/kind em1) :Foo))
@@ -162,7 +160,7 @@
     (let [ems (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])]
       (log/trace "ems:" ems)
       (doseq [em ems]
-        (log/trace (ds/print-str em)))
+        (log/trace (ds/dump-str em)))
       )))
 
     ;; (ds/entity-map! :multi [:A/B :Foo] [{:a 1} {:a 2} {:a 3}])
@@ -187,25 +185,25 @@
     ;; (let [es (filter #(= (ds/kind %) :Foo)  @ds/DSMap)]
     ;;   (log/trace "filtered by kind:")
     ;;   (doseq [e es]
-    ;;     (log/trace (ds/print e)))
+    ;;     (log/trace (ds/dump e)))
     ;;   )
 
     ;; (let [es (ds/filter [:Foo])]
     ;;   (log/trace "filtered on key:")
     ;;   (doseq [e es]
-    ;;     (log/trace (ds/print e)))
+    ;;     (log/trace (ds/dump e)))
     ;;   )
 
 ;; FIXME: kindless queries cannot filter on properties
     ;; (let [es (ds/filter [] {:a 1})]
     ;;   (log/trace "filtered on val:")
     ;;   (doseq [e es]
-    ;;     (log/trace (ds/print e)))
+    ;;     (log/trace (ds/dump e)))
     ;;   )
 
     ;; (let [es1 (ds/filter [:Foo] {:a 1})
     ;;       es2 (ds/filter [:Foo] {:a '(> 1)})]
     ;;   (log/trace "filtered on key and val:")
     ;;   (doseq [e es2]
-    ;;     (log/trace (ds/print e)))
+    ;;     (log/trace (ds/dump e)))
     ;;   )

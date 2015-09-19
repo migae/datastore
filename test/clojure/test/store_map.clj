@@ -14,7 +14,7 @@
            [java.lang RuntimeException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.api :as ds]
+            [migae.datastore.model.gae :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -80,8 +80,8 @@
       (log/debug "ds1: " ds1)
       (let [em1 (get ds/store-map [:a/b])
             em2 (get ds/store-map [:a/b :c/d])]
-        (log/debug "em1: " (ds/print-str em1))
-        (log/debug "em2: " (ds/print-str em2))
+        (log/debug "em1: " (ds/dump-str em1))
+        (log/debug "em2: " (ds/dump-str em2))
       ))))
 
 (deftest ^:sm store-map-3
@@ -89,8 +89,8 @@
     (into ds/store-map (ds/entity-map [:a/b] {:x 1} :em))
     (let [em1 (get ds/store-map [:a/b])
           em2 (ds/store-map [:a/b])]
-        (log/debug "em1: " (ds/print-str em1))
-        (log/debug "em2: " (ds/print-str em2))
+        (log/debug "em1: " (ds/dump-str em1))
+        (log/debug "em2: " (ds/dump-str em2))
       )))
 
 (deftest ^:sm store-map-1.4
@@ -106,13 +106,13 @@
 (deftest ^:sm store-map-1.5
   (testing "store-map 1.5"
     (let [em (ds/entity-map [:a/b :c/d] {:x 1} :em)
-          foo (log/debug "em:" (ds/print-str em))
+          foo (log/debug "em:" (ds/dump-str em))
           ds (into ds/store-map em)]
-      (log/debug "ds: " (ds/print-str ds))
+      (log/debug "ds: " (ds/dump-str ds))
       (let [em1 (ds/entity-map [:a/b :c/d])
             em2 (get ds/store-map em1)]
-        (log/debug "em1: " (ds/print-str em1))
-        (log/debug "em2: " (ds/print-str em2))
+        (log/debug "em1: " (ds/dump-str em1))
+        (log/debug "em2: " (ds/dump-str em2))
         ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -122,7 +122,7 @@
     (assoc ds/store-map [:a/x] {:x 1})
     (let [em (try (get ds/store-map [:a/x])
                    (catch Exception x x))]
-      (log/debug "em: " (ds/print-str em))
+      (log/debug "em: " (ds/dump-str em))
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -139,7 +139,7 @@
       (= (type emx) com.google.appengine.api.datastore.EntityNotFoundException)
       (= "No entity was found matching the key: a(\"x\")" (.getMessage emx))
       (log/debug (.getMessage emx))
-      (log/debug "emy: " (ds/print-str emy))
+      (log/debug "emy: " (ds/dump-str emy))
       )))
 
 (deftest ^:sm store-map-9.1
@@ -157,7 +157,7 @@
       (= (type emx) com.google.appengine.api.datastore.EntityNotFoundException)
       (= "No entity was found matching the key: a(\"x\")" (.getMessage emx))
       (log/debug (.getMessage emx))
-      (log/debug "emy: " (ds/print-str emy))
+      (log/debug "emy: " (ds/dump-str emy))
       (= (type emz) com.google.appengine.api.datastore.EntityNotFoundException)
       (= "No entity was found matching the key: a(\"z\")" (.getMessage emz))
       (log/debug (.getMessage emz))
@@ -167,5 +167,5 @@
 ;; (deftest ^:sm store-map-4
 ;;   (testing "store-map 3"
 ;;     (let [em (ds/entity-map! [:a] {:x 1})]
-;;       (log/debug "em: " (ds/print-str em))
+;;       (log/debug "em: " (ds/dump-str em))
 ;;       )))

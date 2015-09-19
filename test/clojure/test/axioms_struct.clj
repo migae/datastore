@@ -93,10 +93,10 @@
     (let [em1 (ds/entity-map! [:A/B] {:a/b 1})
           em2 (ds/entity-map! [:C/D] {:c/d 2 :e/f 3})]
       (log/debug "construction done")
-      (log/debug "em1:" (ds/print-str em1))
-      (log/debug "em2:" (ds/print-str em2))
+      (log/debug "em1:" (ds/dump-str em1))
+      (log/debug "em2:" (ds/dump-str em2))
       (let [em3 (into em1 em2)]
-        (log/debug "em3:" (ds/print-str em3))
+        (log/debug "em3:" (ds/dump-str em3))
         (log/debug "em3:" em3)
         (log/debug "seq em3:" (seq em3))
         (log/debug "type em3:" (type em3))
@@ -107,7 +107,7 @@
         (is (not= em1 em2 em3))
         (is (not= em3 em2)))
       ;; (let [em3 (into em1 {:a/b 2})]
-      ;;   (log/debug "em1" (ds/print em1))
+      ;;   (log/debug "em1" (ds/dump em1))
       ;;   (is (map? em3))
       ;;   (is (ds/entity-map? em3))
       ;;   (is (= (type em3) migae.datastore.PersistentEntityMap))
@@ -129,10 +129,10 @@
   (testing "entity-map into axiom 3: from fields replace to fields")
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:a 2})]
-      ;; (log/debug "em1" (ds/print em1))
-      ;; (log/debug "em2" (ds/print em2))
+      ;; (log/debug "em1" (ds/dump em1))
+      ;; (log/debug "em2" (ds/dump em2))
       (let [em3 (into em1 em2)]
-        ;; (log/debug "(into em1 em2) => " (ds/print em3))
+        ;; (log/debug "(into em1 em2) => " (ds/dump em3))
         (is (ds/key=? em3 em2))
         (is (not (ds/key=? em3 em1)))
         (is (= (:a em3) (:a em2)))
@@ -143,10 +143,10 @@
   (testing "entity-map into axiom 4: from fields augment to fields")
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:X/Y] {:b 2})]
-      ;; (log/debug "em1" (ds/print em1))
-      ;; (log/debug "em2" (ds/print em2))
+      ;; (log/debug "em1" (ds/dump em1))
+      ;; (log/debug "em2" (ds/dump em2))
       (let [em3 (into em1 em2)]
-        ;; (log/debug "em3" (ds/print em3))
+        ;; (log/debug "em3" (ds/dump em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) (:b em2))))
       ))
@@ -155,7 +155,7 @@
   (testing "entity-map into axiom 5: from obj may be plain clojure map")
     (let [em1 (ds/entity-map [:A/B] {:a 1})]
       (let [em3 (into em1 {:b 2})]
-        ;; (log/debug "em3" (ds/print em3))
+        ;; (log/debug "em3" (ds/dump em3))
         (is (= (:a em3) (:a em1)))
         (is (= (:b em3) 2)))
       ))
@@ -229,9 +229,9 @@
     (let [;;em1 (with-meta (ds/entity-map [:A/B] {:a/b 1})
             ;;    {:foo "bar"})
           em2 ^{:x 999}(ds/entity-map [:C/D] {:a 1})]
-;;      (log/debug "em1:" (ds/print em1))
+;;      (log/debug "em1:" (ds/dump em1))
       (log/debug "seq em2:" (seq em2))
-      (log/debug "em2:" (ds/print em2))
+      (log/debug "em2:" (ds/dump em2))
       (let [em3 ^{:foo "buz"} em2]
         (log/debug "em3:" em3)
         (log/debug "seq em3:" (seq em3))

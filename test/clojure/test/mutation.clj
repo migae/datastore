@@ -39,12 +39,12 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:emap get-ds-fail-1
-  (testing "get-ds fail 1"
-    (try (get ds/store-map [:A/B])
-         (catch com.google.appengine.api.datastore.EntityNotFoundException e
-           (is (= "No entity was found matching the key: A(\"B\")"
-                  (.getMessage e)))))))
+;; (deftest ^:emap get-ds-fail-1
+;;   (testing "get-ds fail 1"
+;; ;; FIXME    (try (get ds/store-map [:A/B])
+;;          (catch com.google.appengine.api.datastore.EntityNotFoundException e
+;;            (is (= "No entity was found matching the key: A(\"B\")"
+;;                   (.getMessage e)))))))
 
 ;; FIXME:  keep into-ds! and into-ds internal?  only expose entity-map ctors?
 
@@ -60,14 +60,14 @@
 ;;   (testing "into-ds!: destructive save"
 ;;     (let [em1 (ds/into-ds! [:A/B] {:a 1 :b 2})
 ;;           em1a (ds/get-ds [:A/B])]
-;;         (log/trace "em1:" (ds/print em1))
-;;         (log/trace "em1a:" (ds/print em1a))
+;;         (log/trace "em1:" (ds/dump em1))
+;;         (log/trace "em1a:" (ds/dump em1a))
 ;;       (is (= (:a em1) 1))
 ;;       (let [em2 (ds/into-ds! [:A/B] {:c 3})
 ;;             em2b (ds/entity-map* [:A/B]) ;; co-constructor
 ;;             em2a (ds/get-ds [:A/B])]     ;; getter
-;;         (log/trace "em2:" (ds/print em2))
-;;         (log/trace "em2a:" (ds/print em2a))
+;;         (log/trace "em2:" (ds/dump em2))
+;;         (log/trace "em2a:" (ds/dump em2a))
 ;;         (is (= (:a em1) 1))             ; previously fetched emap unaffected
 ;;         (is (= (:a em1a) 1))
 ;;         (is (= (:b em2) nil))

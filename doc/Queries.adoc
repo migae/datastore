@@ -41,3 +41,21 @@ Rule languages
 Schema-less databases
 
 * link:http://clojuremongodb.info/articles/querying.html#monger_query_dsl[Monger] - Clojure client for MongoDb
+
+=== huh?
+
+* link:https://cassandra.apache.org/doc/cql/CQL.html[CQL] Cassandra Query Language.  See also link:https://cassandra.apache.org/doc/cql3/CQL.html[Cassandra Query Language (CQL) v.3.2.0]  "CQL v3 offers a model very close to SQL in the sense that data is put in tables containing rows of columns. For that reason, when used in this document, these terms (tables, rows and columns) have the same definition than they have in SQL. But please note that as such, they do not refer to the concept of rows and columns found in the internal implementation of Cassandra and in the thrift and CQL v2 API."
+
+* link:http://milinda.svbtle.com/freshet-cql-based-clojure-dsl-for-streaming-queries[Freshet - CQL based Clojure DSL for Streaming Queries (Draft)]
+** example:
+
+[source]
+----
+SELECT Rstream(*)
+ FROM PosSpeedStr [Now]
+ WHERE speed > 65
+----
+
+* link:http://gistflow.com/posts/964-doing-query-using-sequences-in-clojure[Doing Query using Sequences in Clojure] - SQL-like
+
+* link:http://clojureneo4j.info/[Neocons: An idiomatic, feature rich Clojure client for Neo4J REST API]

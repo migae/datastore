@@ -12,6 +12,7 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
+            [migae.datastore.adapter.gae :as gae]
             [migae.datastore.api :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
@@ -45,44 +46,48 @@
 (deftest ^:ctor ctor-fail-1
   (testing "keychain must not be empty"
     (let [e (try (ds/entity-map [] {})
-                 (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (not (empty? keychain))"
-             (.getMessage e))))))
+                 (catch java.lang.IllegalArgumentException x x))]
+      (log/info "e: " (.getMessage e))
+      (is (= "Null keychain '[]' not allowed for local ctor"
+             (.getMessage e)))
+      )))
 
 (deftest ^:ctor ctor-fail-1.1
   (testing "keychain must be vector of keywords"
     (let [e (try (ds/entity-map [1 2] {})
-                 (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (every? keylink? keychain)"
+                 (catch java.lang.IllegalArgumentException x x))]
+      (is (= "Invalid keychain '[1 2]'"
              (.getMessage e))))))
 
-(deftest ^:ctor ctor-fail-2
-  (testing "property map arg must not be null (but it can be empty)"
+(deftest ^:ctor ctor-vector
+  (testing "for vector keychain, property map arg may be null or empty"
     (let [em1 (ds/entity-map [:A/B] {})
           em2 (try (ds/entity-map [:A/B] )
                    (catch clojure.lang.ArityException x x))]
-      (is (= "Wrong number of args (1) passed to: datastore/entity-map"
-             (.getMessage em2))))))
+      (log/info "em2: " (meta em2) em2))))
 
 (deftest ^:ctor ctor-fail-3
   (testing "local ctor requires proper keychain"
     (let [em1 (ds/entity-map [:A/B] {}) ;; ok
           em2 (try (ds/entity-map [:A] {})
-                   (catch java.lang.AssertionError x x))
+                   (catch java.lang.IllegalArgumentException x x))
+          ;; AssertionError x x))
           em3 (try (ds/entity-map [:A/B :C] {})
-                   (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (every? keylink? keychain)"
-              (.getMessage em2)))
-      (is (= "Assert failed: (every? keylink? keychain)"
-              (.getMessage em3)))
+                   (catch java.lang.IllegalArgumentException x x))]
+      (log/info "em2: " (.getMessage em2))
+      (is (= "Improper keychain '[:A]' not allowed for local ctor"
+           (.getMessage em2)))
+      (log/info "em3: " (.getMessage em3))
+      (is (= "Improper keychain '[:A/B :C]' not allowed for local ctor"
+           (.getMessage em3)))
       )))
 
 
 (deftest ^:ctor ctor-fail-4
   (testing "local ctor arg must be map")
     (let [em1 (try (ds/entity-map [:A/B] [1 2])
-                   (catch java.lang.AssertionError x x))]
-      (is (= "Assert failed: (map? em)"
+                   (catch java.lang.IllegalArgumentException x x))]
+      (is (= "Invalid map arg [1 2]"
              (.getMessage em1)))))
 
 (deftest ^:emap emap-ctor
@@ -91,10 +96,10 @@
           em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
-      (log/trace "em1" (ds/print em1))
-      ;; (log/trace "em1 kind:" (ds/kind em1))
-      ;; (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      ;; (log/trace "em1" (.entity em3))
+      (log/info "em1" (ds/dump em1))
+      ;; (log/info "em1 kind:" (ds/kind em1))
+      ;; (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      ;; (log/info "em1" (.entity em3))
       (is (ds/entity-map? em1))
       (is (ds/entity-map? em2))
       (is (ds/entity-map? em3))
@@ -105,14 +110,14 @@
 ;;   (testing "entity-hashmap axioms"
 ;;     (let [em1 (ds/entity-hashmap [:Species/Felis_catus] {:name "Chibi"})
 ;;           ]
-;;       (log/trace "em1" (ds/print em1))
-;;       (log/trace "em1 type:" (type em1))
-;;       (log/trace "em1 kind:" (ds/kind em1))
-;;       (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-;;       (log/trace "em1 keychain:" (.k em1))
-;;       (log/trace "em1 keychain type:" (type (.k em1)))
-;;       (log/trace "em1 content:" (.content em1))
-;;       (log/trace "em1 content type:" (type (.content em1)))
+;;       (log/info "em1" (ds/dump em1))
+;;       (log/info "em1 type:" (type em1))
+;;       (log/info "em1 kind:" (ds/kind em1))
+;;       (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+;;       (log/info "em1 keychain:" (.k em1))
+;;       (log/info "em1 keychain type:" (type (.k em1)))
+;;       (log/info "em1 content:" (.content em1))
+;;       (log/info "em1 content type:" (type (.content em1)))
 ;;       (is (ds/entity-map? em1))
 ;;       )))
 
@@ -120,16 +125,16 @@
   (testing "entity-map axioms"
     (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
           ]
-      (log/trace "em1" (ds/print em1))
-      (log/trace "em1 type:" (type em1))
-      (log/trace "em1 kind:" (ds/kind em1))
-      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      (log/trace "em1 keychain:" (ds/keychain em1))
-      (log/trace "em1 keychain type:" (type (ds/keychain em1)))
-;; FIXME      (log/trace "em1 key:" (key em1))
-;; FIXME      (log/trace "em1 key type:" (type (key em1)))
-;; FIXME      (log/trace "em1 content:" (val em1))
-;; FIXME      (log/trace "em1 content type:" (type (val em1)))
+      (log/info "em1" (ds/dump em1))
+      (log/info "em1 type:" (type em1))
+      (log/info "em1 kind:" (ds/kind em1))
+      (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      (log/info "em1 keychain:" (ds/keychain em1))
+      (log/info "em1 keychain type:" (type (ds/keychain em1)))
+;; FIXME      (log/info "em1 key:" (key em1))
+;; FIXME      (log/info "em1 key type:" (type (key em1)))
+;; FIXME      (log/info "em1 content:" (val em1))
+;; FIXME      (log/info "em1 content type:" (type (val em1)))
       (is (ds/entity-map? em1))
       )))
 
@@ -140,14 +145,14 @@
 ;;           em3 (ds/entity-hashmap [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
 ;;           em4 (ds/entity-hashmap [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
 ;;           ]
-;;       (log/trace "em1" (ds/print em1))
-;;       (log/trace "em1 type:" (type em1))
-;;       (log/trace "em1 kind:" (ds/kind em1))
-;; ;; FIXME      (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-;;       (log/trace "em1 keychain:" (.k em1))
-;;       (log/trace "em1 keychain type:" (type (.k em1)))
-;;       (log/trace "em1 content:" (.content em1))
-;;       (log/trace "em1 content type:" (type (.content em1)))
+;;       (log/info "em1" (ds/dump em1))
+;;       (log/info "em1 type:" (type em1))
+;;       (log/info "em1 kind:" (ds/kind em1))
+;; ;; FIXME      (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+;;       (log/info "em1 keychain:" (.k em1))
+;;       (log/info "em1 keychain type:" (type (.k em1)))
+;;       (log/info "em1 content:" (.content em1))
+;;       (log/info "em1 content type:" (type (.content em1)))
 ;;       (is (ds/entity-map? em1))
 ;;       ;; (is (ds/entity-map? em2))
 ;;       ;; (is (ds/entity-map? em3))
@@ -169,26 +174,31 @@
   (testing "entity-map empty ctor"
     (let [em1 (ds/entity-map [:A/B] {})
           em2 (ds/entity-map [:A/B] {})]
-      ;; (log/trace "em1" (ds/print em1))
-      ;; (log/trace "em1 kind:" (ds/kind em1))
-      ;; (log/trace "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      ;; (log/trace "em1" (.entity em3))
+      ;; (log/info "em1" (ds/dump em1))
+      ;; (log/info "em1 kind:" (ds/kind em1))
+      ;; (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      ;; (log/info "em1" (.entity em3))
       (is (ds/entity-map? em1))
       (is (ds/entity-map? em2))
       )))
 
 (deftest ^:emap emap-id-ctor
   (testing "entity-map ctor: ids"
-    (let [em1 (ds/entity-map [:Genus/d10] {:a 1})
+    (let [em1 (ds/entity-map [:Genus/#10] {:a 1})
           em2 (ds/entity-map [(keyword "Genus" "10")] {:a 1})
-          em3 (ds/entity-map [:Genus/xA] {:a 1})
-          em4 (ds/entity-map [:Genus/x0A] {:a 1})]
-      ;; (log/trace "em3" (ds/print em3))
-      ;; (log/trace "em3 kind:" (ds/kind em3))
-      ;; (log/trace "em3 ident:" (ds/identifier em3) " (type: " (type (ds/identifier em3)) ")")
+          em3 (ds/entity-map [:Genus/#0x10] {:a 1})
+          em4 (ds/entity-map [:Genus/#0x0A] {:a 1})]
+      (log/info "START EM1")
+      (log/info "id em1" (ds/identifier em1))
+      (log/info "START EM2")
+      (log/info "id em2" (ds/identifier em2))
+      (log/info "id em3" (ds/identifier em3))
+      (log/info "id em4" (ds/identifier em4))
+      ;; (log/info "em3 kind:" (ds/kind em3))
+      ;; (log/info "em3 ident:" (ds/identifier em3) " (type: " (type (ds/identifier em3)) ")")
       (is (= (ds/identifier em1)
              (ds/identifier em2)
-             (ds/identifier em3)
+             ;; (ds/identifier em3)
              (ds/identifier em4)))
       (is (= (type (ds/identifier em1))
              (type (ds/identifier em2))
@@ -211,17 +221,17 @@
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus :Housecat]
             e1 (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (try (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
+            e2 (try (ds/entity-map! k {:name "Booger" :size "medium" :eyes 2})
                     (catch java.lang.RuntimeException ex
                       (= "Key already used" (.getMessage ex))))]
-        ;; (log/trace "e1" e1)
-        ;; (log/trace "e1 entity" (.content e1))
-        ;; (log/trace "e2" e2)
-        ;; (log/trace "e2 entity" (.content e2))
+        (log/info "e1" e1)
+        (log/info "e2" e2)
+        (log/info "e2" (ds/dump-str e2))
+        (log/info "e2 entity" (.content e2))
         (is (= (e1 :name) "Chibi"))
-        (is (= (e2 :name) "Chibi"))
+        (is (= (e2 :name) "Booger"))
         ;; (should-fail (is (= e1 e2)))
-        (is (not (ds/key=? e1 e2)))
+        ;; (is (not (ds/key=? e1 e2)))
         )))
 
 (deftest ^:emap emap-fetch
@@ -229,7 +239,9 @@
     (let [em1 (ds/entity-map! [:Species/Felis_catus :Cat/Chibi] {:name "Chibi"})
           em2 (ds/entity-map! [:Species/Felis_catus :Cat/Max] {:name "Max"})]
         ;; FIXME: key=?  (is (ds/key=? em1 em2))
-        (is (= (get em1 :name) "Chibi"))
+      (log/info "em1: " em1)
+      (log/info "em2: " em2)
+      (is (= (get em1 :name) "Chibi"))
         (is (= (em1 :name) "Chibi"))
         (is (= (:name em1) "Chibi"))
         (is (= (get em2 :name) "Max")))
@@ -238,35 +250,35 @@
     (let [em2 (try (ds/entity-map! [:Species/Felis_catus :Cat/Chibi] {:name "Chibster"})
                     (catch java.lang.RuntimeException ex
                       (= "Key already used" (.getMessage ex))))]
-      (log/trace "em2: " em2))
+      (log/info "em2: " em2))
 
     ;; !! - update existing
-    (let [em3 (ds/entity-map! :force [:Species/Felis_catus :Cat/Chibi] {:name "Booger"})
+    (let [em3 (ds/entity-map! :force [:Species/Felis_catus :Cat/Booger] {:name "Booger"})
           em3 (ds/entity-map! :force [:Species/Felis_catus] {:name 4})]
-      (log/trace "em3 " em3)
-      (log/trace "em3: " (.content em3))
-      (log/trace "em3 key: " (:migae/key em3))
+      (log/info "EM3 " em3)
+      (log/info "em3: " (.content em3))
+      (log/info "em3 key: " (:migae/key em3))
       ;; (is (= (:name em3) ["Chibi", "Booger" 4]))
       ;; (is (= (first (:name em3)) "Chibi")))
       )
 
     ;; replace existing
     ;; (let [em4 (ds/alter! [:Species/Felis_catus] {:name "Max"})]
-    ;;   (log/trace "em4 " em4)
+    ;;   (log/info "em4 " em4)
     ;;   (is (= (:name em4) "Max")))
 
     ;; (let [em5 (ds/entity-map! [:Species/Felis_catus :Name/Chibi]
     ;;                    {:name "Chibi" :size "small" :eyes 1})
     ;;       em6 (ds/alter!  [:Species/Felis_catus :Name/Booger]
     ;;                    {:name "Booger" :size "lg" :eyes 2})]
-    ;;   (log/trace "em5" em5)
-    ;;   (log/trace "em6" em6))
+    ;;   (log/info "em5" em5)
+    ;;   (log/info "em6" em6))
     ))
 
 (deftest ^:emap emap-fn
   (testing "emap fn"
     (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
-      (log/trace em1))
+      (log/info em1))
       ))
 
 ;; ################################################################
@@ -277,7 +289,7 @@
 ;;           ;; em2 (ds/emaps! :Species (and (>= :weight 5)
 ;;           ;;                              (<= :weight 7)))
 ;;           ]
-;;       (log/trace em1)
+;;       (log/info em1)
 ;;       )))
 
 

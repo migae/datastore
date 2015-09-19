@@ -7,6 +7,7 @@
 
 (require '[clojure.test :refer [run-tests test-var]])
 (require '[clojure.tools.namespace.repl :refer [refresh refresh-all set-refresh-dirs]])
+(require '[clojure.tools.reader.edn :as edn])
 
 ;; (defn rt
 ;;   [t]
@@ -32,7 +33,7 @@
 
 (defn ds-reset []
   ;;(.tearDown ds-test-env)
-  (refresh-all)
+  (refresh)
   (.setUp ds-test-env))
 
 ;; some abbrevs, to save typing in the repl.  season to taste.

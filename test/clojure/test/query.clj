@@ -165,11 +165,11 @@
 ;;                         (log/trace (.getMessage e))
 ;;                         nil))
 ;;           ]
-;;       (log/trace "parent" (ds/print parent))
+;;       (log/trace "parent" (ds/dump parent))
 ;;       (log/trace "childs")
-;;       (doseq [child childs] (log/trace "child" (ds/print child)))
+;;       (doseq [child childs] (log/trace "child" (ds/dump child)))
 ;;       (log/trace "children")
-;;       (doseq [child children] (log/trace "child" (ds/print child)))
+;;       (doseq [child children] (log/trace "child" (ds/dump child)))
 ;;       )))
 
 (deftest ^:query by-property
@@ -184,7 +184,7 @@
     (let [ems (ds/entity-map* [])]
       (log/trace "all ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
 
     ;;  (:: (:a = 1 & :b > 2) | (:a < 5))
 
@@ -199,29 +199,29 @@
     ;;                                :b = 2))]
       (log/trace "ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
 
     (let [ems (ds/entity-map* [:A] {:a '(>= 2)})]
       (log/trace "ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
 
     (let [ems (ds/entity-map* [:A] {:a '(> 2)})]
       (log/trace "ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
 
     (let [m {:a "foo@example.org"}
           ems (ds/entity-map* [:A] {:a (list '= (:a m))})]
       (log/trace "ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
 
     ;; default is '=;  {:a "foo@example.org"} as predicate
     (let [ems (ds/entity-map* [:A] {:a "foo@example.org"})]
       (log/trace "ems:")
       (doseq [em ems]
-        (log/trace (ds/print em))))
+        (log/trace (ds/dump em))))
     ))
 
 ;; (deftest ^:query by-key
@@ -230,7 +230,7 @@
 ;; FIXME        em2 (ds/entity-map?? [:Species/Felis_catus])
 ;;         ;; em3 (ds/entity-map?? :Species/Felis_catus)
 ;;         em4 (ds/entity-map?? [(keyword "Species" "Felis_catus")])]
-;;     (log/trace "em1 " (ds/print em1))
+;;     (log/trace "em1 " (ds/dump em1))
 ;;     (log/trace "key em1 " (key em1))
 ;;     (log/trace "em2 " em2 (type em1))
 ;;     ;; (log/trace "em3 " em3)

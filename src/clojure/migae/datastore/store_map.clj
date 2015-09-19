@@ -1,10 +1,57 @@
-(in-ns 'migae.datastore)
+(ns migae.datastore.store-map
+  (:refer-clojure :exclude [name hash])
+  (:import [com.google.appengine.tools.development.testing
+            LocalServiceTestHelper
+            LocalServiceTestConfig
+            LocalMemcacheServiceTestConfig
+            LocalMemcacheServiceTestConfig$SizeUnit
+            LocalMailServiceTestConfig
+            LocalDatastoreServiceTestConfig
+            LocalUserServiceTestConfig]
+           [com.google.apphosting.api ApiProxy]
+           [com.google.appengine.api.datastore
+            EntityNotFoundException]
+           [java.lang RuntimeException]
+           [clojure.lang IFn ILookup IMapEntry IObj
+            IPersistentCollection IPersistentMap IReduce IReference ISeq ITransientCollection]
+           [com.google.appengine.api.datastore
+            Blob
+            DatastoreFailureException
+            DatastoreService
+            DatastoreServiceFactory
+            DatastoreServiceConfig
+            DatastoreServiceConfig$Builder
+            Email
+            Entity EmbeddedEntity EntityNotFoundException
+            Key KeyFactory KeyFactory$Builder
+            Query Query$SortDirection]
+           )
+  ;; (:use [clj-logging-config.log4j])
+  (:require [clojure.test :refer :all]
+            [migae.datastore.adapter.gae :as gae]
+            [migae.datastore.keys :as k]
+            [clojure.tools.logging :as log :only [trace debug info]]))
+
+(declare ->PersistentEntityMap)
+
+(defonce ds (DatastoreServiceFactory/getDatastoreService))
+
+;;(in-ns 'migae.datastore)
 
 ;; (clojure.core/println "loading PersistentStoreMap")
+
+;; TODO: support ds/into, since we cannot override clojure/core.into
+;; in order to get 'put' side effects when going "into" store-map.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PersistentStoreMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(in-ns 'migae.datastore)
+(clojure.core/require '(clojure [core :refer :all]))
+(clojure.core/require '(clojure.tools [logging :as log :only [debug info]]))
+(clojure.core/require '(migae.datastore.adapter [gae :as gae]))
+(clojure.core/require '(migae.datastore [keys :as k]))
+
 (deftype PersistentStoreMap [content txns ds-meta]
 
   migae.datastore.IPersistentEntityMap
@@ -56,9 +103,9 @@
   (invoke [this k]  ; -> Object
     (log/debug "PersistentStoreMap.invoke" k (type k))
     (cond
-      (keychain? k)
-      (let [e (.get content (keychain-to-key k))]
-        (->PersistentEntityMap e nil))
+      (k/keychain? k)
+      (let [e (.get content (k/entity-key k))]
+        (PersistentEntityMap. e nil))
       :else (throw (RuntimeException. "PersistentStoreMap.invoke"))))
 
 
@@ -86,7 +133,7 @@
   (assoc [this k m] ; -> IPersistentMap
     (do
       (log/debug "PersistentStoreMap.assoc" k m)
-      (let [key (keychain-to-key k)
+      (let [key (k/entity-key k)
             e (Entity. key)] ;; FIXME: validate k
         (doseq [[k v] m]
           (.setProperty e (subs (str k) 1) v))
@@ -103,10 +150,10 @@
       (do
         (log/debug "withouting keyword " k)
         this)
-      (keychain? k)
+      (k/keychain? k)
       (do
         (log/debug "withouting keychain: " k)
-        (let [key (keychain-to-key k)]
+        (let [key (k/entity-key k)]
           (.delete content (into-array Key [key]))
           this))
       :else
@@ -146,15 +193,22 @@
   ;;;; extends ILookup
   ;; valAt(Object key), valAt(Object key, Object notFound)
   (valAt [_ k]  ; -> Object
-    (log/debug "PersistentStoreMap.valAt k" k (type k) (entity-map? k))
+    (log/debug "PersistentStoreMap.valAt k" k (type k))
     ;; TODO:  support query filter syntax
     ;; (if (instance? migae.datastore.PersistentEntityMap k)
-    (if (entity-map? k)
-      (if (not (empty? k))
-        (do
-          (log/debug "PersistentStoreMap.valAt entity-map arg:" k)
-          (throw (IllegalArgumentException.
-                  "PersistentStoreMap.valAt does not yet support map filters")))))
+
+    ;;;; FIXME: call entity-map?
+    ;; (if (entity-map? k)
+    ;;   (if (not (empty? k))
+    ;;     (do
+    ;;       (log/debug "PersistentStoreMap.valAt entity-map arg:" k)
+    ;;       (throw (IllegalArgumentException.
+    ;;               "PersistentStoreMap.valAt does not yet support map filters")))))
+
+
+    ;;;;  FIXME:  put/get logic goes in adapter/gae.clj
+
+
     (let [e (cond
               ;; (entity-map? k)
               (instance? migae.datastore.PersistentEntityMap k)
@@ -163,17 +217,18 @@
               (instance? clojure.lang.IPersistentMap k)
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentMap" k)
-                (let [dskey (keychain-to-key (:migae/keychain (meta k)))]
-                  (.get store-map dskey)))
+                (let [dskey (k/entity-key (:migae/keychain (meta k)))]
+                  (.get ds dskey)))
               (instance? clojure.lang.IPersistentVector k)
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentVector" k)
-                (let [dskey (keychain-to-key k)]
-                  (.get store-map dskey)))
-              (keychain? k)
-              (.get content (keychain-to-key k))
+                (let [dskey (k/entity-key k)]
+                  ;; (.get (.content ds) dskey)))
+                  (gae/fetch dskey)))
+              (k/keychain? k)
+              (.get content (k/entity-key k))
               (keyword? k)
-              (.get content (keychain-to-key [k]))
+              (.get content (k/entity-key [k]))
               :else (throw (RuntimeException. "PersistentStoreMap.valAt uncaught")))]
       (->PersistentEntityMap e nil)))
 
