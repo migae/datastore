@@ -28,11 +28,12 @@
             ShortBlob
             Text
             Transaction]
-           ;; [migae.datastore [PersistentEntityMap PersistentStoreMap]]
+;           [migae.datastore PersistentStoreMap]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
             [migae.datastore.keys :as k]
+  ;;          [migae.datastore.types.entity-map-seq :as ems]
             ;; [migae.datastore.api :as ds]
             ))
 
@@ -50,6 +51,18 @@
 
 (declare into-ds! entity-key)
 (declare get-val-ds get-val-ds-coll proper-keychain? keyword-to-key add-child-keylink)
+
+(defn pull-all
+  []
+  ;; (log/trace "pull-all")
+  (let [q  (Query.)
+        prepared-query (.prepare ds q) ;; FIXME
+        iterator (.asIterator prepared-query)
+        ;; res (migae.datastore.PersistentEntityMapSeq. (iterator-seq iterator))
+        res (iterator-seq iterator)
+        ]
+    ;; (log/trace "iter res: " (type res) " count:" (count res))
+    res))
 
 (defn fetch
   [^Key k]

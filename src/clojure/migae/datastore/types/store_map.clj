@@ -1,4 +1,4 @@
-(ns migae.datastore.store-map
+(ns migae.datastore.types.store-map
   (:refer-clojure :exclude [name hash])
   (:import [com.google.appengine.tools.development.testing
             LocalServiceTestHelper
@@ -25,16 +25,19 @@
             Entity EmbeddedEntity EntityNotFoundException
             Key KeyFactory KeyFactory$Builder
             Query Query$SortDirection]
+           migae.datastore.PersistentEntityMapSeq
            )
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
+            ;;[migae.datastore :as ds]
+            migae.datastore.types.entity-map-seq
             [migae.datastore.adapter.gae :as gae]
-            [migae.datastore.keys :as k]
+            ;; [migae.datastore.keys :as k]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
-(declare ->PersistentEntityMap)
+(println "loading migae.datastore.types.store_map")
 
-(defonce ds (DatastoreServiceFactory/getDatastoreService))
+(declare ->PersistentEntityMap)
 
 ;;(in-ns 'migae.datastore)
 
@@ -47,10 +50,19 @@
 ;;  PersistentStoreMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-ns 'migae.datastore)
-(clojure.core/require '(clojure [core :refer :all]))
-(clojure.core/require '(clojure.tools [logging :as log :only [debug info]]))
-(clojure.core/require '(migae.datastore.adapter [gae :as gae]))
-(clojure.core/require '(migae.datastore [keys :as k]))
+(clojure.core/refer 'clojure.core)
+(require '(clojure.tools [logging :as log :only [debug info]])
+         '(migae.datastore.adapter [gae :as gae-ds])
+;;         '(migae.datastore.model [gae :as ds])
+;;         '(migae.datastore [keys])
+         ;; '(migae.datastore.types [entity-map :refer :all])
+         ;; '(clojure.tools.reader [edn :as edn])
+         )
+
+(import '(com.google.appengine.api.datastore DatastoreServiceFactory
+                                             Key Query))
+
+(defonce dss (DatastoreServiceFactory/getDatastoreService))
 
 (deftype PersistentStoreMap [content txns ds-meta]
 
@@ -104,7 +116,8 @@
     (log/debug "PersistentStoreMap.invoke" k (type k))
     (cond
       (k/keychain? k)
-      (let [e (.get content (k/entity-key k))]
+      (let [e (gae-ds/fetch (k/entity-key k))]
+      ;; (let [e (.get content (k/entity-key k))]
         (PersistentEntityMap. e nil))
       :else (throw (RuntimeException. "PersistentStoreMap.invoke"))))
 
@@ -117,7 +130,7 @@
   ;; withMeta; meta
   (^IPersistentMap meta [this]
     (do
-      (log/debug "PersistentEntityMap.meta" ds-meta)
+      (log/debug "meta" ds-meta)
       (let [md (into (some identity [ds-meta {}]) {:type 'migae.datastore.PersistentStoreMap})]
         ;; (log/debug "meta: " md)
         md)))
@@ -218,13 +231,13 @@
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentMap" k)
                 (let [dskey (k/entity-key (:migae/keychain (meta k)))]
-                  (.get ds dskey)))
+                  (.get dss dskey)))
               (instance? clojure.lang.IPersistentVector k)
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentVector" k)
                 (let [dskey (k/entity-key k)]
                   ;; (.get (.content ds) dskey)))
-                  (gae/fetch dskey)))
+                  (gae-ds/fetch dskey)))
               (k/keychain? k)
               (.get content (k/entity-key k))
               (keyword? k)

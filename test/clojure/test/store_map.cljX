@@ -14,9 +14,8 @@
            [java.lang RuntimeException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.gae :as ds]
+            [migae.datastore.model [gae :as ds]]
             [clojure.tools.logging :as log :only [trace debug info]]))
-;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
   `(let [report-type# (atom nil)]

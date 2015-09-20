@@ -1,29 +1,33 @@
 (ns migae.datastore.model.gae
-;;  (:refer-clojure :exclude [print println print-str println-str])
+  ;;  (:refer-clojure :exclude [print println print-str println-str])
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
             DatastoreServiceFactory
             DatastoreServiceConfig
             DatastoreServiceConfig$Builder
-            Key])
+            Key]
+           ;; migae.datastore.PersistentStoreMap
+           )
   ;; WARNING! the migae nss must be in the right order so the deftypes get instantiated
-  (:require [migae.datastore :refer :all]  ;; this instantiates the deftypes needed by implementations
-            [migae.datastore.keys :as k]
+  (:require [migae.datastore.keys :as k]
             [migae.datastore.api :as api]
-            [migae.datastore.keys :as k]
+            migae.datastore.types.entity-map
+            migae.datastore.types.entity-map-seq
+            migae.datastore.types.store-map
             [migae.datastore.impl.map :as pmap]
             [migae.datastore.impl.vector :as pvec]
             [migae.datastore.impl.list :as plist]
             [migae.datastore.impl.keyword :as kw]
             [clojure.tools.logging :as log :only [debug info]]
-            ))
+            )
+)
 
 (clojure.core/println "loading migae.datastore.api.gae")
 
 (def store-map
   (let [dsm (DatastoreServiceFactory/getDatastoreService)
-        psm (->PersistentStoreMap dsm nil nil)]
+        psm (migae.datastore.PersistentStoreMap. dsm nil nil)]
     psm))
 
 (extend clojure.lang.IPersistentMap

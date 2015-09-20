@@ -14,10 +14,11 @@
             ArrayList
             HashSet
             Vector]
-           ;;migae.datastore.PersistentEntityMap
+           migae.datastore.PersistentEntityMap
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
+            ;; [migae.datastore.types.entity-map :refer :all]
             [migae.datastore.impl.vector :as v]
             [migae.datastore.keys :as k]
             [migae.datastore.adapter.gae :as gae]))

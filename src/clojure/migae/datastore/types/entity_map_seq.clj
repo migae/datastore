@@ -1,9 +1,60 @@
+(ns migae.datastore.types.entity-map-seq
+;(in-ns 'migae.datastore)
+  (:refer-clojure :exclude [name hash])
+  (:import [com.google.appengine.tools.development.testing
+            LocalServiceTestHelper
+            LocalServiceTestConfig
+            LocalMemcacheServiceTestConfig
+            LocalMemcacheServiceTestConfig$SizeUnit
+            LocalMailServiceTestConfig
+            LocalDatastoreServiceTestConfig
+            LocalUserServiceTestConfig]
+           [com.google.apphosting.api ApiProxy]
+           [com.google.appengine.api.datastore
+            EntityNotFoundException]
+           [java.lang RuntimeException]
+           [clojure.lang IFn ILookup IMapEntry IObj
+            IPersistentCollection IPersistentMap IReduce IReference ISeq ITransientCollection]
+           [com.google.appengine.api.datastore
+            Blob
+            DatastoreFailureException
+            DatastoreService
+            DatastoreServiceFactory
+            DatastoreServiceConfig
+            DatastoreServiceConfig$Builder
+            Email
+            Entity EmbeddedEntity EntityNotFoundException
+            Key KeyFactory KeyFactory$Builder
+            Query Query$SortDirection]
+;;           migae.datastore.PersistentStoreMap
+         )
+  ;; (:use [clj-logging-config.log4j])
+  (:require [clojure.test :refer :all]
+            ;; [migae.datastore :as ds]
+            [migae.datastore.types.entity-map :as em]
+;;            [migae.datastore.types.store-map :refer :all]
+            [migae.datastore.keys :as k]
+            [clojure.tools.logging :as log :only [trace debug info]]))
+
+(clojure.core/println "loading migae.datastore.types.entity_map_seq")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-ns 'migae.datastore)
+(clojure.core/refer 'clojure.core)
+(require '(clojure.tools [logging :as log :only [debug info]])
+         ;; '(migae.datastore.adapter [gae :as gae])
+         ;; '(migae.datastore [keys])
+         ;; '(migae.datastore.types [entity-map :as em])
+         '(clojure.tools.reader [edn :as edn])
+         )
+;; (clojure.core/require '(clojure.tools [logging :as log :only [debug info]]))
+;; (clojure.core/require '(migae.datastore.adapter [gae :as gae]))
+;; (clojure.core/require '(migae.datastore [keys :as k]))
 
-;; (clojure.core/println "loading PersistentEntityMapSeq")
+(import '(clojure.lang IPersistentCollection))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (deftype PersistentEntityMapSeq [content]
 
   migae.datastore.IPersistentEntityMapSeq
@@ -95,12 +146,15 @@
          #(log/debug "PersistentEntityMapSeq.reduce to-map item: " %)
          to-map)
         to-map)
-      (= (class to-map) migae.datastore.PersistentStoreMap)
-      (do
-        (let [ds (.content to-map)]
-          ;; (log/debug "PersistentEntityMapSeq.reduce ds: " ds)
-          (.put ds content)
-          to-map))
+
+      ;; FIXME:  solve cirular ref problem
+      ;; (= (class to-map) PersistentStoreMap)
+      ;; (do
+      ;;   (let [ds (.content to-map)]
+      ;;     ;; (log/debug "PersistentEntityMapSeq.reduce ds: " ds)
+      ;;     (.put ds content)
+      ;;     to-map))
+
       (= (class to-map) com.google.appengine.api.datastore.DatastoreServiceImpl)
       (do
         (.put to-map content)

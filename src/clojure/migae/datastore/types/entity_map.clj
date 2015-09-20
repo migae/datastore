@@ -1,22 +1,80 @@
+(ns migae.datastore.types.entity-map
+                                        ;(in-ns 'migae.datastore.types.entity-map)
+  (:refer-clojure :exclude [name hash])
+  (:import [java.lang IllegalArgumentException RuntimeException]
+           [java.util
+            Collection
+            Collections
+            ArrayList
+            HashMap HashSet
+            Map Map$Entry
+            Vector]
+           [clojure.lang IFn ILookup IMapEntry IObj
+            IPersistentCollection IPersistentMap IReduce IReference ISeq ITransientCollection]
+           [com.google.appengine.api.datastore
+            Blob
+            DatastoreFailureException
+            DatastoreService
+            DatastoreServiceFactory
+            DatastoreServiceConfig
+            DatastoreServiceConfig$Builder
+            Email
+            Entity EmbeddedEntity EntityNotFoundException
+            Key KeyFactory KeyFactory$Builder
+            Link
+            Query Query$SortDirection]
+           )
+  ;; (:use [clj-logging-config.log4j])
+  (:require [clojure.test :refer :all]
+            [clojure.tools.reader.edn :as edn]
+            ;; [migae.datastore :as ds]
+            ;; [migae.datastore.keys :as k]
+            [clojure.tools.logging :as log :only [trace debug info]]))
+
+(clojure.core/println "loading migae.datastore.types.entity_map")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PersistentEntityMap
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-ns 'migae.datastore)
+(clojure.core/refer 'clojure.core)
+(require '(clojure.tools [logging :as log :only [debug info]])
+         ;; '(migae.datastore.adapter [gae :as gae])
+         '(migae.datastore [keys :as k])
+         ;; get access to funcs above in local ns
+         '(migae.datastore.types [entity-map :refer :all])
+         '(clojure.tools.reader [edn :as edn])
+         )
 
-(clojure.core/println "loading PersistentEntityMap")
+(import '(clojure.lang IFn IObj IPersistentMap ISeq)
+        '(com.google.appengine.api.datastore Entity
+                                             Email
+                                             EmbeddedEntity
+                                             Key KeyFactory
+                                             Link)
+        '(java.lang IllegalArgumentException RuntimeException)
+        '(java.util ;Collection
+          ;Collections
+            ArrayList
+            ;; HashMap HashSet
+            ;; Map Map$Entry
+             Vector
+            ))
 
-(declare clj-to-ds)
+(declare clj-to-ds ds-to-clj ds-to-clj-coll)
+(declare ->PersistentEntityMap)
 
-(defn ds-to-clj-coll
-  "Type conversion: java datastore to clojure"
-  [coll]
-  ;; (log/debug "ds-to-clj-coll" coll (type coll))
-  (cond
-    (= (type coll) java.util.ArrayList) (into '() (for [item coll]
-                                                       (ds-to-clj item)))
-    (= (type coll) java.util.HashSet)  (into #{} (for [item coll]
-                                                       (ds-to-clj item)))
-    (= (type coll) java.util.Vector)  (into [] (for [item coll]
-                                                       (ds-to-clj item)))
-    :else (log/debug "EXCEPTION: unhandled coll " coll)
-    ))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; implementation helpers
+(defn- make-embedded-entity
+  [m]
+  {:pre [(map? m)]}
+  (let [embed (EmbeddedEntity.)]
+    (doseq [[k v] m]
+      ;; FIXME:  (if (map? v) then recur
+      (.setProperty embed (subs (str k) 1) (clj-to-ds v)))
+    embed))
+
 
 (defn ds-to-clj
   [v]
@@ -51,6 +109,22 @@
     ;; (log/debug "ds-to-clj result:" v val)
     val))
 
+(defn ds-to-clj-coll
+  "Type conversion: java datastore to clojure"
+  [coll]
+  ;; (log/debug "ds-to-clj-coll" coll (type coll))
+  (cond
+   (= (type coll) java.util.ArrayList) (into '() (for [item coll]
+                                                   (ds-to-clj item)))
+   (= (type coll) java.util.HashSet)  (into #{} (for [item coll]
+                                                  (ds-to-clj item)))
+   (= (type coll) java.util.Vector)  (into [] (for [item coll]
+                                                (ds-to-clj item)))
+   :else (log/debug "EXCEPTION: unhandled coll " coll)
+   ))
+
+;;(declare ->PersistentEntityMap)
+
 (defn clj-to-ds-coll
   "Type conversion: clojure to java.  The datastore supports a limited
   number of Java classes (see
@@ -64,46 +138,46 @@
   [coll]
   ;; (log/debug "clj-to-ds-coll" coll (type coll))
   (cond
-    (list? coll) (let [a (ArrayList.)]
-                     (doseq [item coll]
-                       (do
-                         ;; (log/debug "vector item:" item (type item))
-                         (.add a (clj-to-ds item))))
-                     ;; (log/debug "ds converted:" coll " -> " a)
-                     a)
-
-    (map? coll) (make-embedded-entity coll)
-
-    (set? coll) (let [s (java.util.HashSet.)]
+   (list? coll) (let [a (ArrayList.)]
                   (doseq [item coll]
-                    (let [val (clj-to-ds item)]
-                      ;; (log/debug "set item:" item (type item))
-                      (.add s (clj-to-ds item))))
-                  ;; (log/debug "ds converted:" coll " -> " s)
-                  s)
+                    (do
+                      ;; (log/debug "vector item:" item (type item))
+                      (.add a (clj-to-ds item))))
+                  ;; (log/debug "ds converted:" coll " -> " a)
+                  a)
 
-    (vector? coll) (let [a (Vector.)]
-                     (doseq [item coll]
-                       (do
-                         ;; (log/debug "vector item:" item (type item))
-                         (.add a (clj-to-ds item))))
-                     ;; (log/debug "ds converted:" coll " -> " a)
-                     a)
+   (map? coll) (make-embedded-entity coll)
 
-    :else (do
-            (log/debug "HELP" coll)
-            coll))
-    )
+   (set? coll) (let [s (java.util.HashSet.)]
+                 (doseq [item coll]
+                   (let [val (clj-to-ds item)]
+                     ;; (log/debug "set item:" item (type item))
+                     (.add s (clj-to-ds item))))
+                 ;; (log/debug "ds converted:" coll " -> " s)
+                 s)
+
+   (vector? coll) (let [a (Vector.)]
+                    (doseq [item coll]
+                      (do
+                        ;; (log/debug "vector item:" item (type item))
+                        (.add a (clj-to-ds item))))
+                    ;; (log/debug "ds converted:" coll " -> " a)
+                    a)
+
+   :else (do
+           (log/debug "HELP" coll)
+           coll))
+  )
 
 (defn- keyword-to-ds
   [kw]
-   (KeyFactory/createKey "Keyword"
-                         ;; remove leading ':'
-                         (subs (str kw) 1)))
+  (KeyFactory/createKey "Keyword"
+                        ;; remove leading ':'
+                        (subs (str kw) 1)))
 
 (defn- symbol-to-ds
   [sym]
-   (KeyFactory/createKey "Symbol" (str sym)))
+  (KeyFactory/createKey "Symbol" (str sym)))
 
 (defn clj-to-ds
   [v]
@@ -128,10 +202,6 @@
     ;; (log/debug "clj-to-ds result:" v " -> " val "\n")
     val))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PersistentEntityMap
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require '(migae.datastore [keys :as k]))
 (deftype PersistentEntityMap [content ^IPersistentMap em-meta]
 
   migae.datastore.IPersistentEntityMap
@@ -141,9 +211,11 @@
     (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
           entry-set (.entrySet props)
           e-iter (.iterator entry-set)
-          em-iter (->PersistentEntityMapSeq e-iter) ]
+          ;; em-iter (->PersistentEntityMapSeq e-iter)
+          ]
       ;; (log/debug "Iterable res:" em-iter)
-      em-iter))
+      ;; em-iter))
+      e-iter))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  java.util.Map
   ;; void	clear()
@@ -294,22 +366,22 @@
         r)))
   (entryAt [this k] ; -> IMapEntry
     (do (log/debug "Associative.entryAt " k)
-    (let [val (.getProperty content (name k))
-          entry (clojure.lang.MapEntry. k val)]
-      ;; (log/debug "entryAt " k val entry)
-      entry)))
+        (let [val (.getProperty content (name k))
+              entry (clojure.lang.MapEntry. k val)]
+          ;; (log/debug "entryAt " k val entry)
+          entry)))
   ;; (assoc) -> Associative => overridden at IPersistentMap
 
   ;;;; extends ILookup
   ;; valAt(Object key), valAt(Object key, Object notFound)
   (valAt [_ k]  ; -> Object
     (log/debug "PersistentEntityMap.ILookup.valAt: " k)
-   (if (= k :migae/keychain)
+    (if (= k :migae/keychain)
       (k/keychain content)
       (let [prop (ds-to-clj (subs (str k) 1))]
         (if-let [v  (.getProperty content prop)]
           (do ;;(log/debug "prop:" prop ", val:" v)
-              (ds-to-clj v))
+            (ds-to-clj v))
           nil))))
   (valAt [_ k not-found]  ; -> Object
     (log/debug "PersistentEntityMap.ILookup.valAt w/notfound: " k)
@@ -323,44 +395,44 @@
     (log/debug "PersistentEntityMap.cons: " o (type o))
     ;; (log/debug "IPersistentCollection this: " this (type this))
     (cond
-      (= (type o) PersistentEntityMap)
-      (do
-        ;; (log/debug "cons PersistentEntityMap to this")
-        ;; (log/debug "this:" this)
-        ;; (log/debug "that:" o)
-        (let [props (.getProperties (.content o))
-              newe (.clone content)]
-          (.setPropertiesFrom newe content) ;; is this needed, or is clone enough?
-          (doseq [[k v] props]
+     (= (type o) PersistentEntityMap)
+     (do
+       ;; (log/debug "cons PersistentEntityMap to this")
+       ;; (log/debug "this:" this)
+       ;; (log/debug "that:" o)
+       (let [props (.getProperties (.content o))
+             newe (.clone content)]
+         (.setPropertiesFrom newe content) ;; is this needed, or is clone enough?
+         (doseq [[k v] props]
            (.setProperty newe k v))
-          (PersistentEntityMap. newe em-meta)))
-      ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
-      (nil? o)
-      (do
-        (log/debug "nil object")
-        this)
-      (= (type o) clojure.lang.MapEntry)
-      (do
-        (log/debug "cons clojure.lang.MapEntry" o " to emap" this)
-        (let [new-entity (.clone content)]
-          (.setProperty new-entity (subs (str (first o)) 1) (clj-to-ds (second o)))
-          (PersistentEntityMap. new-entity nil)))
-      (= (type o) clojure.lang.PersistentArrayMap)
-      (do
-        (log/debug "cons PersistentArrayMap to emap")
-        (let [newe (.clone content)
-              newm (into {} em-meta)]
-          (doseq [[k v] o]
-            (.setProperty newe (subs (str k) 1) (clj-to-ds v)))
-          ;; (.put (datastore) content)
-          (PersistentEntityMap. newe newm)))
-      (= (type o) java.util.Map$Entry)
-      (do
-        (log/debug "cons java.util.Map$Entry to emap")
-        (.setProperty content (.getKey o) (.getValue o))
-        ;; (.put (datastore) content)
-        this)
-      :else (log/debug "cons HELP?" o (type o))))
+         (PersistentEntityMap. newe em-meta)))
+     ;; (= (type o) java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry)
+     (nil? o)
+     (do
+       (log/debug "nil object")
+       this)
+     (= (type o) clojure.lang.MapEntry)
+     (do
+       (log/debug "cons clojure.lang.MapEntry" o " to emap" this)
+       (let [new-entity (.clone content)]
+         (.setProperty new-entity (subs (str (first o)) 1) (clj-to-ds (second o)))
+         (PersistentEntityMap. new-entity nil)))
+     (= (type o) clojure.lang.PersistentArrayMap)
+     (do
+       (log/debug "cons PersistentArrayMap to emap")
+       (let [newe (.clone content)
+             newm (into {} em-meta)]
+         (doseq [[k v] o]
+           (.setProperty newe (subs (str k) 1) (clj-to-ds v)))
+         ;; (.put (datastore) content)
+         (PersistentEntityMap. newe newm)))
+     (= (type o) java.util.Map$Entry)
+     (do
+       (log/debug "cons java.util.Map$Entry to emap")
+       (.setProperty content (.getKey o) (.getValue o))
+       ;; (.put (datastore) content)
+       this)
+     :else (log/debug "cons HELP?" o (type o))))
   ;;int count();
   ;; (count  overridden by Counted
   (empty [this]  ; -> IPersistentCollection
@@ -371,34 +443,34 @@
   (equiv [this o]  ; -> boolean
     ;; FIXME: double-check the logic
     (cond
-      (instance? migae.datastore.IPersistentEntityMap o)
-      (do
-        ;; (log/debug "comparing PersistentEntityMap")
-        (if (.equals content (.content o))
-          (do ;; the entities are key=
-            ;; (log/debug "(.equals content (.content o)) is true: key=")
-            ;; (log/debug "content:" content)
-            ;; (log/debug "(.content o):" (.content o))
-            (let [this-map (.getProperties content)
-                  that-map (.getProperties (.content o))]
-              ;; (log/debug "this-map:" this-map)
-              ;; (log/debug "that-map:" that-map)
-              ;; (log/debug "(= this-map that-map)" (= this-map that-map))
-              (= this-map that-map)))
-          (do ;; (log/debug "entities have different keys")
-              false)))
-      (instance? clojure.lang.PersistentArrayMap o)
-      (do ;; (log/debug "comparing " (type o))
-          (let [props (.getProperties content)
-                pmap (into {}
-                           (for [[k v] props]
-                             (do
-                               (let [prop (keyword k)
-                                     val (ds-to-clj v)]
-                                 ;; (log/debug "prop " prop " val " val)
-                                 {prop val}))))]
-            (= pmap o)))
-      :else (throw (RuntimeException. "PersistentEntityMap.equiv " (type o)))))
+     (instance? migae.datastore.IPersistentEntityMap o)
+     (do
+       ;; (log/debug "comparing PersistentEntityMap")
+       (if (.equals content (.content o))
+         (do ;; the entities are key=
+           ;; (log/debug "(.equals content (.content o)) is true: key=")
+           ;; (log/debug "content:" content)
+           ;; (log/debug "(.content o):" (.content o))
+           (let [this-map (.getProperties content)
+                 that-map (.getProperties (.content o))]
+             ;; (log/debug "this-map:" this-map)
+             ;; (log/debug "that-map:" that-map)
+             ;; (log/debug "(= this-map that-map)" (= this-map that-map))
+             (= this-map that-map)))
+         (do ;; (log/debug "entities have different keys")
+           false)))
+     (instance? clojure.lang.PersistentArrayMap o)
+     (do ;; (log/debug "comparing " (type o))
+       (let [props (.getProperties content)
+             pmap (into {}
+                        (for [[k v] props]
+                          (do
+                            (let [prop (keyword k)
+                                  val (ds-to-clj v)]
+                              ;; (log/debug "prop " prop " val " val)
+                              {prop val}))))]
+         (= pmap o)))
+     :else (throw (RuntimeException. "PersistentEntityMap.equiv " (type o)))))
 
   ;;;;;;;;;;;;;;;; extends Seqable
   (^ISeq seq [this]
@@ -408,12 +480,12 @@
     (let [props (.getProperties content)
           ;; foo (log/debug "props" props)
           emap (into {}
-                           (for [[k v] props]
-                             (do
-                               (let [prop (keyword k)
-                                     val (ds-to-clj v)]
-                                 ;; (log/debug "prop " prop " val " val)
-                                 {prop val}))))
+                     (for [[k v] props]
+                       (do
+                         (let [prop (keyword k)
+                               val (ds-to-clj v)]
+                           ;; (log/debug "prop " prop " val " val)
+                           {prop val}))))
           k (k/keychain content)
           res (with-meta emap {:migae/keychain k})
           ;; res (into r {:migae/keychain k})
@@ -431,89 +503,94 @@
     (log/debug "PersistentEntityMap.reduce func:" f)
     (log/debug "PersistentEntityMap.reduce seed:" (.getSimpleName (class seed)))
     (cond
-      ;; (= (class seed) migae.datastore.PersistentStoreMap)
-      (store-map? seed)
-      (do
-        (let [ds (.content seed)]
-          ;; (log/debug "PersistentEntityMap.reduce ds: " ds)
-          (.put ds content)
-          seed))
-      (= (class seed) com.google.appengine.api.datastore.DatastoreServiceImpl)
-      (do
-        (.put seed content)
-        seed)
-      (= (class seed) clojure.lang.PersistentArrayMap)
-      (do
-        (log/debug "seed:  PersistentArrayMap")
-        )
-      (= (class seed) clojure.lang.PersistentVector)
-      (do
-        (log/debug "seed:  clojure.lang.PersistentVector")
-        )
-      (= (class seed) PersistentEntityMap)
-      (do
-        ;; (log/debug "seed:  PersistentEntityMap")
-        (let [k (.getKey content)
-              e (Entity. k)]
-          (.setPropertiesFrom e (.content seed))
-          (.setPropertiesFrom e content)
-          (PersistentEntityMap. e nil)))
-      ;; f = cons, so we can just use the native into
-      ;; (let [from-props (.getProperties content)
-      ;;       from-coll (into {} (for [[k v] from-props]
-      ;;                                (let [prop (keyword k)
-      ;;                                      val (ds-to-clj v)]
-      ;;                                  {prop val})))
-      ;;       foo (.setPropertiesFrom (.content seed) (.content this))
-      ;;       to-props (.getProperties (.content seed))
-      ;;       to-coll (into {} (for [[k v] to-props]
-      ;;                              (let [prop (keyword k)
-      ;;                                    val (ds-to-clj v)]
-      ;;                                {prop val})))
-      ;;       res (with-meta (into to-coll from-coll)
-      ;;             {:migae/keychain (:migae/key (meta seed))
-      ;;              :type PersistentEntityMap})]
-      ;;   ;; (log/debug "to-coll: " res (type res))
-      ;;   seed)
-      (= (class seed) clojure.lang.PersistentArrayMap$TransientArrayMap)
-      (do
-        (log/debug "seed:  PersistentArrayMap$TransientArrayMap")
-        ;; we use a ghastly hack in order to retain metadata
-        ;; FIXME: handle case where seed is a clj-emap (map with ^:PersistentEntityMap metadata)
-        (let [from-props (.getProperties content)
-              from-coll (into {} (for [[k v] from-props]
-                                       (let [prop (keyword k)
-                                             val (ds-to-clj v)]
-                                         {prop val})))
-              to-ent (Entity. (.getKey content))
-              ;; to-coll (into {} (for [[k v] to-props]
-              ;;                        (let [prop (keyword k)
-              ;;                              val (ds-to-clj v)]
-              ;;                          {prop val})))
-              to-keychain (if (nil? (:migae/keychain seed))
-                            (k/keychain content)
-                            (:migae/keychain seed))]
-          (doseq [[k v] from-coll]
-            (assoc! seed k v))
-          (let [p (persistent! seed)]
-            (doseq [[k v] p]
-              (.setProperty to-ent (subs (str k) 1) (clj-to-ds v))))
-          ;; (let [m1 (persistent! seed)
-          ;;       m2 (with-meta m1 {:migae/keychain keychain
-          ;;                         :type PersistentEntityMap})
-          ;;       to-coll (transient m2)]
-          ;;   (log/debug "m2: " (meta m2) m2 (class m2))
-          ;;   (log/debug "to-coll: " (meta to-coll) to-coll (class to-coll))
-          (PersistentEntityMap. to-ent nil)))
-      :else (log/debug "PersistentEntityMap.reduce HELP" (class seed)))
-      )
+
+     ;; FIXME
+     ;; (store-map? seed)
+     ;; (do
+     ;;   (let [ds (.content seed)]
+     ;;     ;; (log/debug "PersistentEntityMap.reduce ds: " ds)
+     ;;     (.put ds content)
+     ;;     seed))
+
+     (= (class seed) com.google.appengine.api.datastore.DatastoreServiceImpl)
+     (do
+       (.put seed content)
+       seed)
+
+     (= (class seed) clojure.lang.PersistentArrayMap)
+     (do
+       (log/debug "seed:  PersistentArrayMap")
+       )
+
+     (= (class seed) clojure.lang.PersistentVector)
+     (do
+       (log/debug "seed:  clojure.lang.PersistentVector")
+       )
+
+     (= (class seed) PersistentEntityMap)
+     (do
+       ;; (log/debug "seed:  PersistentEntityMap")
+       (let [k (.getKey content)
+             e (Entity. k)]
+         (.setPropertiesFrom e (.content seed))
+         (.setPropertiesFrom e content)
+         (PersistentEntityMap. e nil)))
+     ;; f = cons, so we can just use the native into
+     ;; (let [from-props (.getProperties content)
+     ;;       from-coll (into {} (for [[k v] from-props]
+     ;;                                (let [prop (keyword k)
+     ;;                                      val (ds-to-clj v)]
+     ;;                                  {prop val})))
+     ;;       foo (.setPropertiesFrom (.content seed) (.content this))
+     ;;       to-props (.getProperties (.content seed))
+     ;;       to-coll (into {} (for [[k v] to-props]
+     ;;                              (let [prop (keyword k)
+     ;;                                    val (ds-to-clj v)]
+     ;;                                {prop val})))
+     ;;       res (with-meta (into to-coll from-coll)
+     ;;             {:migae/keychain (:migae/key (meta seed))
+     ;;              :type PersistentEntityMap})]
+     ;;   ;; (log/debug "to-coll: " res (type res))
+     ;;   seed)
+     (= (class seed) clojure.lang.PersistentArrayMap$TransientArrayMap)
+     (do
+       (log/debug "seed:  PersistentArrayMap$TransientArrayMap")
+       ;; we use a ghastly hack in order to retain metadata
+       ;; FIXME: handle case where seed is a clj-emap (map with ^:PersistentEntityMap metadata)
+       (let [from-props (.getProperties content)
+             from-coll (into {} (for [[k v] from-props]
+                                  (let [prop (keyword k)
+                                        val (ds-to-clj v)]
+                                    {prop val})))
+             to-ent (Entity. (.getKey content))
+             ;; to-coll (into {} (for [[k v] to-props]
+             ;;                        (let [prop (keyword k)
+             ;;                              val (ds-to-clj v)]
+             ;;                          {prop val})))
+             to-keychain (if (nil? (:migae/keychain seed))
+                           (k/keychain content)
+                           (:migae/keychain seed))]
+         (doseq [[k v] from-coll]
+           (assoc! seed k v))
+         (let [p (persistent! seed)]
+           (doseq [[k v] p]
+             (.setProperty to-ent (subs (str k) 1) (clj-to-ds v))))
+         ;; (let [m1 (persistent! seed)
+         ;;       m2 (with-meta m1 {:migae/keychain keychain
+         ;;                         :type PersistentEntityMap})
+         ;;       to-coll (transient m2)]
+         ;;   (log/debug "m2: " (meta m2) m2 (class m2))
+         ;;   (log/debug "to-coll: " (meta to-coll) to-coll (class to-coll))
+         (PersistentEntityMap. to-ent nil)))
+     :else (log/debug "PersistentEntityMap.reduce HELP" (class seed)))
+    )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IReference ; extends IMeta; required to support metadata reader syntax?
-    ;; IPersistentMap alterMeta(IFn alter, ISeq args) ;
+  ;; IPersistentMap alterMeta(IFn alter, ISeq args) ;
   (^IPersistentMap alterMeta [this, ^IFn alter, ^ISeq args]
     (log/debug "IReference.alterMeta")
     {:foo 3})
-    ;; IPersistentMap resetMeta(IPersistentMap m);
+  ;; IPersistentMap resetMeta(IPersistentMap m);
   (^IPersistentMap resetMeta [this ^IPersistentMap m]
     (log/debug "IReference.resetMeta")
     {:bar 3})
@@ -542,9 +619,9 @@
     (let [props (.getProperties content)
           kch (k/keychain content)
           coll (into {} (for [[k v] props]
-                              (let [prop (keyword k)
-                                    val (ds-to-clj v)]
-                                {prop val})))
+                          (let [prop (keyword k)
+                                val (ds-to-clj v)]
+                            {prop val})))
           res (with-meta coll {:migae/keychain kch
                                :type PersistentEntityMap})]
       (log/debug "persistent result: " res (class res))
@@ -581,3 +658,5 @@
 
   ) ;; end deftype PersistentEntityMap
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(in-ns 'migae.datastore.types.entity-map)

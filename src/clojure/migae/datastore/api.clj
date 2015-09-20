@@ -8,21 +8,14 @@
             DatastoreServiceConfig$Builder
             Key])
   ;; WARNING! the migae nss must be in the right order so the deftypes get instantiated
-  (:require ;; [migae.datastore :as ds]  ;; this instantiates the deftypes needed by implementations
-            ;; [migae.datastore.PersistentStoreMap :as psm]
-            ;; [migae.datastore.keys :as k]
-            ;; [migae.datastore.impl.map :as pmap]
-            ;; [migae.datastore.impl.vector :as pvec]
-            ;; [migae.datastore.impl.list :as plist]
-            ;; [migae.datastore.impl.keyword :as kw]
-            [clojure.tools.logging :as log :only [debug info]]
+  (:require [clojure.tools.logging :as log :only [debug info]]
             ))
 
 (clojure.core/println "loading migae.datastore.api")
 
 ;; (def store-map
 ;;   (let [dsm (DatastoreServiceFactory/getDatastoreService)
-;;         psm (ds/->PersistentStoreMap dsm nil nil)]
+;;         psm (->PersistentStoreMap dsm nil nil)]
 ;;     psm))
 
 (defprotocol Entity-Map

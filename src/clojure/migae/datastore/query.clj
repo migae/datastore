@@ -28,16 +28,16 @@
 
 ;; keys-only query
 ;;   Query q = new Query("Person").setKeysOnly();
-(defn pull-all
-  []
-  ;; (log/trace "pull-all")
-  (let [q  (Query.)
-        prepared-query (.prepare (.content store-map) q) ;; FIXME
-        iterator (.asIterator prepared-query)
-        res (PersistentEntityMapSeq. (iterator-seq iterator))
-        ]
-    ;; (log/trace "iter res: " (type res) " count:" (count res))
-    res))
+;; (defn pull-all
+;;   []
+;;   ;; (log/trace "pull-all")
+;;   (let [q  (Query.)
+;;         prepared-query (.prepare (.content store-map) q) ;; FIXME
+;;         iterator (.asIterator prepared-query)
+;;         res (pms/PersistentEntityMapSeq. (iterator-seq iterator))
+;;         ]
+;;     ;; (log/trace "iter res: " (type res) " count:" (count res))
+;;     res))
 
 (defn keys-only [kind]
   (let [q  (Query. (clojure.core/name kind))

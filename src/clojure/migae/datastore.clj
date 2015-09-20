@@ -40,32 +40,35 @@
             ;; [migae.datastore.service :as ds]
             ;; NB:  trace level not available on gae
             [clojure.tools.logging :as log :only [debug info]]
-            [migae.datastore.store-map :as psm]
-;;            [migae.datastore.adapter.gae :as gae]
+;;            [migae.datastore.types.entity-map-seq :as ems]
+            ;; [migae.datastore.types.entity-map :refer :all]
+            ;; [migae.datastore.types.entity-map-seq :refer :all]
+;;            [migae.datastore.adapter.gae :refer :all]
             ;; [migae.datastore.impl.map :as pmap]
             ;; [migae.datastore.impl.vector :as pvec]
           )) ;; warn, error, fatal
 
 (clojure.core/println "loading datastore")
 
-(declare ->PersistentStoreMap)
-(declare ->PersistentEntityMapSeq)
-(declare ->PersistentEntityMap)
+;; (declare ->PersistentStoreMap)
+;; (declare ->PersistentEntityMapSeq)
+;; (declare ->PersistentEntityMap)
 
-(declare ds-to-clj get-val-ds)
+;;(declare ds-to-clj clj-to-ds)
 (declare make-embedded-entity)
 (declare props-to-map get-next-emap-prop)
 
-(declare keychain? keylink? keykind? keychain keychain-to-key proper-keychain? improper-keychain?)
+(declare keychain? keylink? keykind? keychain keychain-to-key)
+;; proper-keychain?  improper-keychain?
 
 (declare store-map store-map?)
 (declare entity-map? kind)
 
 ;;(load "datastore/api")
-(load "datastore/PersistentEntityMap")
-(load "datastore/PersistentStoreMap")
+;;(load "datastore/PersistentEntityMap")
+;;(load "datastore/PersistentStoreMap")
 
-(load "datastore/PersistentEntityMapSeq")
+;;(load "datastore/types/entity_map_seq") ;; PersistentEntityMapSeq")
 
 ;; (defn- get-next-emap-prop [this]
 ;;   ;; (log/debug "get-next-emap-prop" (.query this))
@@ -139,7 +142,7 @@
 ;;     :else (log/debug "EXCEPTION: unhandled coll " coll)
 ;;     ))
 
-;; (defn- get-val-ds-coll
+;; (defn- clj-to-ds-coll
 ;;   "Type conversion: clojure to java.  The datastore supports a limited
 ;;   number of Java classes (see
 ;;   https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types);
@@ -150,13 +153,13 @@
 ;;   ;;  :added "1.0"
 ;;   ;;  :static true}
 ;;   [coll]
-;;   ;; (log/debug "get-val-ds-coll" coll (type coll))
+;;   ;; (log/debug "clj-to-ds-coll" coll (type coll))
 ;;   (cond
 ;;     (list? coll) (let [a (ArrayList.)]
 ;;                      (doseq [item coll]
 ;;                        (do
 ;;                          ;; (log/debug "vector item:" item (type item))
-;;                          (.add a (get-val-ds item))))
+;;                          (.add a (clj-to-ds item))))
 ;;                      ;; (log/debug "ds converted:" coll " -> " a)
 ;;                      a)
 
@@ -164,9 +167,9 @@
 
 ;;     (set? coll) (let [s (java.util.HashSet.)]
 ;;                   (doseq [item coll]
-;;                     (let [val (get-val-ds item)]
+;;                     (let [val (clj-to-ds item)]
 ;;                       ;; (log/debug "set item:" item (type item))
-;;                       (.add s (get-val-ds item))))
+;;                       (.add s (clj-to-ds item))))
 ;;                   ;; (log/debug "ds converted:" coll " -> " s)
 ;;                   s)
 
@@ -174,7 +177,7 @@
 ;;                      (doseq [item coll]
 ;;                        (do
 ;;                          ;; (log/debug "vector item:" item (type item))
-;;                          (.add a (get-val-ds item))))
+;;                          (.add a (clj-to-ds item))))
 ;;                      ;; (log/debug "ds converted:" coll " -> " a)
 ;;                      a)
 
@@ -218,12 +221,12 @@
 ;;     val))
 
 ;; ;; this is for values to be stored (i.e. from clojure to ds java types)
-;; (defn get-val-ds
+;; (defn clj-to-ds
 ;;   [v]
-;;   ;; (log/debug "get-val-ds" v (type v))
+;;   ;; (log/debug "clj-to-ds" v (type v))
 ;;   (let [val (cond (integer? v) v
 ;;                   (string? v) (str v)
-;;                   (coll? v) (get-val-ds-coll v)
+;;                   (coll? v) (clj-to-ds-coll v)
 ;;                   (= (type v) clojure.lang.Keyword) (keyword-to-ds v)
 ;;                   (= (type v) clojure.lang.Symbol) (symbol-to-ds v)
 ;;                   (= (type v) EmbeddedEntity) v
@@ -238,7 +241,7 @@
 ;;                   :else (do
 ;;                           (log/debug "ELSE: get val type" v (type v))
 ;;                           v))]
-;;     ;; (log/debug "get-val-ds result:" v " -> " val "\n")
+;;     ;; (log/debug "clj-to-ds result:" v " -> " val "\n")
 ;;     val))
 
 ;; (defn props-to-map
@@ -247,15 +250,6 @@
 ;;                  (let [prop (keyword k)
 ;;                        val (ds-to-clj v)]
 ;;                    {prop val}))))
-
-;; (defn- make-embedded-entity
-;;   [m]
-;;   {:pre [(map? m)]}
-;;   (let [embed (EmbeddedEntity.)]
-;;     (doseq [[k v] m]
-;;       ;; FIXME:  (if (map? v) then recur
-;;       (.setProperty embed (subs (str k) 1) (get-val-ds v)))
-;;     embed))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;;  predicates
@@ -570,8 +564,8 @@
 ;;                                (not (nil? (namespace k)))))
 ;;   (and (keyword? k) (nil? (namespace k))))
 
-(load "datastore/ctor_local")
-(load "datastore/query")
-(load "datastore/ctor_push")
-(load "datastore/ctor_pull")
-(load "datastore/impls")
+;; (load "datastore/ctor_local")
+;; (load "datastore/query")
+;; (load "datastore/ctor_push")
+;; (load "datastore/ctor_pull")
+;;(load "datastore/impls")

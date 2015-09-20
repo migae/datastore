@@ -33,7 +33,7 @@
                    :props :props
                    :query :query
                    }
-  :dependencies [[org.clojure/clojure "1.8.0-master-SNAPSHOT"]
+  :dependencies [[org.clojure/clojure "1.8.0-alpha5"]
                  [org.clojure/tools.reader "0.8.16"]
                  [org.clojure/tools.logging "0.3.1"]
                  [com.google.appengine/appengine-api-1.0-sdk "1.9.26"]

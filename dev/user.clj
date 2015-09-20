@@ -5,7 +5,7 @@
 
 (clojure.core/println "loading user.clj")
 
-(require '[clojure.test :refer [run-tests test-var]])
+(require '[clojure.test :refer [run-tests test-var run-all-tests]])
 (require '[clojure.tools.namespace.repl :refer [refresh refresh-all set-refresh-dirs]])
 (require '[clojure.tools.reader.edn :as edn])
 
@@ -15,13 +15,15 @@
 
 ;;(require 'test.ctor-local :reload-all)
 ;;(run-tests 'test.ctor-local)
+;;(run-all-tests 'test.ctor-local)
+;;(test-var 'test.ctor-local/emap-ctor)
 
 (import '(com.google.appengine.tools.development.testing
           LocalServiceTestHelper
           LocalServiceTestConfig
           LocalDatastoreServiceTestConfig))
 
-(require '(migae.datastore [api :as ds]))
+(require '(migae.datastore.model [gae :as ds]))
 
 (def ds-test-env (.setEnforceApiDeadlines
                   (LocalServiceTestHelper.

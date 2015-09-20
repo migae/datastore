@@ -22,26 +22,26 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;;  emaps stuff
-(defn emaps!!
-  "e.g. (emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}]) saves three Entities of kind :Foo
+;; (defn emaps!!
+;;   "e.g. (emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}]) saves three Entities of kind :Foo
 
-  If keychain ends in a kind (e.g. [:Foo] create anonymous Entities of
-  that kind.  If it ends in a full key?  Merge the maps?"
-  [keychain maps]
-  (log/trace "")
-  (log/trace "emaps!!" keychain maps)
-  (if (keylink? (last keychain))
-    (throw (IllegalArgumentException. "emaps!! keychain must end in a Kind keyword (e.g. :Foo); try emap!!"))
-    ;; (let [s
-    (doseq [emap maps]
-      (do
-        ;; (log/trace "emap" emap)
-        (emap!! keychain emap)))
-    ;; ]
-      ;; (doseq [item s]
-      ;;   (log/trace "item" (meta item) item)
-      ;;   (log/trace "item entity" (.content item)))
-      ))
+;;   If keychain ends in a kind (e.g. [:Foo] create anonymous Entities of
+;;   that kind.  If it ends in a full key?  Merge the maps?"
+;;   [keychain maps]
+;;   (log/trace "")
+;;   (log/trace "emaps!!" keychain maps)
+;;   (if (keylink? (last keychain))
+;;     (throw (IllegalArgumentException. "emaps!! keychain must end in a Kind keyword (e.g. :Foo); try emap!!"))
+;;     ;; (let [s
+;;     (doseq [emap maps]
+;;       (do
+;;         ;; (log/trace "emap" emap)
+;;         (emap!! keychain emap)))
+;;     ;; ]
+;;       ;; (doseq [item s]
+;;       ;;   (log/trace "item" (meta item) item)
+;;       ;;   (log/trace "item entity" (.content item)))
+;;       ))
 
 (defn- throw-bad-keylinks
   [keylinks]
@@ -57,85 +57,85 @@
                (pr-str keylinks)
                " must be a definite (e.g. :Foo/Bar) or indefinite (e.g. :Foo) keylink"))))
 
-(defn- emap-definite!!
-  ;; keylinks already validated
-  [keylinks & props]
-  ;; (log/trace "emap-definite!!" keylinks props)
-  (let [k (apply keychain-to-key keylinks)
-        e  (Entity. k)
-        propmap (first props)]
-    (if (not (nil? propmap))
-      (let [props (first propmap)]
-        (doseq [[k v] props]
-          (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-    (.put store-map e)
-    (migae.datastore.PersistentEntityMap. e nil)))
+;; (defn- emap-definite!!
+;;   ;; keylinks already validated
+;;   [keylinks & props]
+;;   ;; (log/trace "emap-definite!!" keylinks props)
+;;   (let [k (apply keychain-to-key keylinks)
+;;         e  (Entity. k)
+;;         propmap (first props)]
+;;     (if (not (nil? propmap))
+;;       (let [props (first propmap)]
+;;         (doseq [[k v] props]
+;;           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
+;;     (.put store-map e)
+;;     (migae.datastore.PersistentEntityMap. e nil)))
 
-(defn- emap-indefinite!!
-  [keylinks & props]
-  ;; (log/trace "emap-indefinite!!" keylinks props)
-  (let [e (if (> (count keylinks) 1)
-            (let [parent (apply keychain-to-key (butlast keylinks))]
-              (Entity. (name (last keylinks)) parent))
-            (Entity. (name (first keylinks))))
-        propmap (first props)]
-    (if (not (nil? propmap))
-      (let [propmap (first props)]
-        ;; (log/trace "props" propmap)
-        (doseq [[k v] propmap]
-          (.setProperty e (subs (str k) 1) (get-val-ds v)))))
-    (.put store-map e)
-    (migae.datastore.PersistentEntityMap. e nil)))
+;; (defn- emap-indefinite!!
+;;   [keylinks & props]
+;;   ;; (log/trace "emap-indefinite!!" keylinks props)
+;;   (let [e (if (> (count keylinks) 1)
+;;             (let [parent (apply keychain-to-key (butlast keylinks))]
+;;               (Entity. (name (last keylinks)) parent))
+;;             (Entity. (name (first keylinks))))
+;;         propmap (first props)]
+;;     (if (not (nil? propmap))
+;;       (let [propmap (first props)]
+;;         ;; (log/trace "props" propmap)
+;;         (doseq [[k v] propmap]
+;;           (.setProperty e (subs (str k) 1) (get-val-ds v)))))
+;;     (.put store-map e)
+;;     (migae.datastore.PersistentEntityMap. e nil)))
 
 
-(defn- find-definite-necessarily
-  [keylinks & propmap]
-  (log/trace "find-definite-necessarily" keylinks propmap)
-  (if (every? keylink? keylinks)
-    (let [akey (apply keychain-to-key keylinks)
-          e (try (.get store-map akey)
-                 (catch EntityNotFoundException ex nil))]
-      (if (nil? e) ;; not found
-        (let [newe  (Entity. akey)]
-          (if (not (nil? propmap))
-            (let [props (first propmap)]
-              (doseq [[k v] props]
-                (let [p (subs (str k) 1)
-                      val (get-val-ds v)]
-                  ;; (log/trace "PROP" p val)
-                  (.setProperty newe p val)))))
-          (.put store-map newe)
-          (migae.datastore.PersistentEntityMap. newe nil))
-        ;; entity found:
-        (let [em (migae.datastore.PersistentEntityMap. e nil)]
-          (log/trace "already found" (epr em))
-          ;; FIXME: match properties agains propmap?
-          em)))
-    (throw-bad-keylinks keylinks)))
+;; (defn- find-definite-necessarily
+;;   [keylinks & propmap]
+;;   (log/trace "find-definite-necessarily" keylinks propmap)
+;;   (if (every? keylink? keylinks)
+;;     (let [akey (apply keychain-to-key keylinks)
+;;           e (try (.get store-map akey)
+;;                  (catch EntityNotFoundException ex nil))]
+;;       (if (nil? e) ;; not found
+;;         (let [newe  (Entity. akey)]
+;;           (if (not (nil? propmap))
+;;             (let [props (first propmap)]
+;;               (doseq [[k v] props]
+;;                 (let [p (subs (str k) 1)
+;;                       val (get-val-ds v)]
+;;                   ;; (log/trace "PROP" p val)
+;;                   (.setProperty newe p val)))))
+;;           (.put store-map newe)
+;;           (migae.datastore.PersistentEntityMap. newe nil))
+;;         ;; entity found:
+;;         (let [em (migae.datastore.PersistentEntityMap. e nil)]
+;;           (log/trace "already found" (epr em))
+;;           ;; FIXME: match properties agains propmap?
+;;           em)))
+;;     (throw-bad-keylinks keylinks)))
 
-(defn find-indefinite-necessarily
-  [keylinks & propmap]
-  {:pre [(every? keylink? (butlast keylinks))
-         (nil? (namespace (last keylinks)))]}
-  (log/trace "find-indefinite-necessarily" keylinks propmap)
+;; (defn find-indefinite-necessarily
+;;   [keylinks & propmap]
+;;   {:pre [(every? keylink? (butlast keylinks))
+;;          (nil? (namespace (last keylinks)))]}
+;;   (log/trace "find-indefinite-necessarily" keylinks propmap)
 
-  ;; if propmap not nil, construct property-filter query
+;;   ;; if propmap not nil, construct property-filter query
 
-  (let [e (if (nil? (butlast keylinks))
-            (Entity. (name (last keylinks)))
-            (let [parent (apply keychain-to-key (butlast keylinks))]
-              ;; (log/trace "parent" parent)
-              (Entity. (name (last keylinks)) parent)))]
-        (if (not (nil? propmap))
-          (let [props (first propmap)]
-            ;; (log/trace "props" props)
-            (doseq [[k v] props]
-              (let [p (subs (str k) 1)
-                    val (get-val-ds v)]
-                ;; (log/trace "PROP" p val)
-                (.setProperty e p val)))))
-        (.put store-map e)
-        (migae.datastore.PersistentEntityMap. e nil)))
+;;   (let [e (if (nil? (butlast keylinks))
+;;             (Entity. (name (last keylinks)))
+;;             (let [parent (apply keychain-to-key (butlast keylinks))]
+;;               ;; (log/trace "parent" parent)
+;;               (Entity. (name (last keylinks)) parent)))]
+;;         (if (not (nil? propmap))
+;;           (let [props (first propmap)]
+;;             ;; (log/trace "props" props)
+;;             (doseq [[k v] props]
+;;               (let [p (subs (str k) 1)
+;;                     val (get-val-ds v)]
+;;                 ;; (log/trace "PROP" p val)
+;;                 (.setProperty e p val)))))
+;;         (.put store-map e)
+;;         (migae.datastore.PersistentEntityMap. e nil)))
 ;; (throw-bad-keylinks keylinks)))
 
 
