@@ -41,7 +41,7 @@
 ;; use reify?
 
 
-(clojure.core/println "loading adapter.gae")
+(clojure.core/println "loading migae.datastore.adapter.gae")
 
 (def ds  ;; store-map
   (let [dsm (DatastoreServiceFactory/getDatastoreService)

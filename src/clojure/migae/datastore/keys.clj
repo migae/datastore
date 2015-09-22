@@ -19,7 +19,7 @@
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.api :as ds]))
+            [migae.datastore.signature.entity-map :as em]))
 
 (clojure.core/println "loading migae.datastore.keys")
 
@@ -30,11 +30,11 @@
 
 (defn keychain=?
   [k1 k2]
-  (let [kch1 (if (ds/entity-map? k1)
+  (let [kch1 (if (em/entity-map? k1)
                ;; recur with .getParent
                (if (map? k1)
                  (:migae/key (meta k1))))
-        kch2 (if (ds/entity-map? k2)
+        kch2 (if (em/entity-map? k2)
                ;; recur with .getParent
                (if (map? k2)
                  (:migae/key (meta k2))))]
@@ -43,8 +43,8 @@
 (defn key=?
   [em1 em2]
   ;; FIXME:  pre: validate types
-  (if (ds/entity-map? em1)
-    (if (ds/entity-map? em2)
+  (if (em/entity-map? em1)
+    (if (em/entity-map? em2)
       (.equals (.content em1) (.content em2))
       (keychain=? em1 em2))
     (if (map? em1)

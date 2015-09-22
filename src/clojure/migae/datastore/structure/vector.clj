@@ -1,4 +1,4 @@
-(ns migae.datastore.impl.vector
+(ns migae.datastore.structure.vector
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -20,24 +20,31 @@
             [clojure.tools.reader.edn :as edn]
             [migae.datastore.keys :as k]
             ;;[migae.datastore.types.entity-map :refer :all]
-            [migae.datastore.impl.map :as m]
+            [migae.datastore.structure.map :as m]
             [migae.datastore.adapter.gae :as gae]))
 
-(clojure.core/println "loading migae.datastore.impl.vector")
+(clojure.core/println "loading migae.datastore.structure.vector")
 
-(defn entity-map? [m]
-  ;; (log/debug "entity-map?" (meta m) m (type m))
-  (not (nil? (:migae/keychain (meta m)))))
+(defn entity-map?
+  ([k m]
+   (log/debug "entity-map?" k m)
+   ;; FIXME: validate m?
+   (k/proper-keychain? k)))
 
 (defn entity-map
   "entity-map: local constructor"
   ([k]
-   ;; (log/debug "entity-map 1" (meta k) k (type k))
-
-   (with-meta {} {:migae/keychain k}))
-
+   (log/debug "entity-map 1" (meta k) k (type k))
+   (if (k/keychain? k)
+     (log/debug "keychain:" k)
+     ;; expect vector [k m]
+     (do
+       (log/debug "not keychain:" k)
+       (apply entity-map k))
+     ;; (with-meta {} {:migae/keychain k}))
+     ))
   ([k m]
-   ;; (log/debug "entity-map 2" k m)
+   (log/debug "entity-map 2" k m)
    (cond
      (k/proper-keychain? k)
      (if (m/valid-emap? m)

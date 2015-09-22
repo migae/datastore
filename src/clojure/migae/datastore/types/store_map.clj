@@ -52,7 +52,7 @@
 (in-ns 'migae.datastore)
 (clojure.core/refer 'clojure.core)
 (require '(clojure.tools [logging :as log :only [debug info]])
-         '(migae.datastore.adapter [gae :as gae-ds])
+         '(migae.datastore.adapter [gae :as gae-adapter])
 ;;         '(migae.datastore.model [gae :as ds])
 ;;         '(migae.datastore [keys])
          ;; '(migae.datastore.types [entity-map :refer :all])
@@ -116,7 +116,7 @@
     (log/debug "PersistentStoreMap.invoke" k (type k))
     (cond
       (k/keychain? k)
-      (let [e (gae-ds/fetch (k/entity-key k))]
+      (let [e (gae-adapter/fetch (k/entity-key k))]
       ;; (let [e (.get content (k/entity-key k))]
         (PersistentEntityMap. e nil))
       :else (throw (RuntimeException. "PersistentStoreMap.invoke"))))
@@ -237,7 +237,7 @@
                 (log/debug "PersistentStoreMap.valAt IPersistentVector" k)
                 (let [dskey (k/entity-key k)]
                   ;; (.get (.content ds) dskey)))
-                  (gae-ds/fetch dskey)))
+                  (gae-adapter/fetch dskey)))
               (k/keychain? k)
               (.get content (k/entity-key k))
               (keyword? k)

@@ -1,4 +1,4 @@
-(ns migae.datastore.impl.keyword
+(ns migae.datastore.structure.keyword
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -19,11 +19,11 @@
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
             ;; [migae.datastore.types.entity-map :refer :all]
-            [migae.datastore.impl.vector :as v]
+            [migae.datastore.structure.vector :as v]
             [migae.datastore.keys :as k]
             [migae.datastore.adapter.gae :as gae]))
 
-(clojure.core/println "loading migae.datastore.impl.vector")
+(clojure.core/println "loading migae.datastore.structure.keyword")
 
 (defn entity-map? [m]
   (log/debug "entity-map?" (meta m) m (type m))

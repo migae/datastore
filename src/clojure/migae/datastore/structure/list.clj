@@ -1,4 +1,4 @@
-(ns migae.datastore.impl.list
+(ns migae.datastore.structure.list
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -20,7 +20,7 @@
             [clojure.tools.reader.edn :as edn]
             [migae.datastore.keys :as k]))
 
-(clojure.core/println "loading migae.datastore.impl.vector")
+(clojure.core/println "loading migae.datastore.structure.list")
 
 (declare entity-key ->PersistentEntityMap)
 

@@ -48,7 +48,7 @@
             ;; [migae.datastore.impl.vector :as pvec]
           )) ;; warn, error, fatal
 
-(clojure.core/println "loading datastore")
+(clojure.core/println "loading migae.datastore")
 
 ;; (declare ->PersistentStoreMap)
 ;; (declare ->PersistentEntityMapSeq)

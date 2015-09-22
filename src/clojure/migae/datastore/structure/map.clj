@@ -1,10 +1,10 @@
-(ns migae.datastore.impl.map
+(ns migae.datastore.structure.map
   (:refer-clojure :exclude [read read-string])
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :refer [read read-string]]
             [migae.datastore.keys :as k]))
 
-(clojure.core/println "loading migae.datastore.impl.map")
+(clojure.core/println "loading migae.datastore.structure.map")
 
 (declare dump dump-str)
 
@@ -39,12 +39,49 @@
        (throw (IllegalArgumentException.
                (str "Missing metadata key ':migae/keychain'")))))))
 
+(defn keychain? [k] (k/keychain? k))
+
+(defn keychain=?
+  [k1 k2]
+  (throw (RuntimeException. "not implemented yet"))
+  (let [kch1 (if (entity-map? k1)
+               ;; recur with .getParent
+               (if (map? k1)
+                 (:migae/key (meta k1))))
+        kch2 (if (entity-map? k2)
+               ;; recur with .getParent
+               (if (map? k2)
+                 (:migae/key (meta k2))))]
+    ))
+
 (defn keychain
   [m]
   ;; (log/debug "keychain: " m)
   (let [k (:migae/keychain (meta m))]
     (if (k/keychain? k) k nil)))
-;    (if k (:migae/keychain (meta m)) nil)))
+
+(defn key=?
+  [em1 em2]
+  ;; FIXME:  pre: validate types
+  (if (entity-map? em1)
+    (if (entity-map? em2)
+      (.equals (.content em1) (.content em2))
+      (keychain=? em1 em2))
+    (if (map? em1)
+      (keychain=? em1 em2)
+      (log/debug "EXCEPTION: key= applies only to maps and emaps"))))
+
+(defn keychain=?
+  [k1 k2]
+  (let [kch1 (if (entity-map? k1)
+               ;; recur with .getParent
+               (if (map? k1)
+                 (:migae/key (meta k1))))
+        kch2 (if (entity-map? k2)
+               ;; recur with .getParent
+               (if (map? k2)
+                 (:migae/key (meta k2))))]
+    ))
 
 (defn kind
   "co-construct kind from an entity-map"

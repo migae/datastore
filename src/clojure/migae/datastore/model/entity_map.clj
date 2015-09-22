@@ -1,4 +1,4 @@
-(ns migae.datastore.model.gae
+(ns migae.datastore.model.entity-map
   ;;  (:refer-clojure :exclude [print println print-str println-str])
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
@@ -11,24 +11,19 @@
            )
   ;; WARNING! the migae nss must be in the right order so the deftypes get instantiated
   (:require [migae.datastore.keys :as k]
-            [migae.datastore.api :as api]
+            [migae.datastore.signature.entity-map :as api]
             migae.datastore.types.entity-map
             migae.datastore.types.entity-map-seq
             migae.datastore.types.store-map
-            [migae.datastore.impl.map :as pmap]
-            [migae.datastore.impl.vector :as pvec]
-            [migae.datastore.impl.list :as plist]
-            [migae.datastore.impl.keyword :as kw]
+            [migae.datastore.structure.map :as pmap]
+            [migae.datastore.structure.vector :as pvec]
+            [migae.datastore.structure.list :as plist]
+            [migae.datastore.structure.keyword :as kw]
             [clojure.tools.logging :as log :only [debug info]]
             )
 )
 
-(clojure.core/println "loading migae.datastore.api.gae")
-
-(def store-map
-  (let [dsm (DatastoreServiceFactory/getDatastoreService)
-        psm (migae.datastore.PersistentStoreMap. dsm nil nil)]
-    psm))
+(clojure.core/println "loading migae.datastore.model.entity-map")
 
 (extend clojure.lang.IPersistentMap
   api/Entity-Map
@@ -39,6 +34,9 @@
    }
   api/Entity-Key
   {:keychain pmap/keychain
+   :keychain? pmap/keychain?
+   :keychain=? pmap/keychain=?
+   :key=? pmap/key=?
    :kind pmap/kind
    :identifier pmap/identifier
    })
@@ -55,6 +53,8 @@
   {:keychain pvec/keychain
    :keychain? k/keychain?
    :kind pvec/kind
+   ;; :keychain=? pmap/keychain=?
+   ;; :key=? pmap/key=?
    :identifier pvec/identifier
    :entity-key k/entity-key
    })

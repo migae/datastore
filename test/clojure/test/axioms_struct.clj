@@ -17,7 +17,7 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.api :as ds :refer :all]
+            [migae.datastore.signature.entity-map :as ds :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
