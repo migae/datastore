@@ -28,7 +28,7 @@
             ShortBlob
             Text
             Transaction]
-;           [migae.datastore PersistentStoreMap]
+           migae.datastore.DuplicateKeyException
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
@@ -226,14 +226,14 @@
   (let [k (k/entity-key keyvec)
         e (if (not force)
             (do (log/debug "not force: " k)
-            (let [ent (try (.get ds k)
-                           (catch EntityNotFoundException ex ex))]
-              (log/debug "ent: " (instance? EntityNotFoundException ent))
-              ;; (if (= (type ent) Entity) ;; found
-              ;;   (throw (RuntimeException. "Key already used"))
-              (if (instance? EntityNotFoundException ent)
-                (Entity. k)
-                (throw (RuntimeException. "Key already used")))))
+                (let [ent (try (.get ds k)
+                               (catch EntityNotFoundException ex ex))]
+                  (log/debug "ent: " (instance? EntityNotFoundException ent))
+                  ;; (if (= (type ent) Entity) ;; found
+                  ;;   (throw (RuntimeException. "Key already used"))
+                  (if (instance? EntityNotFoundException ent)
+                    (Entity. k)
+                    (throw (DuplicateKeyException. (str keyvec))))))
             (do (log/debug "force push")
                 (Entity. k)))]
     (when (not (empty? propmap))
@@ -247,78 +247,78 @@
     (.put ds e)
     e))
 
-(defn into-ds!
-  ;; FIXME: convert to [keychain & em]???
-  ([arg]
-   (do
-     (log/debug "into-ds! 1" arg)
-     (cond
-       (map? arg)
-       (do
-         ;; edn, e.g.  (entity-map! ^{:migae/keychain [:a/b]} {:a 1})
-         (let [k (:migae/keychain (meta arg))]
-           ;; (log/debug "edn key: " k " improper?" (improper-keychain? k))
-           (cond
-             (k/improper-keychain? k)
-             (put-kinded-emap k arg)
-             (k/proper-keychain? k)
-             (put-proper-emap :keyvec k :propmap arg :force true)
-             :else (throw (IllegalArgumentException. (str "INVALID KEYCHAIN!: " k)))))
-         )
-       (k/keychain? arg)
-       (do
-         (cond
-           (k/improper-keychain? arg)
-           (put-kinded-emap arg {})
-           (k/proper-keychain? arg)
-           (put-proper-emap :keyvec arg :propmap {} :force true)
-           :else (throw (IllegalArgumentException. (str "Invalid keychain" arg)))))
-       :else (throw (IllegalArgumentException.)))))
-  ([keychain em]
-  "Put entity-map to datastore unless already there; use :force true to replace existing"
-  (do
-    ;; (log/debug "into-ds! 2" keychain em)
-    ;; (if (empty? keychain)
-    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-    (cond
-      (k/improper-keychain? keychain)
-      (put-kinded-emap keychain em)
-      (k/proper-keychain? keychain)
-      (put-proper-emap :keyvec keychain :propmap em)
-      :else
-      (throw (IllegalArgumentException. (str "Invalid keychain : " keychain))))))
-  ([mode keychain em]
-  "Modally put entity-map to datastore.  Modes: :force, :multi"
-  (do
-    ;; (log/debug "force into-ds! 3" force keychain em)
-    ;; (if (empty? keychain)
-    ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
-    ;; (if (not= force :force)
-    ;;   (throw (IllegalArgumentException. force)))
-    (cond
-      (= mode :force)
-      (cond
-        (k/improper-keychain? keychain)
-        (put-kinded-emap keychain em)
-        (k/proper-keychain? keychain)
-        (put-proper-emap :keyvec keychain :propmap em :force true)
-        :else
-        (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
-      (= mode :multi)
-      (do
-        ;; (log/debug "entity-map! :multi processing...")
-        (if (k/improper-keychain? keychain)
-          (if (vector? em)
-            (do
-              (for [emap em]
-                (do
-                  ;; (log/debug "ctoring em" (print-str emap))
-                  (entity-map! keychain emap))))
-            (throw (IllegalArgumentException. ":multi ctor requires vector of maps")))
-          (throw (IllegalArgumentException. ":multi ctor requires improper keychain"))))
-      :else
-      (throw (IllegalArgumentException. (str "Invalid mode keyword:" force))))
-    )))
+;; (defn into-ds!
+;;   ;; FIXME: convert to [keychain & em]???
+;;   ([arg]
+;;    (do
+;;      (log/debug "into-ds! 1" arg)
+;;      (cond
+;;        (map? arg)
+;;        (do
+;;          ;; edn, e.g.  (entity-map! ^{:migae/keychain [:a/b]} {:a 1})
+;;          (let [k (:migae/keychain (meta arg))]
+;;            ;; (log/debug "edn key: " k " improper?" (improper-keychain? k))
+;;            (cond
+;;              (k/improper-keychain? k)
+;;              (put-kinded-emap k arg)
+;;              (k/proper-keychain? k)
+;;              (put-proper-emap :keyvec k :propmap arg :force true)
+;;              :else (throw (IllegalArgumentException. (str "INVALID KEYCHAIN!: " k)))))
+;;          )
+;;        (k/keychain? arg)
+;;        (do
+;;          (cond
+;;            (k/improper-keychain? arg)
+;;            (put-kinded-emap arg {})
+;;            (k/proper-keychain? arg)
+;;            (put-proper-emap :keyvec arg :propmap {} :force true)
+;;            :else (throw (IllegalArgumentException. (str "Invalid keychain" arg)))))
+;;        :else (throw (IllegalArgumentException.)))))
+;;   ([keychain em]
+;;   "Put entity-map to datastore unless already there; use :force true to replace existing"
+;;   (do
+;;     ;; (log/debug "into-ds! 2" keychain em)
+;;     ;; (if (empty? keychain)
+;;     ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+;;     (cond
+;;       (k/improper-keychain? keychain)
+;;       (put-kinded-emap keychain em)
+;;       (k/proper-keychain? keychain)
+;;       (put-proper-emap :keyvec keychain :propmap em)
+;;       :else
+;;       (throw (IllegalArgumentException. (str "Invalid keychain : " keychain))))))
+;;   ([mode keychain em]
+;;   "Modally put entity-map to datastore.  Modes: :force, :multi"
+;;   (do
+;;     ;; (log/debug "force into-ds! 3" force keychain em)
+;;     ;; (if (empty? keychain)
+;;     ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
+;;     ;; (if (not= force :force)
+;;     ;;   (throw (IllegalArgumentException. force)))
+;;     (cond
+;;       (= mode :force)
+;;       (cond
+;;         (k/improper-keychain? keychain)
+;;         (put-kinded-emap keychain em)
+;;         (k/proper-keychain? keychain)
+;;         (put-proper-emap :keyvec keychain :propmap em :force true)
+;;         :else
+;;         (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
+;;       (= mode :multi)
+;;       (do
+;;         ;; (log/debug "entity-map! :multi processing...")
+;;         (if (k/improper-keychain? keychain)
+;;           (if (vector? em)
+;;             (do
+;;               (for [emap em]
+;;                 (do
+;;                   ;; (log/debug "ctoring em" (print-str emap))
+;;                   (entity-map! keychain emap))))
+;;             (throw (IllegalArgumentException. ":multi ctor requires vector of maps")))
+;;           (throw (IllegalArgumentException. ":multi ctor requires improper keychain"))))
+;;       :else
+;;       (throw (IllegalArgumentException. (str "Invalid mode keyword:" force))))
+;;     )))
 
 (defn- emap-new
   [^Key k content]

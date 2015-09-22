@@ -72,33 +72,6 @@
 ;;          (catch EntityNotFoundException ex))
 ;;     ))
 
-(deftest ^:entity-maps entity-map-def
-  (testing "entity-map!! definite"
-    (let [e1 (ds/entity-map! [:Foo/Bar] {:a 1})
-          e2 (ds/entity-map! [:Foo/Bar :Baz/Buz] {:b 1})
-          e3 (ds/entity-map! [:Foo/Bar :Baz/Buz :X/Y] {:b 1})]
-      (log/trace "e1" (ds/dump e1))
-      (log/trace "e2" (ds/dump e2))
-      (log/trace "e3" (ds/dump e3))
-    )))
-
-(deftest ^:entity-maps entity-map-indef
-  (testing "entity-map! indefinite"
-    (let [e1 (ds/entity-map! [:Foo] {:a 1 :b "Foobar"})
-          e2 (ds/entity-map! [:Foo/Bar :Baz] {:b 1})
-          e3 (ds/entity-map! [:Foo/Bar :Baz/Buz :X] {:a "Foo/Bar Baz/Buz Z"})]
-      (log/trace "e1" (ds/dump e1))
-      (log/trace "e2" (ds/dump e2))
-      (log/trace "e3" (ds/dump e3))
-    )))
-
-(deftest ^:entity-maps entity-maps-multi
-  (testing "use entity-maps!! to create multiple PersistentEntityMaps of a kind in one stroke"
-;; FIXME: support :multi
-    ;; (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])
-    ;; (ds/entity-map! :multi [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
-    ))
-
 (deftest ^:entity-map entity-map1
   (testing "entity-map key vector must not be empty"
     (let [e (try (ds/entity-map [] {})
@@ -158,6 +131,23 @@
         ;; ;; ?? - find maybe
         ;; (log/trace "??" (ds/entity-map?? k))
         )
+      )))
+
+(deftest ^:emap emap-axioms
+  (testing "entity-map axioms"
+    (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
+          ]
+      (log/info "em1" (ds/dump em1))
+      (log/info "em1 type:" (type em1))
+      (log/info "em1 kind:" (ds/kind em1))
+      (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
+      (log/info "em1 keychain:" (ds/keychain em1))
+      (log/info "em1 keychain type:" (type (ds/keychain em1)))
+;; FIXME      (log/info "em1 key:" (key em1))
+;; FIXME      (log/info "em1 key type:" (type (key em1)))
+;; FIXME      (log/info "em1 content:" (val em1))
+;; FIXME      (log/info "em1 content type:" (type (val em1)))
+      (is (ds/entity-map? em1))
       )))
 
 (deftest ^:entity-map entity-map-props-1

@@ -32,7 +32,6 @@
             ;;[migae.datastore :as ds]
             migae.datastore.types.entity-map-seq
             [migae.datastore.adapter.gae :as gae]
-            ;; [migae.datastore.keys :as k]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (println "loading migae.datastore.types.store_map")
@@ -54,7 +53,7 @@
 (require '(clojure.tools [logging :as log :only [debug info]])
          '(migae.datastore.adapter [gae :as gae-adapter])
 ;;         '(migae.datastore.model [gae :as ds])
-;;         '(migae.datastore [keys])
+         '(migae.datastore [keys :as k])
          ;; '(migae.datastore.types [entity-map :refer :all])
          ;; '(clojure.tools.reader [edn :as edn])
          )

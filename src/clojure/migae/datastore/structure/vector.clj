@@ -14,6 +14,7 @@
             ArrayList
             HashSet
             Vector]
+           migae.datastore.InvalidKeychainException
            migae.datastore.PersistentEntityMap
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
@@ -36,21 +37,23 @@
   ([k]
    (log/debug "entity-map 1" (meta k) k (type k))
    (if (k/keychain? k)
-     (log/debug "keychain:" k)
-     ;; expect vector [k m]
      (do
-       (log/debug "not keychain:" k)
+       ;; (log/debug "keychain:" k)
+       (with-meta {} {:migae/keychain k}))
+     (do
+       ;; (log/debug "    not keychain:" k)
        (apply entity-map k))
-     ;; (with-meta {} {:migae/keychain k}))
      ))
   ([k m]
    (log/debug "entity-map 2" k m)
    (cond
      (k/proper-keychain? k)
      (if (m/valid-emap? m)
-       (let [em (with-meta m {:migae/keychain k})]
-         ;; (log/debug "em: " (meta em) em)
-         em)
+       (if (every? keyword? (keys m))
+         (let [em (with-meta m {:migae/keychain k})]
+           ;; (log/debug "em: " (meta em) em)
+           em)
+         (throw (IllegalArgumentException. (str "Invalid map, only keyword keys allowed: " m))))
        (throw (IllegalArgumentException. (str "Invalid map arg " m))))
 
      (k/improper-keychain? k)
@@ -61,7 +64,7 @@
      :else
      (if (empty? k)
        (throw (IllegalArgumentException. (str "Null keychain '" k "' not allowed for local ctor")))
-       (throw (IllegalArgumentException. (str "Invalid keychain '" k "'"))))))
+       (throw (InvalidKeychainException. (str k))))))
 
   ([k m mode]
    {:pre [(= mode :em)]}
@@ -92,8 +95,8 @@
        (log/debug "entity-map! 1 proper:" keychain)
        ;; (put-proper-emap :keyvec keychain :propmap {} :force true)
        )
-     :else (throw (IllegalArgumentException. (str "Invalid keychain: '" keychain "'"))))
-   )
+     :else (throw (InvalidKeychainException. (str keychain)))))
+
   ([keychain em]
    (cond
      (k/improper-keychain? keychain)
@@ -111,7 +114,7 @@
        )
      :else (if (empty? keychain)
              (throw (IllegalArgumentException. (str "Null keychain '" keychain "' not allowed")))
-             (throw (IllegalArgumentException. (str "Invalid keychain: '" keychain "'")))))
+             (throw (InvalidKeychainException. (str keychain)))))
    )
   ;; ([force keychain em]
   ;;  {:pre [(or (map? em) (vector? em))

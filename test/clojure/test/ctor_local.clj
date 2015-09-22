@@ -59,7 +59,10 @@
       (is (= "Invalid keychain '[1 2]'"
              (.getMessage e))))))
 
-(deftest ^:ctor ctor-vector
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  binary representation:  [:a/b] {:x 1}
+
+(deftest ^:ctor ctor-bin
   (testing "for vector keychain, property map arg may be null or empty"
     (let [em1 (ds/entity-map [:A/B] {})
           em2 (try (ds/entity-map [:A/B] )
@@ -90,7 +93,7 @@
       (is (= "Invalid map arg [1 2]"
              (.getMessage em1)))))
 
-(deftest ^:emap emap-ctor
+(deftest ^:ctor bin
   (testing "entity-map ctor"
     (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
           em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
@@ -120,23 +123,6 @@
 ;;       (log/info "em1 content type:" (type (.content em1)))
 ;;       (is (ds/entity-map? em1))
 ;;       )))
-
-(deftest ^:emap emap-axioms
-  (testing "entity-map axioms"
-    (let [em1 (ds/entity-map [:Species/Felis_catus] {:name "Chibi"})
-          ]
-      (log/info "em1" (ds/dump em1))
-      (log/info "em1 type:" (type em1))
-      (log/info "em1 kind:" (ds/kind em1))
-      (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
-      (log/info "em1 keychain:" (ds/keychain em1))
-      (log/info "em1 keychain type:" (type (ds/keychain em1)))
-;; FIXME      (log/info "em1 key:" (key em1))
-;; FIXME      (log/info "em1 key type:" (type (key em1)))
-;; FIXME      (log/info "em1 content:" (val em1))
-;; FIXME      (log/info "em1 content type:" (type (val em1)))
-      (is (ds/entity-map? em1))
-      )))
 
 ;; (deftest ^:emap hashmap-ctor-2
 ;;   (testing "entity-hashmap ctor"
@@ -216,71 +202,6 @@
              clojure.lang.Keyword))
       )))
 
-(deftest ^:emap emap-props-1
-  (testing "entity-map! with properties"
-    ;; (binding [*print-meta* true]
-      (let [k [:Genus/Felis :Species/Felis_catus :Housecat]
-            e1 (ds/entity-map! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (try (ds/entity-map! k {:name "Booger" :size "medium" :eyes 2})
-                    (catch java.lang.RuntimeException ex
-                      (= "Key already used" (.getMessage ex))))]
-        (log/info "e1" e1)
-        (log/info "e2" e2)
-        (log/info "e2" (ds/dump-str e2))
-        (log/info "e2 entity" (.content e2))
-        (is (= (e1 :name) "Chibi"))
-        (is (= (e2 :name) "Booger"))
-        ;; (should-fail (is (= e1 e2)))
-        ;; (is (not (ds/key=? e1 e2)))
-        )))
-
-(deftest ^:emap emap-fetch
-  (testing "entity-map! new, update, replace"
-    (let [em1 (ds/entity-map! [:Species/Felis_catus :Cat/Chibi] {:name "Chibi"})
-          em2 (ds/entity-map! [:Species/Felis_catus :Cat/Max] {:name "Max"})]
-        ;; FIXME: key=?  (is (ds/key=? em1 em2))
-      (log/info "em1: " em1)
-      (log/info "em2: " em2)
-      (is (= (get em1 :name) "Chibi"))
-        (is (= (em1 :name) "Chibi"))
-        (is (= (:name em1) "Chibi"))
-        (is (= (get em2 :name) "Max")))
-
-    ;; ! do not override existing
-    (let [em2 (try (ds/entity-map! [:Species/Felis_catus :Cat/Chibi] {:name "Chibster"})
-                    (catch java.lang.RuntimeException ex
-                      (= "Key already used" (.getMessage ex))))]
-      (log/info "em2: " em2))
-
-    ;; !! - update existing
-    (let [em3 (ds/entity-map! :force [:Species/Felis_catus :Cat/Booger] {:name "Booger"})
-          em3 (ds/entity-map! :force [:Species/Felis_catus] {:name 4})]
-      (log/info "EM3 " em3)
-      (log/info "em3: " (.content em3))
-      (log/info "em3 key: " (:migae/key em3))
-      ;; (is (= (:name em3) ["Chibi", "Booger" 4]))
-      ;; (is (= (first (:name em3)) "Chibi")))
-      )
-
-    ;; replace existing
-    ;; (let [em4 (ds/alter! [:Species/Felis_catus] {:name "Max"})]
-    ;;   (log/info "em4 " em4)
-    ;;   (is (= (:name em4) "Max")))
-
-    ;; (let [em5 (ds/entity-map! [:Species/Felis_catus :Name/Chibi]
-    ;;                    {:name "Chibi" :size "small" :eyes 1})
-    ;;       em6 (ds/alter!  [:Species/Felis_catus :Name/Booger]
-    ;;                    {:name "Booger" :size "lg" :eyes 2})]
-    ;;   (log/info "em5" em5)
-    ;;   (log/info "em6" em6))
-    ))
-
-(deftest ^:emap emap-fn
-  (testing "emap fn"
-    (let [em1 (ds/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
-      (log/info em1))
-      ))
-
 ;; ################################################################
 ;; NB:  the emaps! family does not (yet) create entities
 ;; (deftest ^:emap emaps
@@ -299,6 +220,9 @@
 ;;     (ds/emaps!! [:Foo] [{:a 1} {:a 2} {:a 3}])
 ;;     (ds/emaps!! [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
 ;;     ))
+
+
+;;;;  FIXME: move these tests to emaps.clj, they are about emap props, not ctors
 
 (deftest ^:em-preds em-predicate-axiom1
   (testing "entity-map predicate axiom 1: what entity-maps are."
@@ -350,6 +274,17 @@
 (deftest ^:em-preds quant-axiom4
   (testing "entity-map quantification axiom 4: not-any?"
     (let [em (ds/entity-map  [:A/B] {:a 1 :b 2})]
+      (is (not-any? em [:x :y]))
+      (is (not (not-any? em [:x :a :y])))
+      )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  vector representation, e.g.  [[:a/b]{:x 1}]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest ^:ctor ctor-vec
+  (testing "entity-map ctor for vector form"
+    (let [em (ds/entity-map [[:A/B] {:a 1 :b 2}])]
+      (is (ds/entity-map? em))
       (is (not-any? em [:x :y]))
       (is (not (not-any? em [:x :a :y])))
       )))

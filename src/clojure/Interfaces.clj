@@ -2,30 +2,6 @@
 
 (clojure.core/println "loading Interfaces")
 
-;; java.lang.Iterable
-    ;; Iterator<T>	iterator()
-    ;; java 8: void forEach(Consumer<? super T> action)
-    ;; java 8: default Spliterator<T>	spliterator()
-
-;; java.io.Serializable (no methods or fields)
-
-;; Seqable (extends nothing)
-;; IPersistentCollection extends Seqable
-;; ILookup (extends nothing)
-;; Counted (extends nothing)
-;; Associative extends IPersistentCollection, ILookup
-;; IPersistentMap extends Iterable, Associative, Counted
-
-;; AFn implements IFn
-;; IHashEq (extends nothing):  int hasheq()
-;; MapEquivalence (extends nothing, no methods)
-;; APersistentMap extends AFn
-;;     implements IPersistentMap, Map, Iterable, Serializable, MapEquivalence, IHashEq {
-
-;; PersistentArrayMap extends APersistentMap implements IObj, IEditableCollection, IMapIterable, IKVReduce{
-;; PersistentHashMap extends APersistentMap implements IEditableCollection, IObj, IMapIterable, IKVReduce {
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  IPersistentEntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,6 +50,7 @@
  ;; :methods []
  ) ;; end gen-interface IPersistentEntityMap
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  IPersistentEntityMapSeq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,3 +67,28 @@
            java.util.Iterator]
  ;; :methods []
  ) ;; end gen-interface IPersistentEntityMapSeq
+
+;; java.lang.Iterable
+    ;; Iterator<T>	iterator()
+    ;; java 8: void forEach(Consumer<? super T> action)
+    ;; java 8: default Spliterator<T>	spliterator()
+
+;; java.io.Serializable (no methods or fields)
+
+;; Seqable (extends nothing)
+;; IPersistentCollection extends Seqable
+;; ILookup (extends nothing)
+;; Counted (extends nothing)
+;; Associative extends IPersistentCollection, ILookup
+;; IPersistentMap extends Iterable, Associative, Counted
+
+;; AFn implements IFn
+;; IHashEq (extends nothing):  int hasheq()
+;; MapEquivalence (extends nothing, no methods)
+;; APersistentMap extends AFn
+;;     implements IPersistentMap, Map, Iterable, Serializable, MapEquivalence, IHashEq {
+
+;; PersistentArrayMap extends APersistentMap implements IObj, IEditableCollection, IMapIterable, IKVReduce{
+;; PersistentHashMap extends APersistentMap implements IEditableCollection, IObj, IMapIterable, IKVReduce {
+
+

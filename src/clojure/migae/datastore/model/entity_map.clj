@@ -29,6 +29,7 @@
   api/Entity-Map
   {:entity-map? pmap/entity-map?
    :entity-map pmap/entity-map
+   :entity-map! pmap/entity-map!
    :dump pmap/dump
    :dump-str pmap/dump-str
    }

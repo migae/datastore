@@ -1,8 +1,0 @@
-{[:rset/yn] {:y "Yes" :n "No"}
- [:rset/dk] {:df "Don't Know"}
- [:rset/rf] {:rf "Refused"}
- [:rset/rgb] {:r "Red" :g "Green" :b "Blue"}}
-
-[[:rseq/yndk] {:rset [[:rset/yn] [:rset/dk]]
-               :seq [:y :n :dk]}]
-

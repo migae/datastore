@@ -1,10 +1,18 @@
 (ns migae.datastore.structure.map
   (:refer-clojure :exclude [read read-string])
   (:require [clojure.tools.logging :as log :only [debug info]]
-            [clojure.tools.reader.edn :refer [read read-string]]
-            [migae.datastore.keys :as k]))
+            [clojure.tools.reader.edn :as edn :refer [read read-string]]
+            [schema.core :as s] ;; :include-macros true]
+            [migae.datastore.keys :as k]
+            [migae.datastore.signature.entity-map :as em]
+            [migae.datastore.schemata :as schemata]))
 
 (clojure.core/println "loading migae.datastore.structure.map")
+
+(schemata/register-schema
+ :Person/#1 [(s/one s/Str "fname") (s/one s/Str "lname") (s/one s/Str "email")])
+(schemata/register-schema
+ :Study#1 [(s/one s/Str "name")])
 
 (declare dump dump-str)
 
@@ -38,6 +46,40 @@
                  (str "Invalid :migae/keychain " keychain " - all links must be namespaced keywords"))))
        (throw (IllegalArgumentException.
                (str "Missing metadata key ':migae/keychain'")))))))
+
+(defn entity-map!
+  "entity-map bulk push ctor"
+  [{kind :kind,
+    schema :schema,
+    ;; {ns :ns schema :schema} :record,
+    data :data
+    :as arg}]
+ ;; schema:
+  ;; {:kind :Participant
+  ;;  :prefix {:entity [:study/#12345]}
+  ;;  :schema [{:fname String} {:lname String} {:email String}]
+  ;;  :data [["Libbie" "Greenlee" "Greenlee@example.org"]
+  ;;         ["Drucilla" "Sebastian" "Sebastian@example.org"]]}
+  (log/debug "entity-map!" arg)
+  (log/debug "    kind" kind)
+  ;; (log/debug "    ns" ns)
+  ;; (log/debug "    keys" keys)
+  (log/debug "    schema" schema)
+  (log/debug "    data" data)
+  (log/debug "schemata: " @schemata/schemata)
+  (let [ps (@schemata/schemata schema)
+        v (try (s/validator ps)
+               (catch Exception x (log/debug "bad schema: " (.getMessage x))))
+        kws (into [] (for [fld ps] (keyword (:name fld))))]
+    (doseq [datum data]
+      (let [rec (zipmap kws datum)
+            em (with-meta rec {:migae/keychain [kind]})]
+        (log/debug "raw datum:" datum)
+        (log/debug "entity-map:" (dump-str (em/entity-map! [kind] rec)))))))
+      ;; (try (v datum)
+      ;;      (catch Exception x (log/debug "fail " (.getMessage x))))
+      ;;   )))
+      ;; )
 
 (defn keychain? [k] (k/keychain? k))
 

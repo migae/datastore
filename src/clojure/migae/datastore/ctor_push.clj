@@ -4,23 +4,23 @@
 
 (declare into-ds!)
 
-(defn entity-map!
-  ([keychain]
-   (into-ds! keychain))
-  ([keychain em]
-   {:pre [(map? em)
-          (vector? keychain)
-          (not (empty? keychain))
-          (every? keyword? keychain)]}
-   (do
-     (into-ds! keychain em)
-     ))
-  ([force keychain em]
-   {:pre [(or (map? em) (vector? em))
-          (vector? keychain)
-          (not (empty? keychain))
-          (every? keyword? keychain)]}
-   (into-ds! force keychain em)))
+;; (defn entity-map!
+;;   ([keychain]
+;;    (into-ds! keychain))
+;;   ([keychain em]
+;;    {:pre [(map? em)
+;;           (vector? keychain)
+;;           (not (empty? keychain))
+;;           (every? keyword? keychain)]}
+;;    (do
+;;      (into-ds! keychain em)
+;;      ))
+;;   ([force keychain em]
+;;    {:pre [(or (map? em) (vector? em))
+;;           (vector? keychain)
+;;           (not (empty? keychain))
+;;           (every? keyword? keychain)]}
+;;    (into-ds! force keychain em)))
 
 ;; (defn put-kinded-emap
 ;;   [keyvec & data]
