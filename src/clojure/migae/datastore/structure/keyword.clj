@@ -112,6 +112,14 @@
    ;; (into-ds! force keychain em))
    ))
 
+(defn entity-map*
+  ;; (defmethod entity-map* [clojure.lang.PersistentVector nil]
+  ([keychain]
+   (log/debug "entity-map* k" keychain)
+   (let [r (gae/get-ds keychain)]
+     (log/debug "entity-map* result: " r)
+     r)))
+
 (defn keychain
   [m]
   (log/debug "keychain: " m)

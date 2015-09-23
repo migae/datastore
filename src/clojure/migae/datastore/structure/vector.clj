@@ -24,6 +24,7 @@
             [migae.datastore.structure.map :as m]
             [migae.datastore.adapter.gae :as gae]))
 
+
 (clojure.core/println "loading migae.datastore.structure.vector")
 
 (defn entity-map?
@@ -101,7 +102,7 @@
    (cond
      (k/improper-keychain? keychain)
      (do
-       (log/debug "entity-map! 2 improper:" keychain)
+       ;; (log/debug "entity-map! 2 improper:" keychain)
        (let [e (gae/put-kinded-emap (with-meta em {:migae/keychain keychain}))]
          (PersistentEntityMap. e nil))
        )
@@ -123,6 +124,33 @@
   ;;         (every? keyword? keychain)]}
   ;;  (into-ds! force keychain em))
   )
+
+
+(defn entity-map*
+  ;; (defmethod entity-map* [clojure.lang.PersistentVector nil]
+  ([keychain]
+   (log/debug "entity-map* 1" keychain)
+   (let [r (gae/get-ds keychain)]
+     (log/debug "entity-map* result: " r)
+     r))
+  ;; (defmethod entity-map* [clojure.lang.Keyword clojure.lang.PersistentVector]
+  ([arg1 arg2]
+   (log/debug "entity-map* 2" arg1 arg2)
+   (if (keyword? arg1)
+     ;; mode keyword:  :prefix, :iso, etc.
+     (do (log/debug "mode " arg1 " keychain: " arg2)
+         (gae/get-ds arg1 arg2))
+     ;; else keychain
+     (if (k/improper-keychain? arg1)
+       (gae/get-ds arg1 arg2))))
+  ;; modal keychain + propmap filters
+  ([arg1 arg2 arg3]
+   (log/debug "entity-map* 3" arg1 arg2 arg3)
+   (if (keyword? arg1)
+     (do
+       ;; mode keyword:  :prefix, :iso, etc.
+       (log/debug "mode " arg1 " keychain: " arg2))
+     (throw (RuntimeException. "bad args")))))
 
 (defn keychain
   [m]

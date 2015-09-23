@@ -1,5 +1,4 @@
 (ns migae.datastore.types.entity-map
-                                        ;(in-ns 'migae.datastore.types.entity-map)
   (:refer-clojure :exclude [name hash])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util

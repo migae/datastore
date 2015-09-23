@@ -114,6 +114,16 @@
     ;;   )
     ))
 
+(deftest ^:query by-kind-1
+  (testing "ds query by kind 1"
+    (ds/entity-map! [:a] {:x 1})
+    (ds/entity-map! [:a/b :a] {:x 2})
+    (ds/entity-map! [:a] {:x 2})
+
+    (let [ems (ds/entity-map* [:a] {:x 2})]
+      (log/trace "ems" ems)
+      )))
+
 (deftest ^:query by-kind
   (testing "ds query by kind"
     ;; populate ds with test entities
@@ -134,7 +144,8 @@
     (ds/entity-map! :multi [:A/C :C] [{:a 1} {:a 2} {:a 3}])
 
     (let [ems1 (ds/entity-map* [:A])
-          ems2 (ds/entity-map* [:A] {:a '(= 2)})]
+          ems2 (ds/entity-map* [:A] {:a 2})]
+          ;; ems2 (ds/entity-map* [:A] {:a '(= 2)})]
       (log/trace "ems1" ems1)
       (log/trace "ems2" ems2)
       )

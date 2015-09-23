@@ -42,6 +42,10 @@
 
 (deftest ^:ctor bulk
   (testing "entity-map bulk push ctor"
+    (ds/register-schema
+     :Person/#1 [(s/one s/Str "fname") (s/one s/Str "lname") (s/one s/Str "email")])
+    (ds/register-schema
+     :Study#1 [(s/one s/Str "name")])
     (let [data (edn/read-string
                 "{:kind :Person
                   :schema :Person/#1
@@ -50,5 +54,7 @@
                         [\"Marni\" \"Alsup\" \"Alsup@example.org\"]
                         [\"Sue\" \"Moxley\" \"Moxley@example.org\"]]}")
           ems (ds/entity-map! data)]
-      (log/info "ems" ems)
+      (log/debug "ems: " (str ems))
+      (doseq [em (ds/entity-map* [:Person] {:email "Greenlee@example.org"})]
+        (log/debug "matched: " (ds/dump-str em)))
       )))

@@ -4,15 +4,10 @@
             [clojure.tools.reader.edn :as edn :refer [read read-string]]
             [schema.core :as s] ;; :include-macros true]
             [migae.datastore.keys :as k]
-            [migae.datastore.signature.entity-map :as em]
-            [migae.datastore.schemata :as schemata]))
+            [migae.datastore.signature.entity-map :as em]))
+            ;; [migae.datastore.schemata :as schemata]))
 
 (clojure.core/println "loading migae.datastore.structure.map")
-
-(schemata/register-schema
- :Person/#1 [(s/one s/Str "fname") (s/one s/Str "lname") (s/one s/Str "email")])
-(schemata/register-schema
- :Study#1 [(s/one s/Str "name")])
 
 (declare dump dump-str)
 
@@ -50,36 +45,38 @@
 (defn entity-map!
   "entity-map bulk push ctor"
   [{kind :kind,
-    schema :schema,
+    type :type,
+    ;; schema :schema,
     ;; {ns :ns schema :schema} :record,
     data :data
     :as arg}]
- ;; schema:
+ ;; schema registered separately:
   ;; {:kind :Participant
+  ;;  :type :Participant#1
   ;;  :prefix {:entity [:study/#12345]}
-  ;;  :schema [{:fname String} {:lname String} {:email String}]
   ;;  :data [["Libbie" "Greenlee" "Greenlee@example.org"]
   ;;         ["Drucilla" "Sebastian" "Sebastian@example.org"]]}
   (log/debug "entity-map!" arg)
   (log/debug "    kind" kind)
   ;; (log/debug "    ns" ns)
   ;; (log/debug "    keys" keys)
-  (log/debug "    schema" schema)
+  ;; (log/debug "    schema" schema)
   (log/debug "    data" data)
-  (log/debug "schemata: " @schemata/schemata)
-  (let [ps (@schemata/schemata schema)
+  (log/debug "schemata: " (@em/dump-schemata))
+  (let [ps (@em/schema type)
         v (try (s/validator ps)
                (catch Exception x (log/debug "bad schema: " (.getMessage x))))
-        kws (into [] (for [fld ps] (keyword (:name fld))))]
-    (doseq [datum data]
-      (let [rec (zipmap kws datum)
-            em (with-meta rec {:migae/keychain [kind]})]
-        (log/debug "raw datum:" datum)
-        (log/debug "entity-map:" (dump-str (em/entity-map! [kind] rec)))))))
-      ;; (try (v datum)
-      ;;      (catch Exception x (log/debug "fail " (.getMessage x))))
-      ;;   )))
-      ;; )
+        kws (into [] (for [fld ps] (keyword (:name fld))))
+        emseq (into []
+                    (for [datum data]
+                      (let [rec (zipmap kws datum)
+                            ;; m (with-meta rec {:migae/keychain [kind]})
+                            em (em/entity-map! [kind] rec)]
+                        ;; (log/debug "raw datum:" datum)
+                        ;; (log/debug "entity-map:" (dump-str em))
+                        em)))]
+    ;; (log/debug "emseq: " emseq)
+    emseq))
 
 (defn keychain? [k] (k/keychain? k))
 

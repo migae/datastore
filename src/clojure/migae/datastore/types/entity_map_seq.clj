@@ -1,15 +1,7 @@
 (ns migae.datastore.types.entity-map-seq
 ;(in-ns 'migae.datastore)
   (:refer-clojure :exclude [name hash])
-  (:import [com.google.appengine.tools.development.testing
-            LocalServiceTestHelper
-            LocalServiceTestConfig
-            LocalMemcacheServiceTestConfig
-            LocalMemcacheServiceTestConfig$SizeUnit
-            LocalMailServiceTestConfig
-            LocalDatastoreServiceTestConfig
-            LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy]
+  (:import [com.google.apphosting.api ApiProxy]
            [com.google.appengine.api.datastore
             EntityNotFoundException]
            [java.lang RuntimeException]
@@ -35,6 +27,7 @@
 ;;            [migae.datastore.types.store-map :refer :all]
             [migae.datastore.keys :as k]
             [clojure.tools.logging :as log :only [trace debug info]]))
+
 
 (clojure.core/println "loading migae.datastore.types.entity_map_seq")
 

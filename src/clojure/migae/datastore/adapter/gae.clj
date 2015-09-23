@@ -28,6 +28,8 @@
             ShortBlob
             Text
             Transaction]
+           migae.datastore.PersistentEntityMap
+           migae.datastore.PersistentEntityMapSeq
            migae.datastore.DuplicateKeyException
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
@@ -51,6 +53,129 @@
 
 (declare into-ds! entity-key)
 (declare get-val-ds get-val-ds-coll proper-keychain? keyword-to-key add-child-keylink)
+(declare get-prefix-matches pull-all get-kinded-emap get-proper-emap)
+
+(defn equality-query
+  [keychain pattern]
+  (log/debug "equality-query" keychain pattern)
+  ;; FIXME: assumption is that keychain is kinded, maybe with prefix?
+  (if (> (count keychain) 1)
+    (throw (RuntimeException. (str "ancestor eq filters not yet supported"))))
+  (let [filter (into [] (for [[k v] pattern]
+                         (do
+                           (log/debug "predicate: " k " = " v)
+                           (Query$FilterPredicate.
+                            (subs (str k) 1) Query$FilterOperator/EQUAL v))))
+        k (str (subs (str (first keychain)) 1))
+        log (log/debug "kind: " k)
+        q (Query. k)
+        fq (doseq [pred filter]
+             (log/debug "pred: " pred)
+             (.setFilter q pred))
+        pq (.prepare ds q)
+        iterator (.asIterator pq)
+        seq (iterator-seq iterator)
+        pemseq (PersistentEntityMapSeq. seq)]
+    (log/debug "filter: " filter)
+    (log/debug "result seq: " (type seq) seq)
+    (log/debug "pemseq" pemseq)
+    pemseq))
+
+(defn get-ds
+  ([keychain]
+   (cond
+     (k/proper-keychain? keychain)
+     (do
+       (log/debug "proper keychain: " keychain)
+       (let [r (get-proper-emap keychain)]
+         r))
+
+     (k/improper-keychain? keychain)
+     (do
+       (log/debug "improper-keychain: " keychain)
+         (let [r (get-kinded-emap keychain)]
+           (log/debug "get-kinded-emap res: " r)
+           r))
+
+     (empty? keychain)
+     (pull-all)
+     :else
+      (throw (IllegalArgumentException. (str "Invalid keychain" keychain)))))
+
+  ([keychain pattern]
+  (log/debug "get-ds " keychain pattern)
+   (cond
+     (= :prefix keychain)
+     (if (k/proper-keychain? pattern)
+       (get-prefix-matches pattern))
+
+     ;; (empty? keychain)
+     ;; (pull-all)
+
+     (k/improper-keychain? keychain)
+     (do
+       (log/debug "improper-keychain with pattern" )
+       (if (empty? pattern)
+         (let [r (get-kinded-emap keychain)]
+           (log/debug "get-kinded-emap res: " r)
+           r)
+         (do ;; we have a kinded keychain with a filter pattern
+           ;; FIXME: validate query pattern
+           (log/debug "pattern: " (first pattern))
+           (if (empty? (meta pattern))
+             (equality-query keychain pattern)
+             (log/debug "inequality filter not yet implemented")))
+           ))
+
+     (k/proper-keychain? keychain)
+     (log/debug "proper keychain with pattern")
+
+     :else
+     (throw (IllegalArgumentException. (str "bad args to get-ds"))))))
+
+(defn get-proper-emap
+  [keychain & data]
+  ;; precon: keychain has already been validated
+  (log/debug "get-proper-emap" keychain)
+  (let [k (k/entity-key keychain)
+        e (.get ds k)]
+    (log/debug "e: " e (type e))
+    (PersistentEntityMap. e nil)))
+
+(defn get-kinded-emap
+  [keychain & data]
+  ;; precon: improper keychain is validated
+  (log/debug "get-kinded-emap " keychain data)
+  ;; (log/debug "store-map " (.content store-map))
+  (if (> (count keychain) 1)
+    (do
+      (log/debug "kinded descendant query")
+      (let [ancestor-key (k/entity-key (vec (butlast keychain)))
+            kind (name (last keychain))
+            q (Query. kind ancestor-key)
+            prepared-query (.prepare ds q)
+            iterator (.asIterator prepared-query)
+            seq (iterator-seq iterator)
+            res (PersistentEntityMapSeq. seq)]
+        (log/debug "seq1: " (type seq))
+        res))
+    ;; kinded query
+    (do
+      (log/debug "kinded query, no ancestor: " keychain)
+      (let [kind (name (last keychain))
+            q (Query. kind)
+            ;; log (log/debug "query: " q)
+            pq (.prepare ds q) ;; FIXME
+            ;; log (log/debug "p query: " pq)
+            ;; log (log/debug "p query count: " (.countEntities pq (FetchOptions$Builder/withDefaults)))
+            iterator (.asIterator pq)
+            seq (iterator-seq iterator)
+            res (PersistentEntityMapSeq. seq)]
+          (log/debug "get-kinded-emap seq: " seq (type seq))
+          (log/debug "get-kinded-emap res: " (type res) (str res))
+        (doseq [em res]
+          (log/debug "get-kinded-emap map: " em (type em)))
+        res))))
 
 (defn pull-all
   []
@@ -155,30 +280,30 @@
     ;; (log/debug "get-val-ds result:" v " -> " val "\n")
     val))
 
-(defn entity-map!
-  ([keychain]
-   (into-ds! keychain))
-  ([keychain em]
-   {:pre [(map? em)
-          (vector? keychain)
-          (not (empty? keychain))
-          (every? keyword? keychain)]}
-   (do
-     (into-ds! keychain em)
-     ))
-  ([force keychain em]
-   {:pre [(or (map? em) (vector? em))
-          (vector? keychain)
-          (not (empty? keychain))
-          (every? keyword? keychain)]}
-   (into-ds! force keychain em)))
+;; (defn entity-map!
+;;   ([keychain]
+;;    (into-ds! keychain))
+;;   ([keychain em]
+;;    {:pre [(map? em)
+;;           (vector? keychain)
+;;           (not (empty? keychain))
+;;           (every? keyword? keychain)]}
+;;    (do
+;;      (into-ds! keychain em)
+;;      ))
+;;   ([force keychain em]
+;;    {:pre [(or (map? em) (vector? em))
+;;           (vector? keychain)
+;;           (not (empty? keychain))
+;;           (every? keyword? keychain)]}
+;;    (into-ds! force keychain em)))
 
 (defn put-kinded-emap
   ([em]
    ;; assumption: input is validated entity-map
-   (log/debug "put-kinded-emap 1: " em (type em))
+   ;; (log/debug "put-kinded-emap 1: " em (type em))
    (let [keychain (:migae/keychain (meta em))
-         foo (log/debug "keychain" keychain)
+         ;; log (log/debug "keychain" keychain)
          kind (name (last keychain))
          parent-keychain (vec (butlast keychain))
          e (if (empty? parent-keychain)
@@ -195,7 +320,7 @@
      e))
   ([keyvec & data]
   ;; precon: improper keychain is validated
-  (log/debug "put-kinded-emap 2:" keyvec " | " data)
+  ;; (log/debug "put-kinded-emap 2:" keyvec " | " data)
   (let [em (first data)
         kind (name (last keyvec))
         parent-keychain (vec (butlast keyvec))
@@ -246,6 +371,18 @@
     ;;   pem)))
     (.put ds e)
     e))
+
+(defn get-prefix-matches
+  [keychain]
+  ;; precon: keychain has already been validated
+  (log/debug "get-prefix-matches" keychain)
+  (let [prefix (apply k/entity-key keychain)
+        q (.setAncestor (Query.) prefix)
+        prepared-query (.prepare ds q)
+        iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
+        seq  (iterator-seq iterator)
+        res (PersistentEntityMapSeq. seq)]
+    res))
 
 ;; (defn into-ds!
 ;;   ;; FIXME: convert to [keychain & em]???
@@ -499,3 +636,4 @@
 ;;         (if (fn? (first content))
 ;;           (emap-update-fn keychain (first content))
 ;;           (throw (IllegalArgumentException. "content must be map or function")))))))
+

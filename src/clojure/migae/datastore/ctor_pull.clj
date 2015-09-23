@@ -32,40 +32,6 @@
 ;;   ;; (log/debug "entity-map* PersistentVector")
 ;;   (get-ds keychain))
 
-;; (defn get-kinded-emap
-;;   [keychain & data]
-;;   ;; precon: improper keychain is validated
-;;   (log/debug "get-kinded-emap " keychain)
-;;   ;; (log/debug "store-map " (.content store-map))
-;;   (if (> (count keychain) 1)
-;;     ;; kinded descendant query
-;;     (let [ancestor-key (keychain-to-key (vec (butlast keychain)))
-;;           kind (name (last keychain))
-;;           q (Query. kind ancestor-key)
-;;           prepared-query (.prepare (.content store-map) q)
-;;           iterator (.asIterator prepared-query)
-;;           seq (iterator-seq iterator)
-;;           res (PersistentEntityMapSeq. seq)]
-;;       ;; (log/debug "seq1: " (type seq))
-;;       res)
-;;     ;; kinded query
-;;     (do
-;;       (log/debug "kinded query: " keychain)
-;;       (let [kind (name (last keychain))
-;;             q (Query. kind)
-;;             foo (log/debug "query: " q)
-;;             pq (.prepare (.content store-map) q) ;; FIXME
-;;             foo (log/debug "p query: " pq)
-;;             foo (log/debug "p query count: " (.countEntities pq (FetchOptions$Builder/withDefaults)))
-;;             iterator (.asIterator pq)
-;;             seq (iterator-seq iterator)
-;;             res (PersistentEntityMapSeq. seq)]
-;;           (log/debug "get-kinded-emap seq: " seq (type seq))
-;;           (log/debug "get-kinded-emap res: " res (type res))
-;;         (doseq [em res]
-;;           (log/debug "get-kinded-emap map: " em (type em)))
-;;         res))))
-
 ;;   ;; (log/debug "keychain" keychain)
 ;;   ;; (log/debug "data" data)
 ;;   ;; (let [em (first data)
@@ -100,15 +66,6 @@
 ;; ;;         e (.get (.content store-map) k)]
 ;; ;; ;;               (catch EntityNotFoundException e nil))]
 ;; ;;     (PersistentEntityMap. e nil)))
-
-;; (defn get-proper-emap
-;;   [keychain & data]
-;;   ;; precon: keychain has already been validated
-;;   (log/debug "get-proper-emap" keychain)
-;;   (let [k (keychain-to-key keychain)
-;;         e (.get (.content store-map) k)]
-;;     (log/debug "e: " e (type e))
-;;     (PersistentEntityMap. e nil)))
 
 ;; ;; getter
 ;; (defn get-ds

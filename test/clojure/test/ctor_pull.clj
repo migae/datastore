@@ -99,7 +99,8 @@
       )))
 
 (deftest ^:ctor-pull ctor-pull-pfx
-  (testing "keychain prefix ctors return all entities whose keychains start with the prefix"
+  (testing "keychain prefix ctor = ancestor query, returns all
+  entities whose keychains start with the prefix"
     (let [abs (ds/entity-map* :prefix [:A/B])
           abac (ds/entity-map* :prefix [:A/B :A/C])
           ]
