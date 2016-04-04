@@ -41,7 +41,7 @@
          ;; '(migae.datastore.adapter [gae :as gae])
          '(migae.datastore [keys :as k])
          ;; get access to funcs above in local ns
-         '(migae.datastore.types [entity-map :refer :all])
+         ;; '(migae.datastore.types [entity-map :refer :all])
          '(clojure.tools.reader [edn :as edn])
          )
 

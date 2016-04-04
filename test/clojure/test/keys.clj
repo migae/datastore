@@ -98,7 +98,6 @@
       (is (= (.getName k2) "B"))
       (is (= (.getKind (KeyFactory/createKey "A" "B")) "A")) ;; native kinds are Strings
       (is (= (ds/kind  (ds/entity-key [:A/B])) :A)) ;; migae kinds are keywords
-      (is (= (.getName k2) "B"))
       (is (= (ds/kind [:A/B]) :A))
       (is (= (ds/identifier [:A/B]) "B"))
       (is (= (ds/kind (ds/keychain (ds/entity-map [:A/B] {:a 1}))) :A))
@@ -107,9 +106,9 @@
 ;; ################################################################
 (deftest ^:keys keys-1
   (testing "keys 1: keylink literals: name"
-    (let [k1 (ds/entity-key :Employee/asalieri)
-          k2 (ds/entity-key :Employee/d15)
-          k3 (ds/entity-key :Employee/x0F)]
+    (let [k1 (ds/entity-key [:Employee/asalieri])
+          k2 (ds/entity-key [:Employee/d15])
+          k3 (ds/entity-key [:Employee/x0F])]
     (log/trace "k1: " k1)
     (is (ds/entity-key? k1) true)
     (is (= (type k1) com.google.appengine.api.datastore.Key))
@@ -125,28 +124,27 @@
     (let [e1 (ds/entity-map [:A/B]{})
           e2 (ds/entity-map [:A/d99]{})
           e3 (ds/entity-map [(keyword "A" "123")]{})]
-    (log/trace "e1 key: " (ds/entity-key e1))
-    (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
-    (log/trace "keys2 e1 keychain:" (ds/keychain e1))
-    (is (ds/entity-key? (ds/entity-key e1)))
-    (is (= (ds/entity-key e1)) (ds/entity-key [:A/B]))
-    (is (= (ds/entity-key e2)) (ds/entity-key :A/B))
-    )))
+      (log/trace "e1 key: " (ds/entity-key e1))
+      (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
+      (log/trace "keys2 e1 keychain:" (ds/keychain e1))
+      (is (ds/entity-key? (ds/entity-key e1)))
+      (is (= (ds/entity-key [:A/B]) (ds/entity-key [:A/B])))
+      (is (= (ds/entity-key e1) (ds/entity-key [:A/B])))
+      ;; (is (= (ds/entity-key e2) (ds/entity-key :A/B)))
+      )))
 
 (deftest ^:keys keys-3
   (testing "keys 3: keylink construction"
     (let [e1 (ds/entity-map [(keyword "A" "B")]{})
           e2 (ds/entity-map [(keyword "A" "99")]{})
           e3 (ds/entity-map [(keyword "A" "B") (keyword "C" "123")]{})]
-    (log/trace "e1 key: " (ds/entity-key e1))
-    (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
-    (log/trace "keys2 e1 keychain:" (ds/keychain e1))
-    (is (ds/entity-key? (ds/entity-key e1)))
-    (is (= (ds/entity-key e1)) (ds/entity-key :A/B))
-    )))
-
-(deftest ^:keychain keychain-fail
-  (testing "keys 3: keychain literals: name"
+      (println "E1 type: " (type e1))
+      (log/trace "e1 key: " (ds/entity-key e1))
+      (log/trace "e1 key to keychain: " (ds/keychain (ds/entity-key e1)))
+      (log/trace "keys2 e1 keychain:" (ds/keychain e1))
+      (is (ds/entity-key? (ds/entity-key e1)))
+      (is (= (ds/entity-key e1)) (ds/entity-key [:A/B]))
+      )))
     (let [ex (try (ds/entity-key [:A/B :X])
                   (catch IllegalArgumentException e e))]
       (is (= (type ex) IllegalArgumentException))

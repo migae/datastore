@@ -177,5 +177,5 @@
   ;; FIXME validate
   (let [dogtag (last v)]
     (if-let [ns (namespace dogtag)]
-      (keyword (name dogtag))
+      (name dogtag)
       dogtag)))

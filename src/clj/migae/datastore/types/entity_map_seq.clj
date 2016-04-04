@@ -1,5 +1,4 @@
 (ns migae.datastore.types.entity-map-seq
-;(in-ns 'migae.datastore)
   (:refer-clojure :exclude [name hash])
   (:import [com.google.apphosting.api ApiProxy]
            [com.google.appengine.api.datastore
@@ -27,8 +26,7 @@
 ;;            [migae.datastore.types.store-map :refer :all]
             [migae.datastore.keys :as k]
             [clojure.tools.logging :as log :only [trace debug info]]))
-
-
+;;
 (clojure.core/println "loading migae.datastore.types.entity_map_seq")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,16 +35,16 @@
 (clojure.core/refer 'clojure.core)
 (require '(clojure.tools [logging :as log :only [debug info]])
          ;; '(migae.datastore.adapter [gae :as gae])
-         ;; '(migae.datastore [keys])
+         '(migae.datastore [keys :as k])
          ;; '(migae.datastore.types [entity-map :as em])
          '(clojure.tools.reader [edn :as edn])
          )
+
 ;; (clojure.core/require '(clojure.tools [logging :as log :only [debug info]]))
 ;; (clojure.core/require '(migae.datastore.adapter [gae :as gae]))
 ;; (clojure.core/require '(migae.datastore [keys :as k]))
 
 (import '(clojure.lang IPersistentCollection))
-
 
 (deftype PersistentEntityMapSeq [content]
 
@@ -62,26 +60,25 @@
   (remove [this]
     (log/debug "PersistentEntityMapSeq.remove"))
 
-
   ;; clojure.lang.ISeq ;; < IPersistentCollection (< Seqable)
   (^Object
     first [_]
-    (log/trace "PersistentEntityMapSeq.ISeq.first of" (type content))
+    ;; (log/debug "PersistentEntityMapSeq.ISeq.first of" (type content))
     (let [r  (first content)
           rm (->PersistentEntityMap r nil)]
       ;; rm (migae.datastore.PersistentEntityMap. r nil)]
-      ;; (log/trace "rm:" rm)
+      ;; (log/debug "rm:" rm)
       rm))
   (^ISeq
     next [_]
-    (log/trace "ISeq next")
+    (log/debug "ISeq next")
     (let [res (next content)]
       (if (nil? res)
         nil
         (PersistentEntityMapSeq. res))))
   (^ISeq
     more [_]  ;;  same as next?
-    (log/trace "PersistentEntityMapSeq.ISeq.more")
+    (log/debug "PersistentEntityMapSeq.ISeq.more")
     (let [res (next content)]
       (if (nil? res)
         nil
@@ -89,39 +86,42 @@
   (^ISeq ;;^clojure.lang.IPersistentVector
     cons  ;; -> ^ISeq ;;
     [this ^Object obj]
-    (log/trace "ISeq cons"))
+    (log/debug "ISeq cons"))
 
   ;;;; Seqable interface
   (^ISeq
     seq [this]  ; specified in Seqable
-     (log/trace "PersistentEntityMapSeq.ISeq.seq")
+     ;; (log/debug "PersistentEntityMapSeq.ISeq.seq")
     this)
 
   ;;;; IPersistentCollection interface
   (^int
     count [_]
-    ;; (log/trace "PersistentEntityMapSeq.count")
+    (log/debug "PersistentEntityMapSeq.count")
     (count content))
   ;; cons - overridden by ISeq
   (^IPersistentCollection
     empty [_]
-    (log/trace "PersistentEntityMapSeq.empty"))
+    (log/debug "PersistentEntityMapSeq.empty"))
   (^boolean
     equiv [_ ^Object obj]
-    (log/trace "PersistentEntityMapSeq.equiv"))
+    (log/debug "PersistentEntityMapSeq.equiv"))
 
   ;; clojure.lang.IndexedSeq extends ISeq, Sequential, Counted{
   ;;public int index();
 
   ;; clojure.lang.Indexed                  ; extends Counted
   ;; (count [this]                         ; Counted
-  ;;   (log/trace "PersistentEntityMapSeq.clojure.lang.Indexed.count")
+  ;;   (log/debug "PersistentEntityMapSeq.clojure.lang.Indexed.count")
   ;;   (count content))
   (nth [this i]                         ; called by get(int index)
-    (log/trace "Indexed nth" i))
+    (log/debug "Indexed nth" i))
   ;; (next em-iter)) ;; HACK
   (nth [this i not-found]
-    (log/trace "Indexed nth with not-found" i))
+    (log/debug "Indexed nth with not-found" i " nf: " not-found)
+    (if-let [r (nth content i)]
+      r
+      not-found))
 
   (reduce [this ^IFn f]  ; -> Object
     (log/debug "PersistentEntityMapSeq.HELP! reduce") (flush)
@@ -167,5 +167,9 @@
       ))
 
   )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(in-ns 'migae.datastore.types.entity-map-seq)
 
 

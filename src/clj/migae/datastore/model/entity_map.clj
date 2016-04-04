@@ -37,6 +37,24 @@
    :identifier pmap/identifier
    })
 
+(extend clojure.lang.PersistentArrayMap
+  sig/Entity-Map
+  {:entity-map? pmap/entity-map?
+   :entity-map pmap/entity-map
+   :entity-map! pmap/entity-map!
+   :dump pmap/dump
+   :dump-str pmap/dump-str
+   }
+  sig/Entity-Key
+  {:keychain pmap/keychain
+   :keychain? pmap/keychain?
+   :keychain=? pmap/keychain=?
+   :key=? pmap/key=?
+   :kind pmap/kind
+   :identifier pmap/identifier
+   :entity-key (fn [this] (k/entity-key (:migae/keychain (meta this))))
+   })
+
 (extend clojure.lang.IPersistentVector
   sig/Entity-Map
   {:entity-map? pvec/entity-map?
@@ -102,3 +120,14 @@
    :dump-str (fn [m] (binding [*print-meta* true] (pr-str m)))
    })
 
+(extend com.google.appengine.api.datastore.Key
+  sig/Entity-Key
+  {:keychain k/keychain
+   :keychain? (fn [this] true)
+   :kind (fn [this] (keyword (.getKind this)))
+   ;; :keychain=? pmap/keychain=?
+   :key=? (fn [this k] (.equals this k))
+   :identifier (fn [this] (if-let [nm (.getName this)] (symbol nm) (.getId this)))
+   :entity-key (fn [this] this)
+   :entity-key? (fn [this] true)
+   })

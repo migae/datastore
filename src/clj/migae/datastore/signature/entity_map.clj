@@ -19,13 +19,19 @@
 ;; fixed and cannot be dynamically altered, unlike the semantics of
 ;; the Protocol operators.
 (defn register-schema
-  [kw schema]
+  [k schema]
   ;; FIXME: validation
-  (if (keyword? kw)
-    (swap! sch/schemata assoc kw schema)
+  (if (and (vector? k)
+           (not (empty? k))
+           (every?
+            #(and (keyword? %) (not (nil? (namespace %))))
+           k))
+    (swap! sch/schemata assoc k schema)
     (throw (IllegalArgumentException. (str "First arg must be keyword")))))
+
 (defn dump-schemata []
   (log/debug "schemata: " @sch/schemata))
+
 (defn schema
   [kw]
   (@sch/schemata kw))

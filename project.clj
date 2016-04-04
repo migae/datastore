@@ -6,7 +6,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:name "git" :url "https://github.com/migae/database"}
   :aot [Interfaces Exceptions]
-  :source-paths ["src/clojure" "src/clj-compile"]
+  :source-paths ["src/clj" "src/clj-compile"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]
   :test-selectors {:ancestor :ancestor
@@ -33,12 +33,12 @@
                    :props :props
                    :query :query
                    }
-  :dependencies [[org.clojure/clojure "1.8.0-alpha5"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.reader "0.8.16"]
                  [org.clojure/tools.logging "0.3.1"]
                  [prismatic/schema "1.0.1"]
-                 [com.google.appengine/appengine-api-1.0-sdk "1.9.26"]
-                 [com.google.appengine.tools/appengine-mapreduce "0.8.5"
+                 [com.google.appengine/appengine-api-1.0-sdk LATEST :scope "runtime"]
+                 #_[com.google.appengine.tools/appengine-mapreduce LATEST ;; "0.8.5"
                   :exclusions [com.google.api-client/google-api-client
                                it.unimi.dsi/fastutil
                                com.google.appengine/appengine-api-1.0-sdk

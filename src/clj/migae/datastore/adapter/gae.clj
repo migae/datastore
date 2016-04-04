@@ -63,22 +63,22 @@
     (throw (RuntimeException. (str "ancestor eq filters not yet supported"))))
   (let [filter (into [] (for [[k v] pattern]
                          (do
-                           (log/debug "predicate: " k " = " v)
+                           (log/debug "\tpredicate: " k " = " v)
                            (Query$FilterPredicate.
                             (subs (str k) 1) Query$FilterOperator/EQUAL v))))
         k (str (subs (str (first keychain)) 1))
-        log (log/debug "kind: " k)
+        log (log/debug "\tkind: " k)
         q (Query. k)
         fq (doseq [pred filter]
-             (log/debug "pred: " pred)
+             (log/debug "\tpred: " pred)
              (.setFilter q pred))
         pq (.prepare ds q)
         iterator (.asIterator pq)
         seq (iterator-seq iterator)
         pemseq (PersistentEntityMapSeq. seq)]
-    (log/debug "filter: " filter)
-    (log/debug "result seq: " (type seq) seq)
-    (log/debug "pemseq" pemseq)
+    (log/debug "\tfilter: " filter)
+    (log/debug (str "\tresult seq: " (type seq) seq))
+    (log/debug (str "\tpemseq: " pemseq))
     pemseq))
 
 (defn get-ds

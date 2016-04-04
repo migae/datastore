@@ -1,3 +1,6 @@
+obsolete/
+tmp/
+
 # emacs
 # -*- mode: gitignore; -*-
 *~
