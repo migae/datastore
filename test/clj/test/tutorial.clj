@@ -15,7 +15,7 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -134,13 +134,13 @@
       (is (= (seq e) '([:a 1])))
       (log/trace "(seq e) " (seq e))
       (log/trace "(assoc e :b 2) " (assoc e :b 2))
-      (is (= (count e) 2))
-      (is (= (seq e) '([:b 2] [:a 1])))
+      (is (= (count (assoc e :b 3)) 2))
+      (is (= (seq (assoc e :b 2)) '([:a 1] [:b 2])))
       (log/trace "(seq e) " (seq e))
       (let [x (assoc e :c 3)]
         (log/trace "(assoc e :c 3) -> " x)
         (log/trace "(type (assoc e :c 3)): " (type x)))
-      (is (= (seq e) '([:b 2] [:c 3] [:a 1])))
+      (is (= (seq (assoc e :b 2 :c 3)) '([:a 1] [:b 2] [:c 3])))
       )))
 
 (def test-study-members
@@ -169,7 +169,8 @@
 (deftest ^:api emap-add-children
   (testing "clojure map api: adding children by kind"
     (log/trace "test: clojure map api: add children by kind")
-    (let [k (ds/keychain (ds/entity-map! [:Study] {:name "Test"}))]
+    (let [em (ds/entity-map! [:Study] {:name "Test"})
+          k (ds/keychain em)]
       (doseq [mbr test-study-members]
         (let [mmap {:fname (first mbr), :lname (second mbr), :email (last mbr)}
               m (ds/entity-map! (conj k :Participant) mmap)]
@@ -185,6 +186,7 @@
           emp3 (ds/entity-map! [:Dept/IT :Employee] {:lname "Bates" :fname "Bill" :email "bates@foo.org"})
           employees  (try (ds/entity-map* (conj k :Employee)) ; ancestory query
                         (catch EntityNotFoundException e (log/trace (.getMessage e))))]
+      (is (= k [:Dept/IT]))
       (is (map? e1))
       (is (ds/entity-map? e1))
       (is (map? emp1))
@@ -232,6 +234,7 @@
 (deftest ^:props emap-embedded-map-1
   (testing "using a map as a property value"
     (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})]
+      (println "EMBED: " e)
       (log/trace "test: emap-embedded 1")
       (log/trace "e: " e)
       (log/trace "(e :b): " (e :b) (type (e :b)))
@@ -298,8 +301,8 @@
   (testing "emap meta"
     (let [e (ds/entity-map! [:Foo/d3] {:a 1 :b 2})]
       (is (ds/entity-map? e))
-      (is (= (type e) migae.datastore.PersistentEntityMap))
-      (is (= (type (:migae/key (meta e))) clojure.lang.PersistentVector))
+      ;; (is (= (type e) migae.datastore.PersistentEntityMap))
+      (is (= (type (:migae/keychain (meta e))) clojure.lang.PersistentVector))
       (is (= (type (.getKey (.content e))) com.google.appengine.api.datastore.Key))
     )))
 

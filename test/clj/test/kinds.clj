@@ -12,9 +12,10 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy])
+           [com.google.apphosting.api ApiProxy]
+           [migae.datastore InvalidKeychainException])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -56,20 +57,15 @@
 (deftest ^:kinds kind-ctor-fail
   (testing "kinded construction: local ctor fails"
     (let [ex (try (ds/entity-map [:A] {})
-                  (catch java.lang.AssertionError e e))]
-      (is (= (type ex) java.lang.AssertionError))
-      (is (= "Assert failed: (every? keylink? keychain)"
-             (.getMessage ex))))
+                  (catch IllegalArgumentException e e))]
+      (is (= (.getMessage ex) "Improper keychain '[:A]' not allowed for local ctor")))
     (let [ex (try (ds/entity-map [:A/B :C] {})
-                  (catch java.lang.AssertionError x x))]
-      (is (= (type ex) java.lang.AssertionError))
-      (is (= "Assert failed: (every? keylink? keychain)"
+                  (catch IllegalArgumentException x x))]
+      (is (= "Improper keychain '[:A/B :C]' not allowed for local ctor"
              (.getMessage ex))))
     (let [ex (try (ds/entity-map [:A/B :C :X/Y] {})
-                  (catch java.lang.AssertionError x x))]
-      (is (= (type ex) java.lang.AssertionError))
-      (is (= "Assert failed: (every? keylink? keychain)"
-             (.getMessage ex))))
+                  (catch InvalidKeychainException x x))]
+      (is (= (.getMessage ex) "[:A/B :C :X/Y]")))
       ))
 
 (deftest ^:kinds kind-ctor-chain

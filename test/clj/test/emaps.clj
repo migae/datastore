@@ -12,7 +12,7 @@
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             ;; [migae.datastore :as ds]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -112,9 +112,9 @@
         (log/trace "e2 entity" (.content e2))
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Booger"))
-        (is (= (ds/kind (ds/entity-map! k {})) :Cat))
+        (is (= (ds/kind (ds/entity-map! k {})) "Cat"))
         ;; FIXME (should-fail (is (= e1 e2)))
-        ;; FIXME (is (ds/key=? e1 e2))
+        ;; FIXME (is (ds/keys=? e1 e2))
         )))
 
 (deftest ^:entity-map entity-map-fetch
@@ -122,7 +122,7 @@
     ;; ignore new if exists
     (let [em1 (ds/entity-map! [:Species/Felis_catus :Cat] {:name "Chibi"})
           em2 (ds/entity-map! [:Species/Felis_catus :Cat] {:name "Booger"})]
-        ;; FIXME (is (not (ds/key=? em1 em2)))
+        ;; FIXME (is (not (ds/keys=? em1 em2)))
         ;; FIXME: is (= pfx em1 pfx em2 (i.e. same ancestry)
         (is (= (get em1 :name) "Chibi"))
         (is (= (em1 :name) "Chibi"))

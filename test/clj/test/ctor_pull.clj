@@ -13,7 +13,7 @@
            [com.google.appengine.api.datastore EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
                                         ;            [ring-zombie.core :as zombie]))
 
@@ -75,8 +75,9 @@
       (log/trace "ems count:" (count ems))
       (log/trace "ems type:" (type ems))
       (doseq [em ems]
-        (log/trace "em:" (ds/keychain em) " kind:" (ds/kind em))
-      ))))
+        (log/trace "em type: " (type em))
+        (log/debug "em: " (ds/dump em))) ;; (ds/keychain em) " kind:" (ds/kind em))
+      )))
 
 (deftest ^:ctor-pull ctor-pull-kinded
   (testing "pull ctor"
@@ -101,8 +102,8 @@
 (deftest ^:ctor-pull ctor-pull-pfx
   (testing "keychain prefix ctor = ancestor query, returns all
   entities whose keychains start with the prefix"
-    (let [abs (ds/entity-map* :prefix [:A/B])
-          abac (ds/entity-map* :prefix [:A/B :A/C])
+    (let [abs (ds/entity-map* [:A/B])
+          abac (ds/entity-map* [:A/B :A/C])
           ]
       (log/trace "abs count:" (count abs) (type abs))
       (log/trace "abac count:" (count abac) (type abac))

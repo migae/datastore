@@ -1,3 +1,5 @@
+(println "Start loading migae.datastore.types.store_map")
+
 (ns migae.datastore.types.store-map
   (:refer-clojure :exclude [name hash])
   (:import [com.google.apphosting.api ApiProxy]
@@ -45,7 +47,7 @@
 (in-ns 'migae.datastore)
 (clojure.core/refer 'clojure.core)
 (require '(clojure.tools [logging :as log :only [debug info]])
-         '(migae.datastore.adapter [gae :as gae-adapter])
+         ;; '(migae.datastore.adapter [gae :as gae-adapter])
 ;;         '(migae.datastore.model [gae :as ds])
          '(migae.datastore [keys :as k])
          ;; '(migae.datastore.types [entity-map :refer :all])
@@ -55,6 +57,7 @@
 (import '(com.google.appengine.api.datastore DatastoreServiceFactory
                                              Key Query))
 
+;;FIXME: move dependencies on datastore api to adapter/gae.clj
 (defonce dss (DatastoreServiceFactory/getDatastoreService))
 
 (deftype PersistentStoreMap [content txns ds-meta]
@@ -109,7 +112,8 @@
     (log/debug "PersistentStoreMap.invoke" k (type k))
     (cond
       (k/keychain? k)
-      (let [e (gae-adapter/fetch (k/entity-key k))]
+      (let [e (.get dss (k/entity-key k))]
+            ;;(gae-adapter/fetch (k/entity-key k))]
       ;; (let [e (.get content (k/entity-key k))]
         (PersistentEntityMap. e nil))
       :else (throw (RuntimeException. "PersistentStoreMap.invoke"))))
@@ -229,8 +233,8 @@
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentVector" k)
                 (let [dskey (k/entity-key k)]
-                  ;; (.get (.content ds) dskey)))
-                  (gae-adapter/fetch dskey)))
+                  (.get dss dskey)))
+                  ;; (gae-adapter/fetch dskey)))
               (k/keychain? k)
               (.get content (k/entity-key k))
               (keyword? k)
@@ -267,13 +271,14 @@
          ;; (throw (RuntimeException. "PersistentStoreMap.seq")))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IReduce  ; extends IReduceInit
-  (reduce [this ^IFn f]  ; -> Object
+  ;; support clojure.core/reduce?  no need if we have seqable?
+  #_(reduce [this ^IFn f]  ; -> Object
     (do
       (log/debug "PersistentStoreMap.reduce 1")
       this))
       ;; (throw (RuntimeException. "PersistentStoreMap.reduce f"))))
 
-  (reduce [this ^IFn f ^Object to-map]  ; -> Object
+  #_(reduce [this ^IFn f ^Object to-map]  ; -> Object
     (do
       (log/debug "PersistentStoreMap.reduce 2")
       (log/debug "to-map: " (type to-map))
@@ -281,9 +286,9 @@
       ;; (throw (RuntimeException. "PersistentStoreMap.reduce f o"))))
 
   ;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IReference; < IMeta
-  (^IPersistentMap alterMeta [this, ^IFn alter, ^ISeq args]
+  #_(^IPersistentMap alterMeta [this, ^IFn alter, ^ISeq args]
          (throw (RuntimeException. "PersistentStoreMap.alterMeta")))
-  (^IPersistentMap resetMeta [this ^IPersistentMap m]
+  #_(^IPersistentMap resetMeta [this ^IPersistentMap m]
          (throw (RuntimeException. "PersistentStoreMap.resetMeta")))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.ITransientCollection
@@ -296,11 +301,12 @@
          (throw (RuntimeException. "PersistentStoreMap.persistent")))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.Indexed                  ; extends Counted
-  (nth [this i]                         ; called by get(int index)
+  #_(nth [this i]                         ; called by get(int index)
          (throw (RuntimeException. "PersistentStoreMap.nth i")))
 
-  (nth [this i not-found]
+  #_(nth [this i not-found]
        (throw (RuntimeException. "PersistentStoreMap.nth i not-found")))
+
   ) ;; end deftype PersistentStoreMap
 
 (defn store-map?
@@ -308,3 +314,5 @@
   (log/debug "PersistentStoreMap.store-map?" (type arg))
   (log/debug "bool" (= (type arg) 'migae.datastore.PersistentStoreMap))
   (= (type arg) 'migae.datastore.PersistentStoreMap))
+
+(println "Done loading migae.datastore.types.store_map")

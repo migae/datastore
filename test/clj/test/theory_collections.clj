@@ -15,7 +15,7 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -71,7 +71,7 @@
           e2 (empty e1)]
       (is (ds/entity-map? e2))
       (is (empty? e2))
-      (is (ds/key=? e1 e2)) ; an entity-map must have a key
+      (is (ds/keys=? e1 e2)) ; an entity-map must have a key
       )))
 
 (deftest ^:coll empty-axiom2
@@ -80,7 +80,7 @@
           e2 (not-empty e1)]
       (is (ds/entity-map? e2))
       (is (not (empty? e2)))
-      (is (ds/key=? e1 e2))
+      (is (ds/keys=? e1 e2))
       (is (= e1 e2))
       )))
 
@@ -228,12 +228,12 @@
 
 (deftest ^:merge merge-4
   (testing "merge 4: merging em into plain map loses key"
-    (is (= (merge {} (ds/entity-map [:X/Y] {:b 1})))
-        ^{:migae/keychain [:A/B]} {:b 1})
+    (is (= (merge {} (ds/entity-map [:X/Y] {:b 1}))
+        ^{:migae/keychain [:A/B]} {:b 1}))
     (is (= (type (merge {} (ds/entity-map [:X/Y] {:b 1})))
            clojure.lang.PersistentArrayMap))
-    (is (= (merge {:a 1} (ds/entity-map [:X/Y] {:b 1})))
-        ^{:migae/keychain [:A/B]} {:a 1 :b 1})
+    (is (= (merge {:a 1} (ds/entity-map [:X/Y] {:b 1}))
+        ^{:migae/keychain [:A/B]} {:a 1 :b 1}))
     (is (= (type (merge {:a 1} (ds/entity-map [:X/Y] {:b 1})))
            clojure.lang.PersistentArrayMap))
     ))
@@ -308,7 +308,7 @@
       (log/trace "em3" (ds/keychain em3) (ds/dump em3))
       (log/trace "em3 type:" (type em3))
       (is (not= em1 em3))
-;;      (is (ds/key=? em1 em3))
+;;      (is (ds/keys=? em1 em3))
 
       (let [em4 (merge em3 {:d 27})]
         (log/trace "em4" em4)

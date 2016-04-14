@@ -22,6 +22,9 @@
 
 (clojure.core/println "loading migae.datastore.structure.list")
 
+
+(declare dump dump-str)
+
 (declare entity-key ->PersistentEntityMap)
 
 (defn entity-map? [m]
@@ -83,3 +86,17 @@
 (defn entity-key
   ([keychain]
    (k/entity-key (vec keychain))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  utils
+(defn dump
+  [m]
+  (binding [*print-meta* true]
+    (with-out-str
+      (prn m))))
+
+(defn dump-str
+  [m]
+  (binding [*print-meta* true]
+    (with-out-str
+      (pr-str m))))

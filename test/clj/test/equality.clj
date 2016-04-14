@@ -13,7 +13,7 @@
             EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -50,7 +50,7 @@
 
 ;; One option is to outlaw clojure.core/= and require equality
 ;; predicates to be decorated to explicitly indicate which kind of
-;; equality: ds/key=?, ds/map=?, and ds/entity-map=?
+;; equality: ds/keys=?, ds/map=?, and ds/entity-map=?
 
 (deftest ^:equality eq-1
   (testing "Clojure.core/= is disallowed"
@@ -73,22 +73,22 @@
                        (array-map :a 1))
                        (catch java.lang.RuntimeException x x))]
       ;; (is (= (class res1) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res1)))
       ;; (is (= (class res2) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res2)))
       ;; (is (= (class res3) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res3)))
       ;; (is (= (class res4) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res4)))
       ;; (is (= (class res5) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res5)))
       ;; (is (= (class res6) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res6)))
       )))
 
@@ -109,60 +109,72 @@
           ;;              (ds/entity-map [:A/B] {:a 1}))
           ;;           (catch java.lang.RuntimeException x x))]
       ;; (is (= (class res1) java.lang.RuntimeException))
-      ;; ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;; ;;        (.getMessage res9)))
       ;; (is (= (class res2) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res2)))
       ;; (is (= (class res3) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res3)))
       ;; (is (= (class res4) java.lang.RuntimeException))
-      ;; (is (= "clojure.core/= not supported; use one of key=?, map=? or entity-map?"
+      ;; (is (= "clojure.core/= not supported; use one of keys=?, map=? or entity-map?"
       ;;        (.getMessage res4)))
       ))
 
 (deftest ^:equality eq-3
-  (testing "ds/entity-map=? means both ds/key=? and ds/map=?"
+  (testing "ds/entity-map=? means both ds/keys=? and ds/map=?"
     (let [em1 (ds/entity-map [:A/B] {:a 1})
           em2 (ds/entity-map [:A/B] {:a 1})]
-    (is (ds/entity-map=? em1 em2))
+    (is (ds/entity-maps=? em1 em2))
     (is (not (identical? em1 em2))))
-    (is (ds/entity-map=? (ds/entity-map [:A/B] {:a 1})
+    (is (ds/entity-maps=? (ds/entity-map [:A/B] {:a 1})
                          (ds/entity-map [:A/B] {:a 1})))
     (is (not (identical? (ds/entity-map [:A/B] {:a 1})
                          (ds/entity-map [:A/B] {:a 1}))))
-    (is (not (ds/entity-map=? (ds/entity-map [:A/B] {:a 1})
+    (is (not (ds/entity-maps=? (ds/entity-map [:A/B] {:a 1})
                    (ds/entity-map [:A/B] {:a 2}))))
-    (is (not (ds/entity-map=? (ds/entity-map [:A/B] {:a 1})
+    (is (not (ds/entity-maps=? (ds/entity-map [:A/B] {:a 1})
                               (ds/entity-map [:A/X] {:a 1}))))
-    (is (not (ds/entity-map=? (ds/entity-map [:A/B] {:a 1})
-                              (ds/entity-map [:A/X] {:a 2}))))
+    (is (not (ds/entity-maps=? (ds/entity-map [:A/B] {:a 1})
+                               (ds/entity-map [:A/X] {:a 2}))))
     ))
 
 (deftest ^:equality key-eq-1
   (testing "key equality 1"
-    (is (ds/key=? (ds/entity-map [:A/B] {:a 1})
+    (is (ds/keys=? (ds/entity-map [:A/B] {:a 1})
                  (ds/entity-map [:A/B] {:a 1})))
-    (is (ds/key=? (ds/entity-map [:A/B] {:a 1})
+    (is (ds/keys=? (ds/entity-map [:A/B] {:a 1})
                  (ds/entity-map [:A/B] {:a 2})))
-    (is (not (ds/key=? (ds/entity-map [:A/B] {:a 1})
+    (is (not (ds/keys=? (ds/entity-map [:A/B] {:a 1})
                       (ds/entity-map [:A/X] {:a 1}))))
-    (is (not (ds/key=? (ds/entity-map [:A/B] {:a 1})
+    (is (not (ds/keys=? (ds/entity-map [:A/B] {:a 1})
                       (ds/entity-map [:A/X] {:a 2}))))
     (log/trace "done")
     ))
 
-(deftest ^:equality map-eq-1
-  (testing "values map equality 1"
-    (is (ds/map=? (ds/entity-map [:A/B] {:a 1})
-               (ds/entity-map [:A/B] {:a 1})))
-    (is (ds/map=? (ds/entity-map [:A/B] {:a 1})
-               (ds/entity-map [:A/X] {:a 1})))
-    (is (not (ds/map=? (ds/entity-map [:A/B] {:a 1})
-                    (ds/entity-map [:A/B] {:a 2}))))
-    (is (not (ds/map=? (ds/entity-map [:A/B] {:a 1})
-                    (ds/entity-map [:A/X] {:a 2}))))
+;; (deftest ^:equality map-eq-1
+;;   (testing "values map equality 1"
+;;     (is (ds/map=? (ds/entity-map [:A/B] {:a 1})
+;;                   (ds/entity-map [:A/B] {:a 1})))
+;;     (is (ds/map=? (ds/entity-map [:A/B] {:a 1})
+;;                   (ds/entity-map [:A/X] {:a 1})))
+;;     (is (not (ds/map=? (ds/entity-map [:A/B] {:a 1})
+;;                        (ds/entity-map [:A/B] {:a 2}))))
+;;     (is (not (ds/map=? (ds/entity-map [:A/B] {:a 1})
+;;                        (ds/entity-map [:A/X] {:a 2}))))
+;;     ))
+
+(deftest ^:equality map-eq-2
+  (testing "values map equality "
+    (is (= (ds/entity-map [:A/B] {:a 1})
+                  (ds/entity-map [:A/B] {:a 1})))
+    (is (= (ds/entity-map [:A/B] {:a 1})
+                  (ds/entity-map [:A/X] {:a 1})))
+    (is (not (= (ds/entity-map [:A/B] {:a 1})
+                       (ds/entity-map [:A/B] {:a 2}))))
+    (is (not (= (ds/entity-map [:A/B] {:a 1})
+                       (ds/entity-map [:A/X] {:a 2}))))
     ))
 
 ;;;;;;;;;;;;;;;;

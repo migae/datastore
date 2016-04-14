@@ -15,11 +15,11 @@
             ArrayList
             HashSet
             Vector]
-           migae.datastore.InvalidKeychainException
+           [migae.datastore InvalidKeychainException]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.signature.entity-map :as em]))
+            #_[migae.datastore.signature.entity-map :as em]))
 
 (clojure.core/println "loading migae.datastore.keys")
 
@@ -28,19 +28,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (declare get-val-ds get-val-ds-coll proper-keychain? keyword-to-key add-child-keylink)
 
-(defn keychain=?
+#_(defn keychain=?
   [k1 k2]
-  (let [kch1 (if (em/entity-map? k1)
+  (let [kch1 ;;(if (em/entity-map? k1)
                ;; recur with .getParent
                (if (map? k1)
-                 (:migae/key (meta k1))))
-        kch2 (if (em/entity-map? k2)
+                 (:migae/key (meta k1))) ;)
+        kch2 ;; (if (em/entity-map? k2)
                ;; recur with .getParent
                (if (map? k2)
-                 (:migae/key (meta k2))))]
-    ))
+                 (:migae/key (meta k2)))]
+    (= kch1 kch2)))
 
-(defn key=?
+#_(defn key=?
   [em1 em2]
   ;; FIXME:  pre: validate types
   (if (em/entity-map? em1)
@@ -49,7 +49,7 @@
       (keychain=? em1 em2))
     (if (map? em1)
       (keychain=? em1 em2)
-      (log/debug "EXCEPTION: key= applies only to maps and emaps"))))
+      (log/trace "EXCEPTION: key= applies only to maps and emaps"))))
 
 (defn- make-embedded-entity
   [m]
@@ -73,20 +73,20 @@
 ;; (defmulti identifier class)
 ;; (defmethod identifier Key
 ;;   [^Key k]
-;;   ;; (log/debug "Key identifier" k)
+;;   ;; (log/trace "Key identifier" k)
 ;;   (let [nm (.getName k)
 ;;         id (.getId k)]
 ;;     (if (nil? nm) id (str nm))))
 ;; (defmethod identifier migae.datastore.PersistentEntityMap
 ;;   [^migae.datastore.PersistentEntityMap em]
-;;   ;; (log/debug "PersistentEntityMap.identifier")
+;;   ;; (log/trace "PersistentEntityMap.identifier")
 ;;   (let [k (.getKey (.content em))
 ;;         nm (.getName k)
 ;;         id (.getId k)]
 ;;     (if (nil? nm) id (str nm))))
 ;; (defmethod identifier migae.datastore.PersistentEntityHashMap
 ;;   [^migae.datastore.PersistentEntityHashMap em]
-;;   ;; (log/debug "PersistentEntityHashMap.identifier")
+;;   ;; (log/trace "PersistentEntityHashMap.identifier")
 ;;   (let [fob (dogtag (.k em))
 ;;         nm (read-string (name fob))]
 ;;     nm))
@@ -101,20 +101,20 @@
 
 (defn keylink?
   [k]
-  ;; (log/debug "keylink?" k)
+  ;; (log/trace "keylink?" k)
   (and (keyword? k)
        (not (nil? (namespace k)))))
 
 (defn keyword-to-key
   [^clojure.lang.Keyword k]
    "map single keyword to key."
-   ;; (log/debug "keyword-to-key:" k (type k))
+   ;; (log/trace "keyword-to-key:" k (type k))
    (if (not (keyword? k))
      (throw (IllegalArgumentException.
              (str "not a clojure.lang.Keyword: " k))))
    (let [kind (clojure.core/namespace k)
          ident (edn/read-string (clojure.core/name k))]
-     ;; (log/debug (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
+     ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
      (cond
        (nil? kind)
        (throw (IllegalArgumentException. (str "missing namespace: " k)))
@@ -147,15 +147,15 @@
 (defn identifier
   "identifier co-ctor"
   [v]
-  (log/debug "identifier co-ctor" v)
+  (log/trace "identifier co-ctor" v)
   ;; FIXME validate
   (if (= (type v) Key)
     (let [nbr (.getId v)]
       (if (> nbr 0)
-        (do (log/debug "id nbr: " nbr)
+        (do (log/trace "id nbr: " nbr)
             nbr)
         (if-let [nm (.getName v)]
-          (do (log/debug "id nm: " nm)
+          (do (log/trace "id nm: " nm)
               nm))))
     (let [dogtag (last v)]
       (if-let [ns (namespace dogtag)]
@@ -164,8 +164,8 @@
 
 (defn add-child-keylink
   [^KeyFactory$Builder builder chain]
-  ;; (log/debug "add-child-keylink builder:" builder)
-  ;; (log/debug "add-child-keylink chain:" chain (type chain) (type (first chain)))
+  ;; (log/trace "add-child-keylink builder:" builder)
+  ;; (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
   (doseq [kw chain]
     (if (nil? kw)
       nil
@@ -203,18 +203,18 @@
 
 (defmethod keychain Entity
   [^Entity e]
-  ;; (log/debug "keychain co-ctor 1: entity" e)
+  ;; (log/trace "keychain co-ctor 1: entity" e)
   (keychain (.getKey e)))
 
 (defmethod keychain EmbeddedEntity
   [^EmbeddedEntity e]
-  ;; (log/debug "keychain co-ctor 1: entity" e)
+  ;; (log/trace "keychain co-ctor 1: entity" e)
   (keychain (.getKey e)))
 
 (defmethod keychain Key
   [^Key k]
   {:pre [(not (nil? k))]}
-  ;; (log/debug "keychain co-ctor 2: key" k)
+  ;; (log/trace "keychain co-ctor 2: key" k)
   (let [kind (.getKind k)
         nm (.getName k)
         id (str (.getId k))
@@ -222,14 +222,14 @@
         res (if (.getParent k)
               (conj (list dogtag) (keychain (.getParent k)))
               (list dogtag))]
-    ;; (log/debug "kind" kind "nm " nm " id " id " parent " (.getParent k))
-    ;; (log/debug "res: " res)
-    ;; (log/debug "res2: " (vec (flatten res)))
+    ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
+    ;; (log/trace "res: " res)
+    ;; (log/trace "res2: " (vec (flatten res)))
     (vec (flatten res))))
 
 (defmethod keychain clojure.lang.PersistentVector
   [^clojure.lang.PersistentVector v]
-  (log/debug "keychain IPersistentVector: " v)
+  (log/trace "keychain IPersistentVector: " v)
   (if (keychain? v)
     v
     (throw (InvalidKeychainException. (str v)))))
@@ -237,12 +237,12 @@
 
 ;; (defmethod keychain migae.datastore.PersistentEntityMap
 ;;   [^PersistentEntityMap e]
-;;   (log/debug "keychain IPersistentEntityMap: " e)
+;;   (log/trace "keychain IPersistentEntityMap: " e)
 ;;   (keychain (.getKey (.content e))))
 
 ;; (defmethod keychain migae.datastore.PersistentEntityHashMap
 ;;   [^PersistentEntityHashMap e]
-;;   (log/debug "to-keychain IPersistentEntityMap: " e)
+;;   (log/trace "to-keychain IPersistentEntityMap: " e)
 ;;   (.k e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -257,14 +257,14 @@
   ;;  :added "1.0"
   ;;  :static true}
   [coll]
-  ;; (log/debug "get-val-ds-coll" coll (type coll))
+  ;; (log/trace "get-val-ds-coll" coll (type coll))
   (cond
     (list? coll) (let [a (ArrayList.)]
                      (doseq [item coll]
                        (do
-                         ;; (log/debug "vector item:" item (type item))
+                         ;; (log/trace "vector item:" item (type item))
                          (.add a (get-val-ds item))))
-                     ;; (log/debug "ds converted:" coll " -> " a)
+                     ;; (log/trace "ds converted:" coll " -> " a)
                      a)
 
     (map? coll) (make-embedded-entity coll)
@@ -272,27 +272,27 @@
     (set? coll) (let [s (HashSet.)]
                   (doseq [item coll]
                     (let [val (get-val-ds item)]
-                      ;; (log/debug "set item:" item (type item))
+                      ;; (log/trace "set item:" item (type item))
                       (.add s (get-val-ds item))))
-                  ;; (log/debug "ds converted:" coll " -> " s)
+                  ;; (log/trace "ds converted:" coll " -> " s)
                   s)
 
     (vector? coll) (let [a (Vector.)]
                      (doseq [item coll]
                        (do
-                         ;; (log/debug "vector item:" item (type item))
+                         ;; (log/trace "vector item:" item (type item))
                          (.add a (get-val-ds item))))
-                     ;; (log/debug "ds converted:" coll " -> " a)
+                     ;; (log/trace "ds converted:" coll " -> " a)
                      a)
 
     :else (do
-            (log/debug "HELP" coll)
+            (log/trace "HELP" coll)
             coll))
     )
 
 (defn get-val-ds
   [v]
-  ;; (log/debug "get-val-ds" v (type v))
+  ;; (log/trace "get-val-ds" v (type v))
   (let [val (cond (integer? v) v
                   (string? v) (str v)
                   (coll? v) (get-val-ds-coll v)
@@ -308,15 +308,15 @@
                   (= (type v) java.util.Date) v
                   (= (type v) java.util.ArrayList) v ;; (into [] v)
                   :else (do
-                          (log/debug "ELSE: get val type" v (type v))
+                          (log/trace "ELSE: get val type" v (type v))
                           v))]
-    ;; (log/debug "get-val-ds result:" v " -> " val "\n")
+    ;; (log/trace "get-val-ds result:" v " -> " val "\n")
     val))
 
 (defn entity-key
   ([keychain]
-   {:pre [(proper-keychain? keychain)]}
-  ;; (log/debug "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+   ;; {:pre [(proper-keychain? keychain)]}
+  ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
    (if (proper-keychain? keychain)
      (let [k (keyword-to-key (first keychain))
            root (KeyFactory$Builder. k)]

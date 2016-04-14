@@ -1,3 +1,5 @@
+(clojure.core/println "Start loading migae.datastore.signature.entity-map")
+
 (ns migae.datastore.signature.entity-map
   ;; (:import [com.google.appengine.api.datastore
   ;;           DatastoreFailureException
@@ -8,7 +10,9 @@
   ;;           Key])
   (:require [clojure.tools.logging :as log :only [debug info]]
             [migae.datastore.schemata :as sch :refer [schemata]]
-            ))
+            [migae.datastore.types.entity-map-seq]
+            [migae.datastore.types.entity-map]
+            [migae.datastore.types.store-map]))
 
 (clojure.core/println "loading migae.datastore.signature.entity-map")
 
@@ -36,6 +40,17 @@
   [kw]
   (@sch/schemata kw))
 
+(defprotocol Entity-Key
+  "protocol for keychains and entity keys"
+  (->keychain [k])
+  (keychain? [k])
+  (entity-key? [k])
+  ;; (keychains=? [k1 k2])
+  (keys=? [k1 k2])
+  (->kind [k])
+  (->identifier [k])
+  )
+
 (defprotocol Entity-Map
   "protocol for entity maps"
   (entity-map? [em] [k m])
@@ -43,25 +58,19 @@
   (entity-map! [k] [k m] [k m mode]) ;; push ctor
   (entity-map* [k] [k m] [k m mode]) ;; pull ctor
   (entity-map$ [k] [k m] [k m mode]) ;; local entity ctor
-  (entity-map=? [em1 em2])
-  (map=? [em1 em2])
+  (entity-maps=? [em1 em2])
+  ;; (map=? [em1 em2])
   ;; native stuff
-  (entity? [e])
+  (entity? [em])
+  ;; key stuff
+  (entity-key [em])
+  (keychain [em])
+  (keychains=? [k1 k2])
+  (kind [em])
+  (identifier [em])
   ;; utils
   (dump [arg])
   (dump-str [arg])
-  )
-
-(defprotocol Entity-Key
-  "protocol for keychains and entity keys"
-  (keychain [arg])
-  (keychain? [arg])
-  (keychain=? [k1 k2])
-  (key=? [k1 k2])
-  (kind [em])
-  (identifier [em])
-  (entity-key [k])
-  (entity-key? [k])
   )
 
 ;; Model declarations (`extend` statements) for this signature must
@@ -98,7 +107,9 @@
 ;; it in turn loads stuff that depends on those declarations.
 
 ;; this must come first, to declare our deftypes
-(require '(migae.datastore.types [entity-map-seq entity-map store-map]))
+;;(require '(migae.datastore.types [entity-map-seq entity-map store-map]))
 
 ;; then comes "defmodel" - i.e. "extend"
-(require '[migae.datastore.model.entity-map])
+;;(require '[migae.datastore.model.entity-map])
+
+(clojure.core/println "Done loading migae.datastore.signature.entity-map")

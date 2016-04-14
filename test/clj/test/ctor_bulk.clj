@@ -14,8 +14,8 @@
   (:require [clojure.test :refer :all]
             [clojure.tools.reader.edn :as edn]
             [schema.core :as s] ;; :include-macros true]
-            [migae.datastore.adapter.gae :as gae]
-            [migae.datastore.signature.entity-map :as ds]
+            [migae.datastore.model.entity-map :as ds]
+            ;; [migae.datastore.adapter.gae :as gae]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -40,15 +40,18 @@
 ;(use-fixtures :once (fn [test-fn] (dss/get-datastore-service) (test-fn)))
 (use-fixtures :each ds-fixture)
 
-(deftest ^:ctor bulk
+;; FIXME: this should be part of an add-on lib for batch ops?
+;; we would want entity-maps! to return a PersistentEntityMapSeq
+#_(deftest ^:ctor bulk
   (testing "entity-map bulk push ctor"
     (ds/register-schema
-     :Person/#1 [(s/one s/Str "fname") (s/one s/Str "lname") (s/one s/Str "email")])
+     [:Schema/Person :Version//#1]
+     [(s/one s/Str "fname") (s/one s/Str "lname") (s/one s/Str "email")])
     (ds/register-schema
      :Study#1 [(s/one s/Str "name")])
     (let [data (edn/read-string
                 "{:kind :Person
-                  :schema :Person/#1
+                  :schema [:Schema/Person :Version/#1]
                   :data [[\"Libbie\" \"Greenlee\" \"Greenlee@example.org\"]
                         [\"Mohammad\" \"Hoffert\" \"Hoffert@example.org\"]
                         [\"Marni\" \"Alsup\" \"Alsup@example.org\"]

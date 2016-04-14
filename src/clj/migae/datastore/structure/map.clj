@@ -4,18 +4,13 @@
             [clojure.tools.reader.edn :as edn :refer [read read-string]]
             [schema.core :as s] ;; :include-macros true]
             [migae.datastore.keys :as k]
-            [migae.datastore.signature.entity-map :as em]))
+            [migae.datastore.signature.entity-map :as em]
+            #_[migae.datastore.structure.utils]))
             ;; [migae.datastore.schemata :as schemata]))
 
 (clojure.core/println "loading migae.datastore.structure.map")
 
 (declare dump dump-str)
-
-(defn valid-emap?
-  [m]
-  ;; (log/debug "valid-emap?" m)
-  ;; insert schema validation here
-  (map? m))
 
 (defn entity-map? [m]
   ;; FIXME: improper key - is (entity-map? [:a]) true?
@@ -40,7 +35,8 @@
          (throw (IllegalArgumentException.
                  (str "Invalid :migae/keychain " keychain " - all links must be namespaced keywords"))))
        (throw (IllegalArgumentException.
-               (str "Missing metadata key ':migae/keychain'")))))))
+               (str "Missing metadata key ':migae/keychain'"))))))
+  ([m m2] (log/trace "entity-map local ctor")))
 
 (defn entity-map!
   "entity-map bulk push ctor"
@@ -77,6 +73,11 @@
                         em)))]
     ;; (log/debug "emseq: " emseq)
     emseq))
+
+(defn entity-maps=?
+  [em1 em2]
+  (and (= (meta em1) (meta em2))
+       (= em1 em2)))
 
 (defn keychain? [k] (k/keychain? k))
 
@@ -128,7 +129,7 @@
   ;; (log/debug "entity-map.kind" (meta m) m)
   (if-let [ky (:migae/keychain (meta m))]
          (if (k/keychain? ky)
-           (keyword (namespace (last ky))))))
+           (str (namespace (last ky))))))
 
 ;; (defn identifier
 ;;   "entity-map.identifier co-ctor"
@@ -170,9 +171,11 @@
 (defn dump
   [m]
   (binding [*print-meta* true]
-    (prn m)))
+    (with-out-str
+      (prn m))))
 
 (defn dump-str
   [m]
   (binding [*print-meta* true]
-    (pr-str m)))
+    (with-out-str
+      (pr-str m))))

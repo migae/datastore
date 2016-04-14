@@ -1,3 +1,5 @@
+(clojure.core/println "Start loading migae.datastore.model.entity-map")
+
 (ns migae.datastore.model.entity-map
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
@@ -14,27 +16,36 @@
             [migae.datastore.structure.vector :as pvec]
             [migae.datastore.structure.list :as plist]
             [migae.datastore.structure.keyword :as kw]
-            [clojure.tools.logging :as log :only [debug info]]
-            )
-)
+            [potemkin :refer [import-vars]]
+            [clojure.tools.logging :as log :refer [debug info]]
+
+            ))
 
 (clojure.core/println "loading migae.datastore.model.entity-map")
+
+;; expose sig operators
+(import-vars [migae.datastore.signature.entity-map
+              entity-map? entity-map entity-map! entity-map* entity-map$ entity-maps=?
+              entity? entity-key keychain keychains=? kind identifier
+              dump dump-str
+              ->keychain keychain? keys=? ->kind ->identifier
+              schema register-schema dump-schemata])
 
 (extend clojure.lang.IPersistentMap
   sig/Entity-Map
   {:entity-map? pmap/entity-map?
    :entity-map pmap/entity-map
    :entity-map! pmap/entity-map!
+   :keychain pmap/keychain
+   :keychains=? pmap/keychain=?
+   :kind pmap/kind
+   :identifier pmap/identifier
    :dump pmap/dump
    :dump-str pmap/dump-str
    }
   sig/Entity-Key
-  {:keychain pmap/keychain
-   :keychain? pmap/keychain?
-   :keychain=? pmap/keychain=?
-   :key=? pmap/key=?
-   :kind pmap/kind
-   :identifier pmap/identifier
+  {:keychain? pmap/keychain?
+   :keys=? pmap/key=?
    })
 
 (extend clojure.lang.PersistentArrayMap
@@ -42,92 +53,120 @@
   {:entity-map? pmap/entity-map?
    :entity-map pmap/entity-map
    :entity-map! pmap/entity-map!
+   :entity-maps=? pmap/entity-maps=?
    :dump pmap/dump
    :dump-str pmap/dump-str
-   }
-  sig/Entity-Key
-  {:keychain pmap/keychain
+   :entity-key (fn [this] (k/entity-key (:migae/keychain (meta this))))
+   :keychain pmap/keychain
    :keychain? pmap/keychain?
-   :keychain=? pmap/keychain=?
-   :key=? pmap/key=?
+   :keychains=? pmap/keychain=?
    :kind pmap/kind
    :identifier pmap/identifier
-   :entity-key (fn [this] (k/entity-key (:migae/keychain (meta this))))
+   }
+  sig/Entity-Key
+  {:keys=? (fn [this em]
+             (if (instance? migae.datastore.IPersistentEntityMap em)
+               (do (log/debug "keys=? " (type em))
+               (= (:migae/keychain (meta this)) (sig/keychain (.getKey (.content em)))))
+               (if (sig/entity-map? em)
+                 (= (sig/keychain this) (sig/keychain em)))))
+   })
+
+#_(extend clojure.lang.IPersistentList
+  sig/Entity-Map
+  {:entity-map? plist/entity-map?
+   :entity-map plist/entity-map
+   :entity-key plist/entity-key}
+  sig/Entity-Key
+  {:keychain plist/keychain
+   :keychain? k/keychain?
+   :kind plist/kind
+   :identifier plist/identifier
    })
 
 (extend clojure.lang.IPersistentVector
   sig/Entity-Map
   {:entity-map? pvec/entity-map?
    :entity-map pvec/entity-map
-   :entity-map! pvec/entity-map!  ;;  [k] [k m] [k m mode]) ;; push ctor
+   :entity-map! pvec/entity-map!
    :entity-map* pvec/entity-map*
-   ;; :entity-map* pvec/entity-map*  ;; [k] [k m] [k m mode]) ;; pull ctor
    ;; :entity-map$ pvec/entity-map$  ;;[k] [k m] [k m mode]) ;; local entity ctor
-   }
-  sig/Entity-Key
-  {:keychain pvec/keychain
-   :keychain? k/keychain?
+   :dump pvec/dump
+   :dump-str pvec/dump-str
+   :entity-key k/entity-key
+   :keychain pvec/keychain
    :kind pvec/kind
    ;; :keychain=? pmap/keychain=?
    ;; :key=? pmap/key=?
    :identifier pvec/identifier
-   :entity-key k/entity-key
-   })
-
-(extend clojure.lang.IPersistentList
-  sig/Entity-Map
-  {:entity-map? plist/entity-map?
-   :entity-map plist/entity-map}
+   }
   sig/Entity-Key
-  {:keychain plist/keychain
-   :keychain? k/keychain?
-   :kind plist/kind
-   :identifier plist/identifier
-   :entity-key plist/entity-key
-   })
+  {:keychain? k/keychain?}
+  )
 
 (extend clojure.lang.Keyword
   sig/Entity-Map
   {:entity-map? kw/entity-map?
    :entity-map kw/entity-map
    :entity-map! kw/entity-map!  ;;  [k] [k m] [k m mode]) ;; push ctor
-   :entity-map* kw/entity-map
+   :entity-map* kw/entity-map*
    ;; :entity-map* pvec/entity-map*  ;; [k] [k m] [k m mode]) ;; pull ctor
    ;; :entity-map$ pvec/entity-map$  ;;[k] [k m] [k m mode]) ;; local entity ctor
-   }
-  sig/Entity-Key
-  {:keychain kw/keychain
-   :keychain? k/keychain?
+   :keychain kw/keychain
    :kind kw/kind
    :identifier kw/identifier
    :entity-key kw/entity-key
+   }
+  sig/Entity-Key
+  {:keychain? k/keychain?
    })
 
-(extend migae.datastore.IPersistentEntityMap
+(extend migae.datastore.PersistentEntityMap
   sig/Entity-Map
-  {:entity-map? (fn [em]
-                  ;; true
-                  ;; )
-                  ;;(defn entity-map?
-                  ;; [em]
-                  (log/debug "PersistentEntityMap.entity-map?" em (type em)
-                             (instance? migae.datastore.IPersistentEntityMap em))
-                  (instance? migae.datastore.IPersistentEntityMap em))
-   :entity-map (fn [em] em)
-   :kind (fn [em] (log/debug "IPersistentMap.Entity-Map.kind" em) nil)
-   :identifer (fn [em] (log/debug "IPersistentMap.Entity-Map.identifier" em) nil)
-   :key=? k/key=?
-   :dump-str (fn [m] (binding [*print-meta* true] (pr-str m)))
-   })
+  {:entity-map? (fn [this] true)
+                  ;; ;; true
+                  ;; ;; )
+                  ;; ;;(defn entity-map?
+                  ;; ;; [this]
+                  ;; (log/debug "PersistentEntityMap.entity-map?" this (type this)
+                  ;;            (instance? migae.datastore.IPersistentEntityMap this))
+                  ;; (instance? migae.datastore.IPersistentEntityMap this))
+   ;; FIXME: create a new copy?
+   :entity-map (fn [this] this)
+   :entity-key (fn [this] (.getKey (.content this)))
+   :keychain (fn [this] (k/keychain (.content this)))
+   :keychains=? (fn [this em]
+                  (if (instance? migae.datastore.IPersistentEntityMap em)
+                    (.equals (.getKey (.content this)) (.getKey (.content em)))
+                    (if (sig/entity-map? em)
+                      (= (sig/keychain this) (sig/keychain em)))))
+   :kind (fn [this] (.getKind (.getKey (.content this))))
+   :identifier (fn [this]
+                 (let [k (.getKey (.content this))]
+                   (if-let [id (.getId k)]
+                     id
+                     (.getName k))))
+   :dump (fn [this] (binding [*print-meta* true] (with-out-str (prn this))))
+   :dump-str (fn [this] (binding [*print-meta* true] (with-out-str (pr-str this))))
+   }
+  ;; sig/Entity-Key
+  ;; {;; :keychain plist/keychain
+  ;;  ;; :keychain? k/keychain?
+  ;;  }
+   )
 
 (extend com.google.appengine.api.datastore.Key
-  sig/Entity-Key
-  {:keychain k/keychain
-   :keychain? (fn [this] true)
-   :kind (fn [this] (keyword (.getKind this)))
-   ;; :keychain=? pmap/keychain=?
-   :key=? (fn [this k] (.equals this k))
+  sig/Entity-Map
+  {
+   :keychain k/keychain
+   :kind (fn [this] (.getKind this))
    :identifier (fn [this] (if-let [nm (.getName this)] (symbol nm) (.getId this)))
-   :entity-key (fn [this] this)
+   ;; :entity-key (fn [this] this)
+   }
+  sig/Entity-Key
+  {:keychain? (fn [this] true)
    :entity-key? (fn [this] true)
+   ;; :keychain=? pmap/keychain=?
+   :keys=? (fn [this k] (.equals this k))
    })
+
