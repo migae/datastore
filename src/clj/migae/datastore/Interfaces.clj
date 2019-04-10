@@ -1,6 +1,15 @@
-(ns Interfaces)
+(ns migae.datastore.Interfaces)
 
 (clojure.core/println "loading Interfaces")
+
+;; why gen-interface?
+;; why not defprotocol? the latter does not extend anything, it just defines a signature.
+;; what about definterface? like defprotocol it requires listing of methods, does not directly support extend
+;; what about (extend com.google.appengine.api.datastore.Entity ...)? extend is for implementations
+
+;; Note: we don't really have to do this; we can specify the supported
+;; interfaces directly in our deftypes.  IOW we could live without the
+;; abstract interfaces defined here.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  IPersistentEntityKeychain
@@ -21,6 +30,7 @@
            java.util.Map$Entry
            java.util.RandomAccess ;; marker interface
 
+           ;; NB: these are all Java interfaces
            clojure.lang.IPersistentVector ;; length, assocN, cons
            ;; extends Associative, Sequential, IPersistentStack, Reversible, Indexed
            ;;     Associative (containsKey, entryAt, assoc) extends IPersistentCollection, ILookup
@@ -48,7 +58,7 @@
            ;; clojure.lang.Seqential ; marker interface
            clojure.lang.ITransientCollection]
  ;; :methods []
- ) ;; end gen-interface IPersistentEntityMap
+ ) ;; end gen-interface IPersistentEntityKeychain
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  IPersistentEntityMap
@@ -95,6 +105,7 @@
            java.util.Map
            java.io.Serializable
 
+           ;; NB: these are all Java interfaces
            clojure.lang.IFn             ; AFn: call(), run(), invoke()
            clojure.lang.IPersistentMap
            clojure.lang.IHashEq
