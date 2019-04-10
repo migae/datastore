@@ -1,39 +1,44 @@
-(def +project+ 'org.mobileink/migae.datastore)
+(def +project+ 'migae/datastore)
+;; (def +project+ 'org.mobileink/migae.datastore)
 (def +version+ "0.4.0-SNAPSHOT")
 
 (set-env!
- :gae {:app-id "boot-test"
-       :module "bulkops"
-       :version +version+}
+ ;; :gae {:app-id "boot-test"
+ ;;       :module "bulkops"
+ ;;       :version +version+}
  :asset-paths #{"resources"}
  :resource-paths #{"src/clj"}
- :source-paths #{"src/clj-compile"}
- :repositories {"clojars" "https://clojars.org/repo"
-                "central" "http://repo1.maven.org/maven2/"
-                "maven-central" "http://mvnrepository.com"}
- :dependencies   '[[org.clojure/clojure "1.8.0" :scope "runtime"]
+ ;; :source-paths #{"src/clj-aot"}
+ ;; :repositories {"clojars" "https://clojars.org/repo"
+ ;;                "central" "http://repo1.maven.org/maven2/"
+ ;;                "maven-central" "http://mvnrepository.com"}
+ :dependencies   '[[org.clojure/clojure "1.10.0" :scope "runtime"]
+
+                   [javax.servlet/javax.servlet-api "3.1.0" :scope "provided"]
 
                    ;; the java sdk is not used by app code, it's just there for the devserver
                    ;; and test service stubs, so it should have :scope provided
                    ;; even though it will not in fact be provided by the prod env
-                   [com.google.appengine/appengine-java-sdk LATEST :scope "provided" :extension "zip"]
+                   ;; this is for the GAE runtime (NB: scope provided):
+                   [com.google.appengine/appengine-java-sdk RELEASE :scope "provided" :extension "zip"]
+                   ;; [com.google.appengine/appengine-java-sdk LATEST :scope "provided" :extension "zip"]
 
+                   ;; this is for the GAE services like datastore (NB: scope runtime):
                    ;; NOTE: the api sdk is runtime scoped, since we do not compile our clojure files
-                   [com.google.appengine/appengine-api-1.0-sdk LATEST :scope "runtime"]
+                   [com.google.appengine/appengine-api-1.0-sdk RELEASE :scope "runtime"]
+                   ;; [com.google.appengine/appengine-api-1.0-sdk LATEST :scope "runtime"]
 
                    ;; test service stubs
-                   [com.google.appengine/appengine-api-labs "1.9.34" :scope "test"]
-                   [com.google.appengine/appengine-api-stubs "1.9.34" :scope "test"]
-                   [com.google.appengine/appengine-tools-sdk "1.9.34" :scope "test"]
+                   [com.google.appengine/appengine-api-labs RELEASE :scope "test"]
+                   [com.google.appengine/appengine-api-stubs RELEASE :scope "test"]
+                   [com.google.appengine/appengine-tools-sdk RELEASE :scope "test"]
 
                    ;; setup utils
-                   [com.google.appengine/appengine-testing "1.9.34" :scope "test"]
+                   [com.google.appengine/appengine-testing RELEASE :scope "test"]
 
 
                    ;; [org.mobileink/migae.datastore "0.3.3-SNAPSHOT" :scope "runtime"]
                    ;; [org.mobileink/migae.mail "0.1.0-SNAPSHOT" :scope "runtime"]
-
-                   ;; [javax.servlet/servlet-api "2.5" :scope "provided"]
 
                    ;; GCM
                    ;; [com.ganyo/gcm-server "1.0.2"]
@@ -51,15 +56,15 @@
                    ;; data
                    ;; [cheshire/cheshire "5.5.0" :scope "runtime"]
                    ;; [fogus/ring-edn "0.3.0" :scope "runtime"]
-                   [org.clojure/tools.reader "1.0.0-beta1" :scope "runtime"]
+                   [org.clojure/tools.reader "1.3.2" :scope "runtime"]
                    ;; [commons-io/commons-io "2.4" :scope "runtime"]
                    ;; [commons-fileupload/commons-fileupload "1.3.1" :scope "runtime"]
                    [prismatic/schema "1.0.1"]
 
-                   [potemkin "0.4.3"]
-                   [org.clojure/tools.logging "0.3.1"]
-                   [org.apache.logging.log4j/log4j-core "2.5"]
-                   [org.apache.logging.log4j/log4j-slf4j-impl "2.5"]
+                   [potemkin "0.4.5"]
+                   [org.clojure/tools.logging "0.4.1"]
+                   [org.apache.logging.log4j/log4j-core "2.11.1"]
+                   [org.apache.logging.log4j/log4j-slf4j-impl "2.11.1"]
                    ;; [org.apache.logging.log4j/log4j-api "2.5"]
                    ;; [log4j "1.2.17" :exclusions [javax.mail/mail
                    ;;                              javax.jms/jms
@@ -67,9 +72,9 @@
                    ;;                              com.sun.jmx/jmxri]]
 
                    ;; [org.clojure/tools.namespace "0.2.11"]
-                   [ns-tracker/ns-tracker "0.3.0" :scope "test"]
-                   [adzerk/boot-test "1.1.1" :scope "test"]
-                   [migae/boot-gae "0.1.0-SNAPSHOT" :scope "test"]])
+                   [ns-tracker/ns-tracker "0.3.1" :scope "test"]
+                   [adzerk/boot-test "1.2.0" :scope "test"]
+                   [migae/boot-gae "0.2.1-SNAPSHOT" :scope "test"]])
 
 (require '[migae.boot-gae :as gae]
          '[boot.task.built-in :as boot]
@@ -81,7 +86,6 @@
                          :war "target/bulkops"}]})
 
 (task-options!
- gae/ear modules
  gae/run modules
  pom  {:project     +project+
        :version     +version+
