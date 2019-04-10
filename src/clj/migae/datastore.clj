@@ -39,6 +39,7 @@
   (:require [clojure.walk :as walk]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
+            [migae.datastore.Interfaces]
             [migae.datastore.types.entity-map]
             [migae.datastore.types.entity-map-seq]
             ;; [migae.datastore.structure.vector]
