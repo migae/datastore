@@ -52,7 +52,7 @@
    :dump-str pmap/dump-str
    }
   sig/Entity-Key
-  {:keychain? pmap/keychain?
+  {:keychain? k/keychain?
    :keys=? pmap/key=?
    })
 
@@ -66,13 +66,13 @@
    :dump-str pmap/dump-str
    :entity-key (fn [this] (k/entity-key (:migae/keychain (meta this))))
    :keychain pmap/keychain
-   :keychain? pmap/keychain?
    :keychains=? pmap/keychain=?
    :kind pmap/kind
    :identifier pmap/identifier
    }
   sig/Entity-Key
-  {:keys=? (fn [this em]
+  {:keychain? k/keychain?
+   :keys=? (fn [this em]
              (if (instance? migae.datastore.IPersistentEntityMap em)
                (do (log/debug "keys=? " (type em))
                (= (:migae/keychain (meta this)) (sig/keychain (.getKey (.content em)))))
