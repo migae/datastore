@@ -77,4 +77,6 @@
 
 ;;(load "datastore/types/entity_map_seq") ;; PersistentEntityMapSeq")
 
+(load "/migae/datastore/model/entity_map")
+
 (clojure.core/println "Done loading migae.datastore")

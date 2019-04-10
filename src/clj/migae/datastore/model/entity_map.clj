@@ -1,27 +1,35 @@
 (clojure.core/println "Start loading migae.datastore.model.entity-map")
 
-(ns migae.datastore.model.entity-map
-  (:import [com.google.appengine.api.datastore
-            DatastoreFailureException
-            DatastoreService
-            DatastoreServiceFactory
-            DatastoreServiceConfig
-            DatastoreServiceConfig$Builder
-            Key]
-           )
-  ;; WARNING! the migae nss must be in the right order so the deftypes get instantiated
-  (:require [migae.datastore.signature.entity-map :as sig]
-            [migae.datastore.keys :as k]
-            [migae.datastore.structure.map :as pmap]
-            [migae.datastore.structure.vector :as pvec]
-            [migae.datastore.structure.list :as plist]
-            [migae.datastore.structure.keyword :as kw]
-            [potemkin :refer [import-vars]]
-            [clojure.tools.logging :as log :refer [debug info]]
+(in-ns 'migae.datastore)
+;(import '(clojure.lang IFn IObj IPersistentMap ISeq)
+(import (com.google.appengine.api.datastore DatastoreFailureException
+                                            DatastoreService
+                                            DatastoreServiceFactory
+                                            DatastoreServiceConfig
+                                            DatastoreServiceConfig$Builder
+                                            Key)
+        )
 
-            ))
+;(require '(clojure.tools [logging :as log :only [debug info]])
+
+  ;; WARNING! the migae nss must be in the right order so the deftypes get instantiated
+(require '[migae.datastore.Interfaces]
+         '[migae.datastore.signature.entity-map :as sig]
+         '[migae.datastore.keys :as k]
+         '[migae.datastore.structure.map :as pmap]
+         '[migae.datastore.structure.vector :as pvec]
+         '[migae.datastore.structure.list :as plist]
+         '[migae.datastore.structure.keyword :as kw]
+         '[potemkin :refer [import-vars]]
+         '[clojure.tools.logging :as log :refer [debug info]]
+         )
+;;)
 
 (clojure.core/println "loading migae.datastore.model.entity-map")
+
+;; we extend Clojure and other types to support the datastore signatures
+;; this obviates the need to type-check before applying a ds operator
+;; e.g. if m is a plain old clojure map, (entity-map? m) will return false instead of throwing an exception
 
 ;; expose sig operators
 (import-vars [migae.datastore.signature.entity-map
