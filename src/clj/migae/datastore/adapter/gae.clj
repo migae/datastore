@@ -32,7 +32,7 @@
             ShortBlob
             Text
             Transaction]
-           [migae.datastore PersistentEntityMap DuplicateKeyException InvalidKeychainException]
+           [migae.datastore PersistentEntityMap]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
@@ -368,7 +368,10 @@
                   ;;   (throw (RuntimeException. "Key already used"))
                   (if (instance? EntityNotFoundException ent)
                     (Entity. k)
-                    (throw (DuplicateKeyException. (str keyvec))))))
+                    (throw (ex-info "DuplicateKeyException"
+                                     {:type :keychain-exception, :cause :duplicate}))
+                    #_(throw (DuplicateKeyException. (str keyvec)))
+                    )))
             (do (log/trace "force push")
                 (Entity. k)))]
     (when (not (empty? propmap))

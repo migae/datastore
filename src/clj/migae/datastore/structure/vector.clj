@@ -16,7 +16,6 @@
             ArrayList
             HashSet
             Vector]
-           migae.datastore.InvalidKeychainException
            migae.datastore.PersistentEntityMap
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
@@ -68,7 +67,7 @@
      :else
      (if (empty? k)
        (throw (IllegalArgumentException. (str "Null keychain '" k "' not allowed for local ctor")))
-       (throw (InvalidKeychainException. (str k))))))
+       (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid})))))
 
   ([k m mode]
    {:pre [(= mode :em)]}
@@ -99,7 +98,8 @@
        (log/trace "entity-map! 1 proper:" keychain)
        ;; (put-proper-emap :keyvec keychain :propmap {} :force true)
        )
-     :else (throw (InvalidKeychainException. (str keychain)))))
+     :else (throw (ex-info "InvalidKeychainException"
+                           {:type :keychain-exception, :cause :invalid}))))
 
   ([keychain em]
    (log/trace "entity-map! 2")
@@ -121,8 +121,8 @@
        )
      :else (if (empty? keychain)
              (throw (IllegalArgumentException. (str "Null keychain '" keychain "' not allowed")))
-             (throw (InvalidKeychainException. (str keychain)))))
-   )
+             (throw (ex-info "InvalidKeychainException"
+                             {:type :keychain-exception, :cause :invalid})))))
   ;; ([force keychain em]
   ;;  {:pre [(or (map? em) (vector? em))
   ;;         (vector? keychain)
