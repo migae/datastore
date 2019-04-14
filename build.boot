@@ -1,4 +1,4 @@
-(def +project+ 'org.mobileink/migae.datastore)
+(def +project+ 'migae/datastore)
 (def +version+ "0.4.0-SNAPSHOT")
 
 (set-env!
@@ -9,8 +9,8 @@
  :resource-paths #{"src/clj"}
  :source-paths #{"src/clj-compile"}
  :repositories {"clojars" "https://clojars.org/repo"
-                "central" "http://repo1.maven.org/maven2/"
-                "maven-central" "http://mvnrepository.com"}
+                "central" "https://repo1.maven.org/maven2/"
+                "maven-central" "https://mvnrepository.com"}
  :dependencies   '[[org.clojure/clojure "1.8.0" :scope "runtime"]
 
                    ;; the java sdk is not used by app code, it's just there for the devserver
@@ -81,7 +81,6 @@
                          :war "target/bulkops"}]})
 
 (task-options!
- gae/ear modules
  gae/run modules
  pom  {:project     +project+
        :version     +version+
