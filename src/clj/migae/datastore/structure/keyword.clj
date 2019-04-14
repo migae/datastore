@@ -14,7 +14,6 @@
             ArrayList
             HashSet
             Vector]
-           migae.datastore.InvalidKeychainException
            migae.datastore.PersistentEntityMap
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
@@ -73,7 +72,9 @@
          ;; (gae/put-proper-emap :keyvec keychain :propmap em)
          (gae/put-proper-emap :keyvec keychain :propmap {} :force true)
          )
-       :else (throw (InvalidKeychainException. (str keychain))))
+       :else (throw (ex-info "InvalidKeychainException"
+                             {:type :keychain-exception, :cause :invalid}))
+       )
      :else (throw (IllegalArgumentException. (str "Invalid mode keyword: " mode)))))
 
   ([mode keychain em]
@@ -95,8 +96,8 @@
              ;; (PersistentEntityMap. e nil)
              e)
            )
-         :else
-         (throw (InvalidKeychainException. (str keychain)))))
+         :else (throw (ex-info "InvalidKeychainException"
+                               {:type :keychain-exception, :cause :invalid}))))
 
      (= mode :multi)
      (do

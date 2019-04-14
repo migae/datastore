@@ -15,7 +15,6 @@
             ArrayList
             HashSet
             Vector]
-           [migae.datastore InvalidKeychainException]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
@@ -232,7 +231,8 @@
   (log/trace "keychain IPersistentVector: " v)
   (if (keychain? v)
     v
-    (throw (InvalidKeychainException. (str v)))))
+    (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid}))
+    ))
     ;; (throw (IllegalArgumentException. (str "Invalid keychain arg " v)))))
 
 ;; (defmethod keychain migae.datastore.PersistentEntityMap
@@ -321,7 +321,8 @@
      (let [k (keyword-to-key (first keychain))
            root (KeyFactory$Builder. k)]
        (.getKey (doto root (add-child-keylink (rest keychain)))))
-     (throw (InvalidKeychainException. (str keychain))))))
+     (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid}))
+     )))
 
      ;; (throw (IllegalArgumentException.
      ;;         (str "Invalid keychain: " keychain))))))
