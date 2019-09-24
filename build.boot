@@ -88,6 +88,17 @@
 
 (task-options!
  gae/run modules
+ ;; test {:startup (fn []
+ ;;                  (println "XXXXXXXXXXXXXXXX")
+ ;;                  ;; (set-env! ;; :source-paths #(conj % "test/clj" "target")
+ ;;                  ;;  :asset-paths #{"resources"}
+ ;;                  ;;  :resource-paths #{"src/clj" "test/clj"})
+ ;;                  #_(require 'test.rig)
+ ;;                  #_(test.rig/setup))
+ ;;       ;;:shutdown test.rig/teardown
+ ;;       }
+ ;; run-tests {:startup test.rig/setup
+ ;;            :shutdown test.rig/teardown}
  pom  {:project     +project+
        :version     +version+
        :description "Example code, boot, miraj, GAE"
@@ -101,12 +112,12 @@
         (boot/target)))
 
 (deftask testing
-  "Profile setup for running tests."
+  "Profile setup for running tests. E.g. $ boot testing test -n test.emap"
   []
   ;; (dev)
-  (set-env! :source-paths #(conj % "test/clj" "target")
-            ;; :asset-paths #{"resources"}
-            :resource-paths #{"src/clj" "resources"})
+  (set-env! ;; :source-paths #(conj % "test/clj" "target")
+            :asset-paths #{"resources"}
+            :resource-paths #{"src/clj" "test/clj"})
   identity)
 
 (deftask watchme
