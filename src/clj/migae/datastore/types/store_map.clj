@@ -1,6 +1,6 @@
 (println "Start loading migae.datastore.types.store_map")
 
-(ns migae.datastore.types.store-map
+#_(ns migae.datastore.types.store-map
   (:refer-clojure :exclude [name hash])
   (:import [com.google.apphosting.api ApiProxy]
            [com.google.appengine.api.datastore
@@ -49,7 +49,7 @@
 (require '(clojure.tools [logging :as log :only [debug info]])
          ;; '(migae.datastore.adapter [gae :as gae-adapter])
 ;;         '(migae.datastore.model [gae :as ds])
-         '(migae.datastore [keys :as k])
+;;         '(migae.datastore [keys :as k])
          ;; '(migae.datastore.types [entity-map :refer :all])
          ;; '(clojure.tools.reader [edn :as edn])
          )
@@ -112,9 +112,9 @@
     (log/debug "PersistentStoreMap.invoke" k (type k))
     (cond
       (k/keychain? k)
-      (let [e (.get dss (k/entity-key k))]
-            ;;(gae-adapter/fetch (k/entity-key k))]
-      ;; (let [e (.get content (k/entity-key k))]
+      (let [e (.get dss (k/vector->Key k))]
+            ;;(gae-adapter/fetch (k/vector->Key k))]
+      ;; (let [e (.get content (k/vector->Key k))]
         (PersistentEntityMap. e nil))
       :else (throw (RuntimeException. "PersistentStoreMap.invoke"))))
 
@@ -143,7 +143,7 @@
   (assoc [this k m] ; -> IPersistentMap
     (do
       (log/debug "PersistentStoreMap.assoc" k m)
-      (let [key (k/entity-key k)
+      (let [key (k/vector->Key k)
             e (Entity. key)] ;; FIXME: validate k
         (doseq [[k v] m]
           (.setProperty e (subs (str k) 1) v))
@@ -163,7 +163,7 @@
       (k/keychain? k)
       (do
         (log/debug "withouting keychain: " k)
-        (let [key (k/entity-key k)]
+        (let [key (k/vector->Key k)]
           (.delete content (into-array Key [key]))
           this))
       :else
@@ -227,18 +227,18 @@
               (instance? clojure.lang.IPersistentMap k)
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentMap" k)
-                (let [dskey (k/entity-key (:migae/keychain (meta k)))]
+                (let [dskey (k/vector->Key (:migae/keychain (meta k)))]
                   (.get dss dskey)))
               (instance? clojure.lang.IPersistentVector k)
               (do
                 (log/debug "PersistentStoreMap.valAt IPersistentVector" k)
-                (let [dskey (k/entity-key k)]
+                (let [dskey (k/vector->Key k)]
                   (.get dss dskey)))
                   ;; (gae-adapter/fetch dskey)))
               (k/keychain? k)
-              (.get content (k/entity-key k))
+              (.get content (k/vector->Key k))
               (keyword? k)
-              (.get content (k/entity-key [k]))
+              (.get content (k/vector->Key [k]))
               :else (throw (RuntimeException. "PersistentStoreMap.valAt uncaught")))]
       (->PersistentEntityMap e nil)))
 

@@ -9,11 +9,10 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy]
-           [migae.datastore InvalidKeychainException])
+           [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+            [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -52,11 +51,21 @@
              (.getMessage e)))
       )))
 
-(deftest ^:ctor ctor-fail-1.1
-  (testing "keychain must be vector of keywords"
+(deftest ^:ctor ctor-fail-2
+  (testing "Keychain must be vector of keywords"
     (let [e (try (ds/entity-map [1 2] {})
-                 (catch InvalidKeychainException x x))]
-      (is (= (.getMessage e) "[1 2]")))))
+                 (catch java.lang.Exception x (Throwable->map x)))]
+      (log/info "e: " (:cause e))
+      (is (= "Invalid keychain '[1 2]'"
+             (:cause e)))))) ;; (:cause e))))))
+
+;;     (is (=(ds/entity-map [1 2] {})
+;; [1 2] ;; InvalidKeychainException ;; clojure.lang.ExceptionInfo ;; #"I
+;; ))))
+
+    ;; (let [e (try (ds/entity-map [1 2] {})
+    ;;              (catch Exception x x))] ;; InvalidKeychainException
+    ;;   (is (= (.getMessage e) "[1 2]")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  binary representation:  [:a/b] {:x 1}
@@ -287,3 +296,5 @@
       (is (not-any? em [:x :y]))
       (is (not (not-any? em [:x :a :y])))
       )))
+
+;;(run-tests)

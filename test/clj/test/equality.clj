@@ -13,7 +13,7 @@
             EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+            [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -206,3 +206,5 @@
 ;;     ))
 
 ;;; what about comparing an entity-map and a Map$Entry?  never equal, since type-incompatible
+
+;;(run-tests)

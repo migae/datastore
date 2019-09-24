@@ -13,8 +13,8 @@
            [com.google.appengine.api.datastore
             EntityNotFoundException]
            [com.google.apphosting.api ApiProxy])
-  (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+  (:require [migae.datastore :as ds]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -318,8 +318,8 @@
   (testing "entity-map* ancestor query"
     (let [acme (ds/entity-map! :force [:Group] {:name "Acme"})
           k (ds/keychain acme)        ; FIXME
-          foo (log/trace "ancestor-query key: " k)
-          foo (flush)
+          _ (log/trace "ancestor-query key: " k)
+          _ (flush)
           ;; id (ds/id k)
           joe (ds/entity-map! :force (merge k :Member/Joe) {:fname "Joe" :lname "Cool"})
           ;; joeq  (ds/entity-map* [:Group/Acme :Member/Joe])

@@ -32,12 +32,11 @@ In no particular order:
 == [[start]]getting started
 
 **NOTE:** you do not need an App Engine account to explore this
-  library in a development environment.  The gradle build system will
-  download and install (to `~/.gradle`) everything you need.
+  library in a development environment.  The boot build system will
+  download and install everything you need.
 
 1.  Fork/clone
-2.  $ lein with-profile compile compile
-3.  $ lein repl
+2.  $ boot repl
 
 **WARNING**  Tested only on Mac OS X 10.9.5
 
@@ -55,62 +54,56 @@ local test environment and defines a few vars to save typing during
 experimentation.  So from the root directory, fire up a repl and start
 experimenting:
 
+NOTE: use boot -C if your terminal colors are hard to read
+
 [[app-listing]]
 [source,clojure]
 ----
-$ lein repl
-nREPL server started on port 52304 on host 127.0.0.1 - nrepl://127.0.0.1:52304
-REPL-y 0.3.5, nREPL 0.2.6
-Clojure 1.7.0
-Java HotSpot(TM) 64-Bit Server VM 1.8.0_45-b14
-migae datastore repl.  (ds-reset) to reinitialize test datastore.
-user=> k   ;; predefined in dev/user.clj
-[:A/B]
-user=> m   ;; predefined in dev/user.clj
+$ boot testing repl
+;; the testing task puts test/clj on the class path, which exposes the GAE dev services
+nREPL server started on port 57767 on host 127.0.0.1 - nrepl://127.0.0.1:57767
+...etc...
+boot.user=> (require '[migae.datastore :as em] :reload-all)
+boot.user=> (require '[test.rig :as ds] :reload)
+boot.user=> (ds/setup)   ;; initialize GAE datastore service emulation
+;; if try to use the ds without running ds/setup, you'll get:
+;; java.lang.NullPointerException: No API environment is registered for this thread.
+boot.user=> (def em1 (em/entity-map! [:A/B] {:a 1}))
+boot.user=> em1
 {:a 1}
-user=> em   ;; predefined in dev/user.clj
-{:a 1}
-user=> (meta em)
-{:migae/key [:A/B], :type migae.datastore.PersistentEntityMap}
-user=> (type em)
+boot.user=> (em/entity-map? em1)
+true
+boot.user=> (type em1)
 migae.datastore.PersistentEntityMap
-user=> (println (.content em))  ;; dump underlying Entity
-#object[com.google.appengine.api.datastore.Entity 0x78859a2b <Entity [A("B")]:
-	a = 1
->
-]
-nil
-user=> (ds/keychain? k)   ;; ds loaded by dev/user.clj
-true
-user=> (ds/entity-map? em)
-true
-user=> (ds/keychain em)
+boot.user=> (:migae/keychain em1)
 [:A/B]
+boot.user=> (:a em1)
+1
+boot.user=> (meta em1)
+#:migae{:keychain [:A/B]}
+boot.user=> (.content em1)
+#object[com.google.appengine.api.datastore.Entity 0x5bb99523 "<Entity [A(\"B\")]:\n\ta = 1\n>\n"]
+;; use println to get a formatted representation
+boot.user=> (em/keychain? (em/keychain em1))
+true
+
+;; pull constructor fetches Entity from datastore
+boot.user=> (em/entity-map* [:A/B])
+{:a 1}
+
+;; refresh test datastore
+boot.user=> (ds/teardown)
+boot.user=> (ds/setup)
+
+;; run some tests from the repl
+boot.user=> (require 'test.ctor_push)
+
+...etc...
+
 user=> (key em)
 [:A/B]
 user=> (val em)
 {:a 1}
-user=> (keys em)
-(:a)
-user=> (vals em)
-(1)
-user=> (ds-reset)
-#object[com.google.appengine.tools.development.testing.LocalServiceTestHelper 0x7d7d7520 "com.google.appengine.tools.development.testing.LocalServiceTestHelper@7d7d7520"]
-user=> (ds/entity-map k m)    ;; local constructor
-{:a 1}
-user=> (ds/entity-map! k m)   ;; push constructor - saves to datastore
-Sep 02, 2015 6:38:18 AM com.google.appengine.api.datastore.dev.LocalDatastoreService init
-INFO: Local Datastore initialized:
-	Type: Master/Slave
-	Storage: In-memory
-{:a 1}
-user=> (ds/entity-map* k m)   ;; pull constructor - retrieves matches from datastore
-{:a 1}
-----
-
-You will sometimes get `NullPointerException No API environment is
-registered for this thread.` (the test env seems to timeout); if so,
-just run `user=> (ds-reset)`.
 
 == [[types]]types
 
@@ -479,16 +472,29 @@ an "augmentation" op.
 
 == [[testing]] testing
 
-See the link:/test/clojure/tests[tests] for lots of examples of how to use
+See the code in link:/test/clojure/tests[tests] for lots of examples of how to use
 the library.  Be **be forewarned**, the test cases are in flux; some
 of them are outdated, and the api is changing.
 
-There are lots of ways to set up a dev/test environement.  Here's how
-I've been testing using the repl.  I use `dev/user.clj` to
-initialize/configure my repl.
+The testing env:
 
+==== unit testing:
+
+Run the `testing` task before the `test` task; it puts test/clj on the
+class path, which exposes the GAE dev services. Use -n to specify the
+namespace to test (omit to run all tests):
+
+[[app-listing]]
+[source,clojure]
+----
+$ boot testing test -n test.local-ctor
+
+----
+
+==== testing at the repl
 dev/user.clj:
 ----
+
 (require '[clojure.test :refer [run-tests test-var]])  ;; :all
 (require '[clojure.tools.namespace.repl :refer [refresh refresh-all]])
 ----

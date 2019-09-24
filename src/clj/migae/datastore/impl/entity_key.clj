@@ -1,6 +1,6 @@
-(clojure.core/println "Start loading migae.datastore.structure.entity-key")
+(clojure.core/println "Start loading migae.datastore.impl.entity-key")
 
-#_(ns migae.datastore.structure.entity-key
+#_(ns migae.datastore.impl.entity-key
   (:refer-clojure :exclude [name hash])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util
@@ -32,7 +32,7 @@
             ;; [migae.datastore.keys :as k]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
-(clojure.core/println "loading migae.datastore.types.entity-key")
+(clojure.core/println "loading migae.datastore.impl.entity-key")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PersistentKeychain
@@ -519,6 +519,6 @@
   ) ;; end deftype PersistentEntityMap
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(in-ns 'migae.datastore.structure.entity-key)
+(in-ns 'migae.datastore.impl.entity-key)
 
 (clojure.core/println "Done loading migae.datastore.types.entity-key")

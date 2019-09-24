@@ -39,8 +39,9 @@
   (:require [clojure.walk :as walk]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.types.entity-map]
-            [migae.datastore.types.entity-map-seq]
+            [migae.datastore.Interfaces]
+            ;; [migae.datastore.types.entity-map]
+            ;; [migae.datastore.types.entity-map-seq]
             ;; [migae.datastore.structure.vector]
 
             ;; [migae.datastore.service :as ds]
@@ -64,8 +65,9 @@
 (declare make-embedded-entity)
 (declare props-to-map get-next-emap-prop)
 
-(declare keychain? keylink? keykind? keychain keychain-to-key)
-;; proper-keychain?  improper-keychain?
+(declare keychain? keylink? keykind? keychain keychain-to-key
+         proper-keychain?  improper-keychain?
+         vector->Key)
 
 (declare store-map store-map?)
 (declare entity-map? kind)
@@ -75,5 +77,11 @@
 ;;(load "datastore/PersistentStoreMap")
 
 ;;(load "datastore/types/entity_map_seq") ;; PersistentEntityMapSeq")
+
+(load "/migae/datastore/protocols")
+(load "/migae/datastore/entity_map_seq")
+(load "/migae/datastore/entity_map")
+(load "/migae/datastore/keys")
+(load "/migae/datastore/impl")
 
 (clojure.core/println "Done loading migae.datastore")

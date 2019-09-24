@@ -9,12 +9,11 @@
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy]
-           [com.google.appengine.api.datastore EntityNotFoundException]
-           migae.datastore.DuplicateKeyException
-           migae.datastore.InvalidKeychainException)
+           [com.google.appengine.api.datastore EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as em]
+            ;; [migae.datastore.model.entity-map :as em]
+            [migae.datastore :as em]
             [clojure.tools.logging :as log :only [trace debug info]]))
                                         ;            [ring-zombie.core :as zombie]))
 
@@ -54,16 +53,16 @@
 
 (deftest ^:ctor-push ctor-invalid-keychain
   (testing "ctor-push fail: invalid keychain"
-    (is (thrown? InvalidKeychainException (em/entity-map! [1 2] {:a 2})))
-    (is (thrown? InvalidKeychainException (em/entity-map! [:a/b 'x] {:a 2})))
-    (is (thrown? InvalidKeychainException (em/entity-map! [:a :b/c] {:a 2})))
-    (is (thrown? InvalidKeychainException (em/entity-map! [:A :B] {:a 2})))))
+    (is (thrown? Exception (em/entity-map! [1 2] {:a 2})))
+    (is (thrown? Exception (em/entity-map! [:a/b 'x] {:a 2})))
+    (is (thrown? Exception (em/entity-map! [:a :b/c] {:a 2})))
+    (is (thrown? Exception (em/entity-map! [:A :B] {:a 2})))))
 
 (deftest ^:ctor-push ctor-push-fail-1.3
   (testing "ctor-push fail: vector keychain"
     (let [em (try (em/entity-map! 2 {:a 2})
                   (catch java.lang.IllegalArgumentException x x))]
-      (is (= "No implementation of method: :entity-map! of protocol: #'migae.datastore.signature.entity-map/Entity-Map found for class: java.lang.Long"
+      (is (= "No implementation of method: :entity-map! of protocol: #'migae.datastore/Entity-Map found for class: java.lang.Long"
              (.getMessage em)))
       )))
 
@@ -78,7 +77,7 @@
 (deftest ^:ctor-push ctor-push-fail-2
   (testing "ctor-push fail"
     (em/entity-map! [:A/B] {:a 1})
-    (is (thrown? DuplicateKeyException (em/entity-map! [:A/B] {:a 2})))))
+    (is (thrown? Exception (em/entity-map! [:A/B] {:a 2})))))
 
 (deftest ^:ctor-push ctor-push-proper
   (testing "ctor-push proper keychains"
@@ -281,3 +280,5 @@
     ;;   (doseq [e es2]
     ;;     (log/trace (em/dump e)))
     ;;   )
+
+;;(run-tests)

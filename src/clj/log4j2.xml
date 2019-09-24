@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="ALL">
+<Configuration status="WARN">
 
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
@@ -7,7 +7,7 @@
       <!-- <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1} - %msg%n" /> -->
     </Console>
 
-    <RollingFile name="RollingFile" filename="log/migae.log"
+    <RollingFile name="RollingFile" filename="logs/migae.log"
 		 filepattern="${logPath}/%d{yyyy-MM-dd-hh-mm}-fargo.log">
       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{2}:%L - %msg%n" />
       <Policies>
@@ -22,22 +22,22 @@
       <AppenderRef ref="Console" />
       <AppenderRef ref="RollingFile" />
     </Root>
-    <Logger name="migae.datastore.adapter.gae" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore.adapter.gae" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="migae.datastore.keys" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore.keys" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="migae.datastore.structure.keyword" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore.structure.keyword" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="migae.datastore.structure.map" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore.structure.map" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="migae.datastore.structure.vector" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore.structure.vector" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="migae.datastore" level="DEBUG" additivity="false">
+    <Logger name="migae.datastore" level="ALL" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
   </Loggers>

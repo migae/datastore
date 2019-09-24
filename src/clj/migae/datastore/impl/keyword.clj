@@ -1,4 +1,6 @@
-(ns migae.datastore.structure.keyword
+(ns migae.datastore.impl.keyword
+  "support ops taking :force or :multi as first arg"
+  ;; FIXME: :multi not needed? can be detected via arg types?
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -19,11 +21,11 @@
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
             ;; [migae.datastore.types.entity-map :refer :all]
-            [migae.datastore.structure.vector :as v]
-            [migae.datastore.keys :as k]
+            [migae.datastore.impl.vector :as v]
+            [migae.datastore :as k]
             [migae.datastore.adapter.gae :as gae]))
 
-(clojure.core/println "loading migae.datastore.structure.keyword")
+(clojure.core/println "loading migae.datastore.impl.keyword")
 
 (defn entity-map? [m]
   (log/trace "entity-map?" (meta m) m (type m))
@@ -31,30 +33,31 @@
 
 (defn entity-map
   "entity-map: local constructor"
-  ([k]
-   (log/trace "entity-map 1" (meta k) k (type k))
-   (with-meta {} {:migae/keychain k}))
-  ([k m]
-   (log/trace "entity-map 2" k m)
-   (let [em (with-meta m {:migae/keychain k})]
+  ([kw]
+   ;; FIXME: broken
+   (log/trace "entity-map 1" (meta kw) kw (type kw))
+   (with-meta {} {:migae/keychain kw}))
+  ([kw m]
+   (log/trace "entity-map 2" kw m)
+   (let [em (with-meta m {:migae/keychain kw})]
      (log/trace "em: " (meta em) em)
      em))
-  ([k m mode]
+  ([kw m mode]
    {:pre [(= mode :em)]}
-   (log/trace "entity-map :em" k m)
-   (if (empty? k)
+   (log/trace "entity-map :em" kw m)
+   (if (empty? kw)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [ds (DatastoreServiceFactory/getDatastoreService)
-           key (k/entity-key k)
-           foo (log/trace "k: " key)
+           key (k/vector->Key kw)
+           foo (log/trace "kw: " key)
            e (Entity. key)]
-       (doseq [[k v] m]
-         (.setProperty e (subs (str k) 1) (k/get-val-ds v)))
+       (doseq [[kw v] m]
+         (.setProperty e (subs (str kw) 1) (k/get-val-ds v)))
        (PersistentEntityMap. e nil))))
   )
 
 (defn entity-map!
-  "push ctor"
+  "forced push ctor: if first arg is :force, overwrite"
   ([keyword] (throw (IllegalArgumentException. "cannot make entity-map from keyword")))
   ([mode keychain]
    (log/trace "entity-map! 2" mode keychain)
@@ -153,7 +156,7 @@
       (keyword (name dogtag))
       dogtag)))
 
-(defn entity-key
-  [mode keychain m]
-  (log/trace "Keyword entity-key: " mode keychain m)
-  )
+;; (defn entity-key
+;;   [mode keychain m]
+;;   (log/trace "Keyword entity-key: " mode keychain m)
+;;   )

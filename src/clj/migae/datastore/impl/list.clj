@@ -1,4 +1,4 @@
-(ns migae.datastore.structure.list
+(ns migae.datastore.impl.list
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -18,14 +18,14 @@
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.keys :as k]))
+            [migae.datastore :as k]))
 
-(clojure.core/println "loading migae.datastore.structure.list")
+(clojure.core/println "loading migae.datastore.impl.list")
 
 
 (declare dump dump-str)
 
-(declare entity-key ->PersistentEntityMap)
+(declare ->PersistentEntityMap)
 
 (defn entity-map? [m]
   (log/debug "entity-map?" (meta m) m (type m))
@@ -47,7 +47,7 @@
    (if (empty? k)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [ds (DatastoreServiceFactory/getDatastoreService)
-           key (entity-key k)
+           key (k/vector->Key (vec k))
            foo (log/trace "k: " key)
            e (Entity. key)]
        (doseq [[k v] m]
@@ -83,9 +83,9 @@
       (keyword (name dogtag))
       dogtag)))
 
-(defn entity-key
-  ([keychain]
-   (k/entity-key (vec keychain))))
+;; (defn entity-key
+;;   ([keychain]
+;;    (k/vector->Key (vec keychain))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  utils

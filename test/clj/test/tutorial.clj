@@ -14,8 +14,8 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
-  (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+  (:require [migae.datastore :as ds]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -201,8 +201,8 @@
       )))
 
 (deftest ^:api clojure-map-2
-  (testing "clojure map api: entity with 2 properties"
-    (let [e (ds/entity-map! [:Foo/bar] {:a 1 :b 2})]
+  (testing "clojure map api: entity with 2 (unordered) properties"
+    (let [e (ds/entity-map! [:Foo/bar] {:b 2 :a 1})]
       (log/trace "test: clojure map api")
       (log/trace "entity: " (.content e))
       (log/trace "e: " e)
@@ -224,11 +224,12 @@
       (is (= (e :a) 1))
       (is (= (:a e) 1))
       (is (= (count e) 2))
-      (is (= (seq e) '([:b 2] [:a 1])))
       (is (contains? e :a))
       (is (contains? e :b))
-      (is (= (keys e) '(:b :a)))
-      (is (= (vals e) '(2 1)))
+      ;; ordering of seq, keys, vals undefined, sort first
+      (is (= (sort (seq e)) '([:a 1] [:b 2])))
+      (is (= (sort (keys e)) '(:a :b)))
+      (is (= (sort (vals e)) '(1 2)))
       )))
 
 (deftest ^:props emap-embedded-map-1
@@ -264,11 +265,11 @@
 (deftest ^:props emap-embedded-set
   (testing "using a set as a property value"
     (let [e (ds/entity-map! [:Foo/bar] {:a 1, :b #{1 2 3}})]
-      (log/trace "test: emap-embedded-set")
-      (log/trace "e: " e)
-      (log/trace "entity: " (.content e))
-      (log/trace "(e :b) dump: " (e :b) (type (e :b)))
-      (log/trace "(seq e): " (seq e)))))
+      (log/info "test: emap-embedded-set")
+      (log/info "e: " e)
+      (log/info "entity: " (.content e))
+      (log/info "(e :b) dump: " (e :b) (type (e :b)))
+      (log/info "(seq e): " (seq e)))))
 
 (defn seqtest
   [e indent]

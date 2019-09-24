@@ -1,6 +1,10 @@
-(clojure.core/println "Start loading migae.datastore.structure.vector")
+;; vector implementations of protocols methods, mapped here by impl.clj
+;; extends clojure.lang.IPersistentVector
 
-(ns migae.datastore.structure.vector
+(clojure.core/println "Start loading migae.datastore.impl.vector")
+
+
+(ns migae.datastore.impl.vector
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -9,6 +13,7 @@
             DatastoreServiceConfig$Builder
             Entity EmbeddedEntity EntityNotFoundException
             Email
+            Key KeyFactory KeyFactory$Builder
             Link]
            [java.util
             Collection
@@ -20,12 +25,12 @@
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.keys :as k]
+            [migae.datastore :as ds]
             ;;[migae.datastore.types.entity-map :refer :all]
-            [migae.datastore.structure.utils :as u]
+            [migae.datastore.impl.utils :as u]
             [migae.datastore.adapter.gae :as gae]))
 
-(clojure.core/println "loading migae.datastore.structure.vector")
+(clojure.core/println "loading migae.datastore.impl.vector")
 
 (declare dump dump-str)
 
@@ -33,13 +38,13 @@
   ([k m]
    (log/trace "entity-map?" k m)
    ;; FIXME: validate m?
-   (k/proper-keychain? k)))
+   (ds/proper-keychain? k)))
 
 (defn entity-map
   "entity-map: local constructor"
   ([k]
-   (log/trace "entity-map 1" (meta k) k (type k))
-   (if (k/keychain? k)
+   (log/trace "vector entity-map 1" (meta k) k (type k))
+   (if (ds/keychain? k)
      (do
        ;; (log/trace "keychain:" k)
        (with-meta {} {:migae/keychain k}))
@@ -48,9 +53,9 @@
        (apply entity-map k))
      ))
   ([k m]
-   ;; (println "entity-map 2" k m)
+   (log/trace "vector entity-map 2" k m)
    (cond
-     (k/proper-keychain? k)
+     (ds/proper-keychain? k)
      (if (u/valid-emap? m)
        (if (every? keyword? (keys m))
          (let [em (with-meta m {:migae/keychain k})]
@@ -59,7 +64,7 @@
          (throw (IllegalArgumentException. (str "Invalid map, only keyword keys allowed: " m))))
        (throw (IllegalArgumentException. (str "Invalid map arg " m))))
 
-     (k/improper-keychain? k)
+     (ds/improper-keychain? k)
      ;; FIXME: allow improper keychains in PersistentMap?
      ;; call them "open emaps", as opposed to closed, just like closed/open logic sentences
      (throw (IllegalArgumentException. (str "Improper keychain '" k "' not allowed for local ctor")))
@@ -67,7 +72,7 @@
      :else
      (if (empty? k)
        (throw (IllegalArgumentException. (str "Null keychain '" k "' not allowed for local ctor")))
-       (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid})))))
+       (throw (IllegalArgumentException. (str "Invalid keychain '" k "'"))))))
 
   ([k m mode]
    {:pre [(= mode :em)]}
@@ -75,11 +80,11 @@
    (if (empty? k)
      (throw (IllegalArgumentException. "keychain vector must not be empty"))
      (let [ds (DatastoreServiceFactory/getDatastoreService)
-           key (k/entity-key k)
+           key (ds/vector->Key k)
            ;; log (log/trace "k: " key)
            e (Entity. key)]
        (doseq [[k v] m]
-         (.setProperty e (subs (str k) 1) (k/get-val-ds v)))
+         (.setProperty e (subs (str k) 1) (ds/get-val-ds v)))
        (PersistentEntityMap. e nil))))
   )
 
@@ -88,12 +93,12 @@
   ([keychain]
    ;;(into-ds! keychain)
    (cond
-     (k/improper-keychain? keychain)
+     (ds/improper-keychain? keychain)
      (do
        (log/trace "entity-map! 1 improper:" keychain)
        ;; (gae/put-kinded-emap keychain {})
        )
-     (k/proper-keychain? keychain)
+     (ds/proper-keychain? keychain)
      (do
        (log/trace "entity-map! 1 proper:" keychain)
        ;; (put-proper-emap :keyvec keychain :propmap {} :force true)
@@ -102,16 +107,16 @@
                            {:type :keychain-exception, :cause :invalid}))))
 
   ([keychain em]
-   (log/trace "entity-map! 2")
+   ;; (log/trace "entity-map! 2")
    (cond
-     (k/improper-keychain? keychain)
+     (ds/improper-keychain? keychain)
      (do
        ;; (log/trace "entity-map! 2 improper:" keychain)
        (let [e (gae/put-kinded-emap (with-meta em {:migae/keychain keychain}))]
          e)
        ;; (PersistentEntityMap. e nil))
        )
-     (k/proper-keychain? keychain)
+     (ds/proper-keychain? keychain)
      (do
        (log/trace "entity-map! 2 proper:" keychain)
        (let [e (gae/put-proper-emap :keyvec keychain :propmap em)]
@@ -147,10 +152,10 @@
      (do (log/trace "mode " arg1 " keychain: " arg2)
          (gae/get-ds arg1 arg2))
 
-     (k/improper-keychain? arg1)
+     (ds/improper-keychain? arg1)
      (gae/get-ds arg1 arg2)
 
-     (k/proper-keychain? arg1)
+     (ds/proper-keychain? arg1)
      (gae/get-ds arg1 arg2)
 
      :else (throw (IllegalArgumentException. "bad arg1")))
@@ -169,15 +174,47 @@
 ;;    {:pre [(proper-keychain? keychain)]}
 ;;    ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
 ;;    ;; (if (proper-keychain? keychain)
-;;    (let [k (keyword-to-key (first keychain))
+;;    (let [k (keyword->Key (first keychain))
 ;;          root (KeyFactory$Builder. k)]
 ;;      (.getKey (doto root (add-child-keylink (rest keychain))))
 ;;      (throw (InvalidKeychainException. (str keychain))))))
 
+(defn keychain?
+  [k]
+  (ds/proper-keychain? k))
+
+(defn Key?
+  [k]
+  (ds/proper-keychain? k))
+
+;; moved to ds/vector->Key in keys.clj
+#_(defn ->Key
+  "given a keychain vector, return a ...datastore.Key object"
+  ([keychain]
+   ;; {:pre [(proper-keychain? keychain)]}
+   (log/debug "vector->Key: " keychain (type keychain) " : " (vector? keychain))
+   (if (ds/proper-keychain? keychain)
+     (let [k (ds/keyword->Key (first keychain))
+           _ (log/debug "root key: " k)
+           _ (flush)
+           root (KeyFactory$Builder. k)]
+       (.getKey (doto root (ds/add-child-keylink (rest keychain)))))
+     (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid}))
+     )))
+
+(defn ->keychain
+  "given a vector, return it if it is a valid keychain, else barf"
+  ([keychain]
+   ;; {:pre [(proper-keychain? keychain)]}
+   (log/debug "->keychain: " keychain (type keychain) " : " (vector? keychain))
+   (if (ds/proper-keychain? keychain)
+     keychain
+     (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid})))))
+
 (defn keychain
   [v]
   ;; (println "keychain: " v)
-  (if (k/keychain? v) v nil))
+  (if (ds/keychain? v) v nil))
 
 (defn kind
   "entity-map.kind co-ctor"
@@ -212,4 +249,4 @@
   (binding [*print-meta* true]
     (pr-str m)))
 
-(clojure.core/println "Done loading migae.datastore.structure.vector")
+(clojure.core/println "Done loading migae.datastore.impl.vector")

@@ -14,8 +14,8 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
-  (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+  (:require [migae.datastore :as ds]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]

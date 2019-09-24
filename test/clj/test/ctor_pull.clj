@@ -13,7 +13,7 @@
            [com.google.appengine.api.datastore EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+            [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
                                         ;            [ring-zombie.core :as zombie]))
 
@@ -108,3 +108,5 @@
       (log/trace "abs count:" (count abs) (type abs))
       (log/trace "abac count:" (count abac) (type abac))
       )))
+
+;;(run-tests)
