@@ -1,6 +1,6 @@
 obsolete/
 tmp/
-log/
+logs/
 
 # emacs
 # -*- mode: gitignore; -*-
