@@ -32,12 +32,12 @@
             ShortBlob
             Text
             Transaction]
-           [migae.datastore PersistentEntityMap]
+           ;; [migae.datastore PersistentEntityMap] ;; PersistentEntityMapSeq]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
-            [migae.datastore.keys :as k]
-            [migae.datastore :refer [->PersistentEntityMap]]
+            [migae.datastore :as ds]
+            ;; [migae.datastore :refer [->PersistentEntityMap ->PersistentEntityMapSeq]]
             ;; [migae.datastore.types.entity-map :refer [->PersistentEntityMap]]
             ;; [migae.datastore.types.entity-map-seq]
             ;; [migae.datastore.api :as ds]
@@ -48,7 +48,7 @@
 
 (clojure.core/println "loading migae.datastore.adapter.gae")
 
-(def ds  ;; store-map
+(def datastore  ;; store-map
   (let [dsm (DatastoreServiceFactory/getDatastoreService)
 ;;        psm (ds/->PersistentStoreMap dsm nil nil)
         ]
@@ -75,7 +75,7 @@
         fq (doseq [pred filter]
              (log/trace "\tpred: " pred)
              (.setFilter q pred))
-        pq (.prepare ds q)
+        pq (.prepare datastore q)
         iterator (.asIterator pq)
         seq (iterator-seq iterator)
         pemseq (migae.datastore.PersistentEntityMapSeq. seq)]
@@ -88,13 +88,13 @@
   ([keychain]
    (log/trace "get-ds " keychain)
    (cond
-     (k/proper-keychain? keychain)
+     (ds/proper-keychain? keychain)
      (do
        (log/trace "proper keychain: " keychain)
        (let [r (get-proper-emap keychain)]
          r))
 
-     (k/improper-keychain? keychain)
+     (ds/improper-keychain? keychain)
      (do
        (log/trace "improper-keychain: " keychain)
        (let [r (get-kinded-emap keychain)]
@@ -111,13 +111,13 @@
   (log/trace "get-ds " keychain pattern)
    (cond
      (= :prefix keychain)
-     (if (k/proper-keychain? pattern)
+     (if (ds/proper-keychain? pattern)
        (get-prefix-matches pattern))
 
      ;; (empty? keychain)
      ;; (pull-all)
 
-     (k/improper-keychain? keychain)
+     (ds/improper-keychain? keychain)
      (do
        (log/trace "improper-keychain with pattern" )
        (if (empty? pattern)
@@ -132,7 +132,7 @@
              (log/trace "inequality filter not yet implemented")))
            ))
 
-     (k/proper-keychain? keychain)
+     (ds/proper-keychain? keychain)
      (if (empty? pattern)
        (do (log/trace "proper keychain with empty pattern")
            (get-proper-emap keychain))
@@ -145,10 +145,10 @@
   [keychain & data]
   ;; precon: keychain has already been validated
   (log/trace "get-proper-emap" keychain)
-  (let [k (k/entity-key keychain)
-        e (.get ds k)]
+  (let [k (ds/vector->Key keychain)
+        e (.get datastore k)]
     (log/trace "e: " e (type e))
-    (->PersistentEntityMap e nil)))
+    (ds/->PersistentEntityMap e nil)))
 
 (defn get-kinded-emap
   [keychain & data]
@@ -158,10 +158,10 @@
   (if (> (count keychain) 1)
     (do
       (log/trace "kinded descendant query")
-      (let [ancestor-key (k/entity-key (vec (butlast keychain)))
+      (let [ancestor-key (ds/vector->Key (vec (butlast keychain)))
             kind (name (last keychain))
             q (Query. kind ancestor-key)
-            prepared-query (.prepare ds q)
+            prepared-query (.prepare datastore q)
             iterator (.asIterator prepared-query)
             seq (iterator-seq iterator)
             res (migae.datastore.PersistentEntityMapSeq. seq)]
@@ -173,7 +173,7 @@
       (let [kind (name (last keychain))
             q (Query. kind)
             ;; log (log/trace "query: " q)
-            pq (.prepare ds q) ;; FIXME
+            pq (.prepare datastore q) ;; FIXME
             ;; log (log/trace "p query: " pq)
             ;; log (log/trace "p query count: " (.countEntities pq (FetchOptions$Builder/withDefaults)))
             iterator (.asIterator pq)
@@ -189,7 +189,7 @@
   []
   ;; (log/trace "pull-all")
   (let [q  (Query.)
-        prepared-query (.prepare ds q) ;; FIXME
+        prepared-query (.prepare datastore q) ;; FIXME
         iterator (.asIterator prepared-query)
         ;; res (migae.datastore.PersistentEntityMapSeq. (iterator-seq iterator))
         seq (iterator-seq iterator)
@@ -202,7 +202,7 @@
 (defn fetch
   [^Key k]
   ;; FIXME: validate k
-  (.get ds k))
+  (.get datastore k))
 
 (defn- make-embedded-entity
   [m]
@@ -320,13 +320,13 @@
              (Entity. kind)
              (do #_(log/trace "parent-keychain" parent-keychain)
                  #_(log/trace "parent-key" (entity-key parent-keychain))
-                 (Entity. kind  (k/entity-key parent-keychain))
+                 (Entity. kind  (ds/vector->Key parent-keychain))
                  ))]
      (when (not (empty? em))
        (doseq [[k v] (seq em)]
          (.setProperty e (subs (str k) 1) (get-val-ds v))))
-     (.put ds e)
-     (->PersistentEntityMap e nil)))
+     (.put datastore e)
+     (ds/->PersistentEntityMap e nil)))
      ;; e))
   ([keyvec & data]
   ;; precon: improper keychain is validated
@@ -339,16 +339,16 @@
             (Entity. kind)
             (do #_(log/trace "parent-keychain" parent-keychain)
                 #_(log/trace "parent-key" (entity-key parent-keychain))
-                (Entity. kind  (k/entity-key parent-keychain))
+                (Entity. kind  (ds/vector->Key parent-keychain))
                 ))]
     (when (not (empty? em))
       (doseq [[k v] (seq em)]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
-    (.put ds e)
+    (.put datastore e)
     ;; (PersistentEntityMap. e nil))))
     e)))
     ;; (let [pem (PersistentEntityMap. e nil)
-    ;;       ds (into store-map pem)]
+    ;;       datastore (into store-map pem)]
     ;;   pem)))
 
 (defn put-proper-emap
@@ -358,10 +358,10 @@
   ;; (log/trace "keychain" keyvec)
   ;; (log/trace "propmap" propmap)
   ;; (log/trace "force" force)
-  (let [k (k/entity-key keyvec)
+  (let [k (ds/vector->Key keyvec)
         e (if (not force)
             (do (log/trace "not force: " k)
-                (let [ent (try (.get ds k)
+                (let [ent (try (.get datastore k)
                                (catch EntityNotFoundException ex ex))]
                   (log/trace "ent: " (instance? EntityNotFoundException ent))
                   ;; (if (= (type ent) Entity) ;; found
@@ -378,20 +378,20 @@
       (doseq [[k v] propmap]
         (.setProperty e (subs (str k) 1) (get-val-ds v))))
     ;; (let [pem (PersistentEntityMap. e nil)
-    ;;       ds ds]
-    ;;   ;; (log/trace "ctor-push.put-proper-emap ds: " ds (type ds))
+    ;;       datastore ds]
+    ;;   ;; (log/trace "ctor-push.put-proper-emap ds: " datastore (type ds))
     ;;   (into store-map pem)
     ;;   pem)))
-    (.put ds e)
-    (->PersistentEntityMap e nil)))
+    (.put datastore e)
+    (ds/->PersistentEntityMap e nil)))
 
 (defn get-prefix-matches
   [keychain]
   ;; precon: keychain has already been validated
   (log/trace "get-prefix-matches" keychain)
-  (let [prefix (apply k/entity-key keychain)
+  (let [prefix (apply ds/vector->Key keychain)
         q (.setAncestor (Query.) prefix)
-        prepared-query (.prepare ds q)
+        prepared-query (.prepare datastore q)
         iterator (.asIterator prepared-query (FetchOptions$Builder/withDefaults))
         seq  (iterator-seq iterator)
         res (migae.datastore.PersistentEntityMapSeq. seq)]
@@ -409,18 +409,18 @@
 ;;          (let [k (:migae/keychain (meta arg))]
 ;;            ;; (log/trace "edn key: " k " improper?" (improper-keychain? k))
 ;;            (cond
-;;              (k/improper-keychain? k)
+;;              (ds/improper-keychain? k)
 ;;              (put-kinded-emap k arg)
-;;              (k/proper-keychain? k)
+;;              (ds/proper-keychain? k)
 ;;              (put-proper-emap :keyvec k :propmap arg :force true)
 ;;              :else (throw (IllegalArgumentException. (str "INVALID KEYCHAIN!: " k)))))
 ;;          )
-;;        (k/keychain? arg)
+;;        (ds/keychain? arg)
 ;;        (do
 ;;          (cond
-;;            (k/improper-keychain? arg)
+;;            (ds/improper-keychain? arg)
 ;;            (put-kinded-emap arg {})
-;;            (k/proper-keychain? arg)
+;;            (ds/proper-keychain? arg)
 ;;            (put-proper-emap :keyvec arg :propmap {} :force true)
 ;;            :else (throw (IllegalArgumentException. (str "Invalid keychain" arg)))))
 ;;        :else (throw (IllegalArgumentException.)))))
@@ -431,9 +431,9 @@
 ;;     ;; (if (empty? keychain)
 ;;     ;;   (throw (IllegalArgumentException. "keychain vector must not be empty"))
 ;;     (cond
-;;       (k/improper-keychain? keychain)
+;;       (ds/improper-keychain? keychain)
 ;;       (put-kinded-emap keychain em)
-;;       (k/proper-keychain? keychain)
+;;       (ds/proper-keychain? keychain)
 ;;       (put-proper-emap :keyvec keychain :propmap em)
 ;;       :else
 ;;       (throw (IllegalArgumentException. (str "Invalid keychain : " keychain))))))
@@ -448,16 +448,16 @@
 ;;     (cond
 ;;       (= mode :force)
 ;;       (cond
-;;         (k/improper-keychain? keychain)
+;;         (ds/improper-keychain? keychain)
 ;;         (put-kinded-emap keychain em)
-;;         (k/proper-keychain? keychain)
+;;         (ds/proper-keychain? keychain)
 ;;         (put-proper-emap :keyvec keychain :propmap em :force true)
 ;;         :else
 ;;         (throw (IllegalArgumentException. (str "Invalid keychain" keychain))))
 ;;       (= mode :multi)
 ;;       (do
 ;;         ;; (log/trace "entity-map! :multi processing...")
-;;         (if (k/improper-keychain? keychain)
+;;         (if (ds/improper-keychain? keychain)
 ;;           (if (vector? em)
 ;;             (do
 ;;               (for [emap em]
@@ -480,7 +480,7 @@
             val (get-val-ds v)]
         ;; (log/trace "emap-new setting prop: " k prop v val)
         (.setProperty e prop val)))
-    (.put ds e)
+    (.put datastore e)
     ;; (PersistentEntityMap. e nil)))
     e))
 
@@ -517,21 +517,21 @@
 ;;               ;; (log/trace "setting val" val (type val))
 ;;               ;; (flush)
 ;;               (.setProperty e prop val)))))
-;;       (.put ds e)
+;;       (.put datastore e)
 ;;       ;; (log/trace "saved entity " e)
 ;;       (PersistentEntityMap. e nil))))
 
 ;; (defn- emap-update-empty
 ;;   [keychain]
 ;;   (let [k (apply entity-key keychain)
-;;         e (try (.get ds k)
+;;         e (try (.get datastore k)
 ;;                (catch EntityNotFoundException e nil)
 ;;                (catch DatastoreFailureException e (throw e))
 ;;                (catch java.lang.IllegalArgumentException e (throw e)))]
 ;;     (if (ds/entity-map? e)
 ;;           (PersistentEntityMap. e nil)
 ;;           (let [e (Entity. k)]
-;;             (.put ds e)
+;;             (.put datastore e)
 ;;             (PersistentEntityMap. e nil)))))
 
 ;; TODO: support embedded maps, e.g. (ds/emap!! [:Foo/bar] {:a 1, :b {:c 3, :d 4}})
@@ -543,9 +543,9 @@
     ;; (log/trace "emap-update-map key: " k)
     (let [e (if (keyword? k)
               (let [e (Entity. (subs (str k) 1))] ;; key of form :Foo, i.e. a Kind specifier
-                (.put ds e)
+                (.put datastore e)
                 e)
-              (try (.get ds k)
+              (try (.get datastore k)
                    (catch EntityNotFoundException e nil)
                    (catch DatastoreFailureException e (throw e))
                    (catch java.lang.IllegalArgumentException e (throw e))))]
@@ -565,14 +565,14 @@
 ;;           em (PersistentEntityMap. e nil)]
 ;;       (try
 ;;         (f em)
-;;         (.put ds e)
+;;         (.put datastore e)
 ;;         (.commit txn)
 ;;         (finally
 ;;           (if (.isActive txn)
 ;;             (.rollback txn))))
 ;;       em)
 ;;     (let [k (apply entity-key keychain)
-;;           e (try (.get ds k)
+;;           e (try (.get datastore k)
 ;;                  (catch EntityNotFoundException e
 ;;                    ;;(log/trace (.getMessage e))
 ;;                    e)
@@ -596,7 +596,7 @@
 ;;               em (PersistentEntityMap. e nil)]
 ;;           (try
 ;;             (f em)
-;;             (.put ds e)
+;;             (.put datastore e)
 ;;             (.commit txn)
 ;;             (finally
 ;;               (if (.isActive txn)
