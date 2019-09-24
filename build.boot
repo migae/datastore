@@ -7,7 +7,7 @@
        :version +version+}
  :asset-paths #{"resources"}
  :resource-paths #{"src/clj"}
- :source-paths #{"src/clj-compile"}
+ ;; :source-paths #{"src/clj-compile"}
  :repositories {"clojars" "https://clojars.org/repo"
                 "central" "https://repo1.maven.org/maven2/"
                 "maven-central" "https://mvnrepository.com"}
