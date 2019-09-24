@@ -14,7 +14,7 @@
   (:require [clojure.test :refer :all]
             [clojure.tools.reader.edn :as edn]
             [schema.core :as s] ;; :include-macros true]
-            [migae.datastore.model.entity-map :as ds]
+            [migae.datastore :as ds]
             ;; [migae.datastore.adapter.gae :as gae]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
@@ -61,3 +61,5 @@
       (doseq [em (ds/entity-map* [:Person] {:email "Greenlee@example.org"})]
         (log/debug "matched: " (ds/dump-str em)))
       )))
+
+(run-tests)

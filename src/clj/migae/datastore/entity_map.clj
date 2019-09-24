@@ -1,6 +1,6 @@
 (clojure.core/println "Start loading migae.datastore.types.entity_map")
 
-(ns migae.datastore.types.entity-map
+#_(ns migae.datastore.types.entity-map
   (:refer-clojure :exclude [name hash])
   (:import [java.lang IllegalArgumentException RuntimeException]
            [java.util
@@ -38,10 +38,11 @@
 ;;  PersistentEntityMap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-ns 'migae.datastore)
+
 (clojure.core/refer 'clojure.core)
 (require '(clojure.tools [logging :as log :only [debug info]])
          ;; '(migae.datastore.adapter [gae :as gae])
-         '(migae.datastore [keys :as k])
+         ;; '(migae.datastore [keys :as k])
          ;; get access to funcs above in local ns
          ;; '(migae.datastore.types [entity-map :refer :all])
          '(clojure.tools.reader [edn :as edn])
@@ -66,6 +67,22 @@
 (declare ->PersistentEntityMap)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#_(defn- get-parent-keychain
+  [^Key k]
+  {:pre [(not (nil? k))]}
+  (log/trace "get-parent-keychain for key: " k)
+  (let [kind (.getKind k)
+        nm (.getName k)
+        id (str (.getId k))
+        dogtag (keyword kind (if nm nm id))
+        res (if (.getParent k)
+              (conj (list dogtag) (keychain (.getParent k)))
+              (list dogtag))]
+    ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
+    ;; (log/trace "res: " res)
+    ;; (log/trace "res2: " (vec (flatten res)))
+    (vec (flatten res))))
+
 (defn- get-keychain
   [^Key k]
   {:pre [(not (nil? k))]}
@@ -75,7 +92,7 @@
         id (str (.getId k))
         dogtag (keyword kind (if nm nm id))
         res (if (.getParent k)
-              (conj (list dogtag) (k/keychain (.getParent k)))
+              (conj (list dogtag) (get-keychain (.getParent k)))
               (list dogtag))]
     ;; (log/trace "kind" kind "nm " nm " id " id " parent " (.getParent k))
     ;; (log/trace "res: " res)
@@ -235,22 +252,40 @@
     ;; (log/trace "clj-to-ds result:" v " -> " val "\n")
     val))
 
+(clojure.core/println "migae.datastore.types.entity_map ns:" *ns*)
+
 (deftype PersistentEntityMap [content ^IPersistentMap em-meta]
 
-  migae.datastore.IPersistentEntityMap
-  ;; java.lang.Iterable
-  (iterator [this]
-    ;; (log/trace "Iterable iterator" (.content this))
-    (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
-          entry-set (.entrySet props)
-          e-iter (.iterator entry-set)
-          ;; em-iter (->PersistentEntityMapSeq e-iter)
-          ]
-      ;; (log/trace "Iterable res:" em-iter)
-      ;; em-iter))
-      e-iter))
+  ;; Protocol
+  ;; migae.datastore.IPersistentEntityMap
+ ;; :extends [java.lang.Iterable
+ ;;           java.util.Map
+ ;;           java.io.Serializable
+ ;;           ;; NB: these are all Java interfaces
+ ;;           clojure.lang.IFn             ; AFn: call(), run(), invoke()
+ ;;           clojure.lang.IPersistentMap
+ ;;           clojure.lang.IHashEq
+ ;;           clojure.lang.IKVReduce       ; support clojure.core/reduce-kv
+ ;;           clojure.lang.MapEquivalence
+ ;;           clojure.lang.IObj ;; extends IMeta
+ ;;           clojure.lang.ITransientCollection
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  java.util.Map
+
+  ;;Protocol:
+  ;; java.lang.Iterable
+  ;; (iterator [this]
+  ;;   ;; (log/trace "Iterable iterator" (.content this))
+  ;;   (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
+  ;;         entry-set (.entrySet props)
+  ;;         e-iter (.iterator entry-set)
+  ;;         ;; em-iter (->PersistentEntityMapSeq e-iter)
+  ;;         ]
+  ;;     ;; (log/trace "Iterable res:" em-iter)
+  ;;     ;; em-iter))
+  ;;     e-iter))
+
+  ;;Protocol:
+  java.util.Map
   ;; void	clear()
   ;; boolean containsKey(Object key) => implemented by Associative, below
   ;; boolean containsValue(Object value)
@@ -297,16 +332,21 @@
   ;;j8 default boolean replace(K key, V oldValue, V newValue)
   ;;j8 default void replaceAll(BiFunction<? super K,? super V,? extends V> function)
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IFn
+  ;;Protocol:
+  java.io.Serializable
+  ;;   no methods or fields; this class only serves to "identify the semantics of being serializable"
+
+  ;;Protocol:
+  clojure.lang.IFn
   ;; invoke, applyTo
   (invoke [this k]  ; -> Object
     {:pre [(keyword? k)]}
-    (log/trace "PersistentEntityMap.invoke(" k ")")
+    ;; (log/trace "PersistentEntityMap.invoke(" k ")")
     (if (= k :migae/keychain)
       (get-keychain (.getKey content))
       (let [kw (subs (str k) 1)
             prop (.getProperty (.content this) kw)]
-        (log/trace "Property: " k " : " prop)
+        ;; (log/trace "Property: " k " : " prop)
         (if (not (nil? prop))
           (ds-to-clj prop)
           nil))))
@@ -314,29 +354,12 @@
   (applyTo [_ ^ISeq arglist]  ; -> Object
     (log/trace "IFn.applyTo"))
 
-  ;; clojure.lang.IMapEntry
-  ;; key, val
-  ;; (key [this]  ; -> Object
-  ;;   (log/trace "PersistentEntityMap.IMapEntry key")
-  ;;   (get-keychain (.getKey content)))
-  ;; (val [this]  ; -> Object
-  ;;   (log/trace "PersistentEntityMap.IMapEntry val")
-  ;;   (.printStackTrace (Exception.))
-  ;;   (let [props (.getProperties content)
-  ;;         coll (into {} (for [[k v] props]
-  ;;                             (let [prop (keyword k)
-  ;;                                   val (ds-to-clj v)]
-  ;;                               {prop val})))
-  ;;         keychain (get-keychain (.getKey content))
-  ;;         ;; res (into coll {:migae/keychain keychain})]
-  ;;         ]
-  ;;     coll))
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IObj ;; extends IMeta
+  ;;Protocol:
+  clojure.lang.IObj ;; extends IMeta
   ;; withMeta; meta
   (^IPersistentMap meta [this]
     (do
-      (log/trace "PersistentEntityMap.meta on: " (type (.content this)))
+      ;; (log/trace "PersistentEntityMap.meta on: " (type (.content this)))
       (if (instance? EmbeddedEntity (.content this))
         ;; FIXME: handle case where embedded entity has key
         {}
@@ -352,8 +375,22 @@
         ;; (log/trace "entity with meta" em)
         em)))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IPersistentMap ; extends Iterable, Associative, Counted
+  ;;Protocol:
+  clojure.lang.IPersistentMap
+  ;; extends Iterable, Associative, Counted
   ;; assoc, assocEx, without; containsKey, entryAt; valAt; cons, count, empty, equiv; seq
+  ;; extends java.lang.Iterable
+  (iterator [this]
+    ;; (log/trace "Iterable iterator" (.content this))
+    (let [props (.getProperties content) ;; java.util.Map<java.lang.String,java.lang.Object>
+          entry-set (.entrySet props)
+          e-iter (.iterator entry-set)
+          ;; em-iter (->PersistentEntityMapSeq e-iter)
+          ]
+      ;; (log/trace "Iterable res:" em-iter)
+      ;; em-iter))
+      e-iter))
+
   (assoc [this k v] ; -> IPersistentMap
     (do
       (log/trace "PersistentEntityMap.assoc")
@@ -366,7 +403,7 @@
                                  (let [prop (keyword k)
                                        val (ds-to-clj v)]
                                    {prop val})))
-              key-chain (get-keychain (.getKey content)) ;; (k/keychain this)
+              key-chain (get-keychain (.getKey content))
               res (assoc to-coll k v)]
           (log/trace "IPersistentMap assoc res: " res)
           (with-meta res {:migae/keychain key-chain})))))
@@ -382,7 +419,7 @@
         (.removeProperty content prop)
         this)))
 
-  ;;;; extends Counted
+  ;; IPersistentMap extends Counted
   (count [_]  ; -> int
     "number of properties in container, plus one for the keychain"
     (do
@@ -390,7 +427,7 @@
       (let [props (.getProperties content)
             c (.size props)]
         c)))
-  ;;;; extends Associative extends IPersistentCollection, ILookup
+  ;; IPersistentMap extends Associative extends IPersistentCollection, ILookup
   ;; containsKey, entryAt, assoc
   ;; (containsKey [_ k]
   ;;   (log/trace "PersistentEntityMap.containsKey: " k)
@@ -490,7 +527,7 @@
   (equiv [this o]  ; -> boolean
     ;; FIXME: double-check the logic
     (cond
-     (instance? migae.datastore.IPersistentEntityMap o)
+     (instance? PersistentEntityMap o) ;; migae.datastore.I
      (do
        ;; (log/trace "comparing PersistentEntityMap")
        (if (.equals content (.content o))
@@ -523,8 +560,8 @@
   (^ISeq seq [this]
     ;; seq is called by: into, merge, printing stuff (prn, println, (log/trace em), etc)
     ;; also called by reduce
-    (log/trace "PersistentEntityMap.seq:" (type this)) ;; (.hashCode this) (.getKey content))
-    (log/trace (str "    on (.content this)" (.content this)))
+    ;; (log/trace "PersistentEntityMap.seq:" (type this)) ;; (.hashCode this) (.getKey content))
+    ;; (log/trace (str "seq on (.content this)" (.content this)))
     (let [props (.getProperties (.content this))
           ;; foo (println "props" props)
           emap (into {}
@@ -552,14 +589,15 @@
           (seq res)))))
   ;;      this))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IKVReduce
+  ;;Protocol:
+  clojure.lang.IKVReduce
   ;; support clojure.core/reduce-kv
   ;; Object kvreduce(IFn f, Object init);
   (kvreduce [this ^IFn f ^Object seed]
     (println "KVREDUCE")
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IReduce  ; extends IReduceInit
+  ;;;;;;;;;;;;; clojure.lang.IReduce  ; extends IReduceInit
   ;; FIXME: do we need to implement IReduce if we implement seq?
   ;; support clojure.core/reduce
   #_(reduce [this ^IFn f]  ; -> Object
@@ -651,7 +689,7 @@
      :else (log/trace "PersistentEntityMap.reduce HELP" (class seed)))
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.IReference ; extends IMeta; required to support metadata reader syntax?
+  ;;;;;;;;;; clojure.lang.IReference ; extends IMeta; required to support metadata reader syntax?
   ;; IPersistentMap alterMeta(IFn alter, ISeq args) ;
   ;; (^IPersistentMap alterMeta [this, ^IFn alter, ^ISeq args]
   ;;   (log/trace "IReference.alterMeta")
@@ -666,7 +704,8 @@
   ;; NB:  IMapEntry extends java.util.Map$Entry
   ;; can we use defprotocol and extend to do this?
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.ITransientCollection
+  ;;Protocol:
+  clojure.lang.ITransientCollection
   ;; FIXME: do we need this?
   ;; conj, persistent
   (conj [this args]  ; -> ITransientCollection
@@ -710,7 +749,7 @@
   ;;     (log/trace "ITransientMap persistent")
   ;;   )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; clojure.lang.Indexed                  ; extends Counted
+  ;;;;;;;;; clojure.lang.Indexed extends Counted
   ;; FIXME: do we need this if we support Seqable?
   ;; (count [this]                         ; Counted
   ;;   (log/trace "count"))
@@ -720,9 +759,28 @@
   #_(nth [this i not-found]
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; IHashEq
+  ;;Protocol:
+  clojure.lang.IHashEq
   (^int hasheq [this]
     (clojure.lang.Murmur3/hashUnordered this))
+
+  ;; clojure.lang.IMapEntry
+  ;; key, val
+  ;; (key [this]  ; -> Object
+  ;;   (log/trace "PersistentEntityMap.IMapEntry key")
+  ;;   (get-keychain (.getKey content)))
+  ;; (val [this]  ; -> Object
+  ;;   (log/trace "PersistentEntityMap.IMapEntry val")
+  ;;   (.printStackTrace (Exception.))
+  ;;   (let [props (.getProperties content)
+  ;;         coll (into {} (for [[k v] props]
+  ;;                             (let [prop (keyword k)
+  ;;                                   val (ds-to-clj v)]
+  ;;                               {prop val})))
+  ;;         keychain (get-keychain (.getKey content))
+  ;;         ;; res (into coll {:migae/keychain keychain})]
+  ;;         ]
+  ;;     coll))
 
   ) ;; end deftype PersistentEntityMap
 

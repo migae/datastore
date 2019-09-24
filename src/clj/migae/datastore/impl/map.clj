@@ -1,21 +1,22 @@
-(ns migae.datastore.structure.map
+(ns migae.datastore.impl.map
   (:refer-clojure :exclude [read read-string])
-  (:require [clojure.tools.logging :as log :only [debug info]]
+  (:require [clojure.tools.logging :as log :only [debug trace info]]
             [clojure.tools.reader.edn :as edn :refer [read read-string]]
             [schema.core :as s] ;; :include-macros true]
-            [migae.datastore.keys :as k]
-            [migae.datastore.signature.entity-map :as em]
-            #_[migae.datastore.structure.utils]))
-            ;; [migae.datastore.schemata :as schemata]))
+            [migae.datastore.schemata :as sch]
+            [migae.datastore :as ds]
+            ;; [migae.datastore.entity-map :as em]
+            [migae.datastore.impl.vector :as v]
+            #_[migae.datastore.impl.utils]))
 
-(clojure.core/println "loading migae.datastore.structure.map")
+(clojure.core/println "loading migae.datastore.impl.map")
 
 (declare dump dump-str)
 
 (defn entity-map? [m]
   ;; FIXME: improper key - is (entity-map? [:a]) true?
   ;; (log/debug "entity-map?" (meta m) m (type m))
-  (if (k/proper-keychain? (:migae/keychain (meta m)))
+  (if (ds/proper-keychain? (:migae/keychain (meta m)))
     true
     false))
 
@@ -26,11 +27,11 @@
 (defn entity-map
   "entity-map: local constructor"
   ([m]
-   ;; (log/debug "entity-map" (meta m) m (type m))
+   (log/debug "entity-map" (meta m) m (type m))
    (if (entity-map? m)
      m
      (if-let [keychain (:migae/keychain (meta m))]
-       (if (k/improper-keychain? keychain)
+       (if (ds/improper-keychain? keychain)
          (throw (IllegalArgumentException. (str "Improper keychain: " keychain)))
          (throw (IllegalArgumentException.
                  (str "Invalid :migae/keychain " keychain " - all links must be namespaced keywords"))))
@@ -58,8 +59,8 @@
   ;; (log/debug "    keys" keys)
   ;; (log/debug "    schema" schema)
   (log/debug "    data" data)
-  (log/debug "schemata: " (@em/dump-schemata))
-  (let [ps (@em/schema type)
+  (log/debug "schemata: " (sch/dump-schemata))
+  (let [ps (sch/schema type)
         v (try (s/validator ps)
                (catch Exception x (log/debug "bad schema: " (.getMessage x))))
         kws (into [] (for [fld ps] (keyword (:name fld))))
@@ -67,7 +68,7 @@
                     (for [datum data]
                       (let [rec (zipmap kws datum)
                             ;; m (with-meta rec {:migae/keychain [kind]})
-                            em (em/entity-map! [kind] rec)]
+                            em (v/entity-map! [kind] rec)]
                         ;; (log/debug "raw datum:" datum)
                         ;; (log/debug "entity-map:" (dump-str em))
                         em)))]
@@ -79,7 +80,7 @@
   (and (= (meta em1) (meta em2))
        (= em1 em2)))
 
-(defn keychain? [k] (k/keychain? k))
+;; (defn keychain? [k] (ds/keychain? k))
 
 (defn keychain=?
   [k1 k2]
@@ -98,7 +99,7 @@
   [m]
   ;; (log/debug "keychain: " m)
   (let [k (:migae/keychain (meta m))]
-    (if (k/keychain? k) k nil)))
+    (if (ds/keychain? k) k nil)))
 
 (defn key=?
   [em1 em2]
@@ -128,7 +129,7 @@
   [m]
   ;; (log/debug "entity-map.kind" (meta m) m)
   (if-let [ky (:migae/keychain (meta m))]
-         (if (k/keychain? ky)
+         (if (ds/keychain? ky)
            (str (namespace (last ky))))))
 
 ;; (defn identifier

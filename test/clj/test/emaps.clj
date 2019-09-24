@@ -12,7 +12,7 @@
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
             ;; [migae.datastore :as ds]
-            [migae.datastore.model.entity-map :as ds]
+            [migae.datastore :as ds]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -183,3 +183,5 @@
 ;;     (ds/entity-map! :multi [:Foo] [{:a 1} {:a 2} {:a 3}])
 ;;     (ds/entity-map! :multi [:Foo/Bar :Baz] [{:b 1} {:b 2} {:b 3}])
 ;;     ))
+
+;;(run-tests)

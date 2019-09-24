@@ -17,8 +17,8 @@
            [com.google.apphosting.api ApiProxy])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.signature.entity-map :as sig]
-            [migae.datastore.model.entity-map :as em :refer :all]
+            ;; [migae.datastore.signature.entity-map :as sig]
+            [migae.datastore :as em :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -93,14 +93,14 @@
   (testing "entity-map into axiom 1: into produces new entity-map"
     (let [em1 (em/entity-map! [:A/B] {:a/b 1})
           em2 (em/entity-map! [:C/D] {:c/d 2 :e/f 3})]
-      (log/debug "construction done")
-      (log/debug "em1: " (em/dump-str em1) (type em1))
-      (log/debug "em2: " (em/dump-str em2) (type em2))
+      ;; (log/debug "construction done")
+      ;; (log/debug "em1: " (em/dump-str em1) (type em1))
+      ;; (log/debug "em2: " (em/dump-str em2) (type em2))
       (let [em3 (into em1 em2)]
-        (log/debug "em3:" (em/dump-str em3))
-        (log/debug "em3:" em3)
-        (log/debug "seq em3:" (seq em3))
-        (log/debug "type em3:" (type em3))
+        ;; (log/debug "em3:" (em/dump-str em3))
+        ;; (log/debug "em3:" em3)
+        ;; (log/debug "seq em3:" (seq em3))
+        ;; (log/debug "type em3:" (type em3))
         (is (map? em3))
         (is (em/entity-map? em3))
         ;; (is (= (type em3) migae.datastore.PersistentEntityMap))
@@ -122,7 +122,8 @@
     (let [em1 (em/entity-map [:A/B] {:a 1})
           em2 (em/entity-map [:X/Y] {:b 2})]
       (let [em3 (into em1 em2)]
-        (println "em3, em1, em2: " (em/keychain em3) (em/keychain em1) (em/keychain em2))
+        (log/debug "em3" (em/dump em1))
+        ;; (println "em3, em1, em2: " (em/keychain em3) (em/keychain em1) (em/keychain em2))
         (is (em/keys=? em3 em1))
         (is (not (em/keys=? em3 em2))))
       ))
@@ -162,20 +163,20 @@
         (is (= (:b em3) 2)))
       ))
 
-(deftest ^:intoX entity-map-into-cljmap
+#_(deftest ^:intoX entity-map-into-cljmap
   (testing "clojure map api: into"
-    (log/debug "test: clojure map api: into")
+    ;; (log/debug "test: clojure map api: into")
     (let [em1 (em/entity-map! [:A/B] {:a/b 1})
           em2 (em/entity-map! [:A/B :C/D] {:c/d 1})
           em3 (em/entity-map! [:A/B :C/D :E/F] {:e/f 1})]
-      (log/debug "em1:" em1 (type em1))
-      (log/debug "em2:" em2 (type em2))
-      (log/debug "em3:" em3 (type em3))
+      ;; (log/debug "em1:" em1 (type em1))
+      ;; (log/debug "em2:" em2 (type em2))
+      ;; (log/debug "em3:" em3 (type em3))
       (let [em11 (with-meta (into {:x :y} em1) (meta em1))
             ;; em22 (em/into {} em2)
             ;; em33 (em/into {} em3)
             ]
-        (log/debug "em11:" (meta em11) em11 (type em11))
+        ;; (log/debug "em11:" (meta em11) em11 (type em11))
       ;;   (log/debug "em22:" em22 (type em22))
       ;;   (log/debug "em33:" em33 (type em33))
       ;;   (is (= em33 em3))
@@ -232,19 +233,20 @@
             ;;    {:foo "bar"})
           em2 ^{:x 999}(em/entity-map [:C/D] {:a 1})]
 ;;      (log/debug "em1:" (em/dump em1))
-      (log/debug "seq em2:" (seq em2))
-      (log/debug "em2 type: " em2 (type em2))
-      (log/debug (str "em2: " (em/dump em2)))
+      ;; (log/debug "seq em2:" (seq em2))
+      ;; (log/debug "em2 type: " em2 (type em2))
+      ;; (log/debug (str "em2: " (em/dump em2)))
       (let [em3 ^{:foo "buz"} em2]
-        (log/debug "em3:" em3)
-        (log/debug "seq em3:" (seq em3))
-        (log/debug "meta em3:" (meta em3)))
+        ;; (log/debug "em3:" em3)
+        ;; (log/debug "seq em3:" (seq em3))
+        ;; (log/debug "meta em3:" (meta em3))
+        )
       ))
 
 (deftest ^:meta interfaces
   (testing "supported interfaces")
     (let [em1 (em/entity-map [:A/B] {:a/b 1})]
-      (is (satisfies? sig/Entity-Map em1))
+      (is (satisfies? Entity-Map em1))
       (is (instance? clojure.lang.Associative em1))
       (is (instance? clojure.lang.Counted em1))
       (is (instance? clojure.lang.Seqable em1))
@@ -261,3 +263,4 @@
       (is (instance? java.lang.Iterable em1))
       ))
 
+;;(run-tests)

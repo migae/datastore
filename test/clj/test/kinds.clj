@@ -12,10 +12,11 @@
             LocalMailServiceTestConfig
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
-           [com.google.apphosting.api ApiProxy]
-           [migae.datastore InvalidKeychainException])
-  (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as ds]
+           [com.google.apphosting.api ApiProxy])
+           ;; [migae.datastore InvalidKeychainException])
+  (:require [migae.datastore :as ds]
+            ;; [migae.datastore.model.entity-map :as ds]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log :only [trace debug info]]))
 
 (defmacro should-fail [body]
@@ -64,8 +65,14 @@
       (is (= "Improper keychain '[:A/B :C]' not allowed for local ctor"
              (.getMessage ex))))
     (let [ex (try (ds/entity-map [:A/B :C :X/Y] {})
-                  (catch InvalidKeychainException x x))]
-      (is (= (.getMessage ex) "[:A/B :C :X/Y]")))
+                  (catch IllegalArgumentException x x))]
+      (is (= "Invalid keychain '[:A/B :C :X/Y]'"
+             (.getMessage ex))))
+
+      ;;             (catch clojure.lang.ExceptionInfo e e))]
+      ;; (is (= (:type (ex-data ex)) :keychain-exception))
+      ;; (is (= (:arg (ex-data ex)) [:A/B :C :X/Y])))
+      ;; (is (= (.getMessage ex) "[:A/B :C :X/Y]")))
       ))
 
 (deftest ^:kinds kind-ctor-chain

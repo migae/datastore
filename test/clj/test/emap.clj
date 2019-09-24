@@ -10,11 +10,10 @@
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy]
            [com.google.appengine.api.datastore
-            EntityNotFoundException]
-           [migae.datastore DuplicateKeyException])
+            EntityNotFoundException])
   ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore.model.entity-map :as em]
+            [migae.datastore :as em]
             [clojure.tools.logging :as log :only [trace debug info]]))
 ;            [ring-zombie.core :as zombie]))
 
@@ -52,12 +51,11 @@
 ;;  !!  replace if existant (i.e. discard existing)
 
 (deftest ^:entity-map entity-map!
-  (testing "create or fetch"
+  (testing "Duplicate Key Exception"
     (em/entity-map! [:Foo/Bar] {})
-    (try (em/entity-map! [:Foo/Bar] {})
-         ;; (catch RuntimeException e (do (log/trace "entity already exists"))))
-         (catch DuplicateKeyException e
-           (is (= (.getMessage e) "[:Foo/Bar]"))))
+    (let [e (try  (em/entity-map! [:Foo/Bar] {})
+                 (catch java.lang.Exception x (Throwable->map x)))]
+      (is (= (:cause e) "DuplicateKeyException")))))
          ;; (catch EntityNotFoundException e
          ;;   (throw e)))
     ;; (is (= (try (em/entity-map?? [:A/B 'C/D])
@@ -65,15 +63,15 @@
     ;;                     (log/trace "Exception:" (.getMessage e))
     ;;                     (.getClass e)))
     ;;        IllegalArgumentException))
-    ))
+    ;; ))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FIXME
-;; (deftest ^:entity-map entity-map??
-;;   (testing "entity-map?!"
-;;     (try (em/entity-map?? [:Foo/Baz])
-;;          (catch EntityNotFoundException ex))
-;;     ))
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; FIXME
+;; ;; (deftest ^:entity-map entity-map??
+;; ;;   (testing "entity-map?!"
+;; ;;     (try (em/entity-map?? [:Foo/Baz])
+;; ;;          (catch EntityNotFoundException ex))
+;; ;;     ))
 
 (deftest ^:entity-map entity-map1
   (testing "entity-map key vector must not be empty"
@@ -157,19 +155,22 @@
   (testing "entity-map! with properties"
     ;; (binding [*print-meta* true]
       (let [k [:Genus/Felis :Species/Felis_catus]
+            _ (log/info "k:" k)
             e1 (em/entity-map! k {:name "Chibi" :size "small" :eyes 1})
-            e2 (em/entity-map* k)]
-        (log/trace "e1" e1)
-        (log/trace "e1 entity" (.content e1))
-        (log/trace "e2" e2)
-        (log/trace "e2 entity" (.content e2))
+            e2 (em/entity-map* k)
+            ]
+        (log/info "e1: " e1 " type: " (type e1))
+        (log/info "e1 entity" (.content e1))
+        (log/info "e2: " e2 " type: " (type e2))
+        (log/info "e2 entity" (.content e2))
+        (flush)
         (is (= (e1 :name) "Chibi"))
         (is (= (e2 :name) "Chibi"))
         ;; (should-fail (is (= e1 e2)))
         (is (em/keychains=? e1 e2))
         )))
 
-(deftest ^:entity-map entity-map-fetch
+#_(deftest ^:entity-map entity-map-fetch
   (testing "entity-map! new, update, replace"
     ;; ignore new if exists
     (let [em1 (em/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
@@ -205,7 +206,7 @@
     ;;   (log/trace "em6" em6))
     ))
 
-(deftest ^:entity-map entity-map-fn
+#_(deftest ^:entity-map entity-map-fn
   (testing "entity-map fn"
     (let [em1 (em/entity-map! [:Species/Felis_catus] {:name "Chibi"})]
       (log/trace em1))
@@ -222,3 +223,4 @@
 ;;       (log/trace em1)
 ;;       )))
 
+;;(run-tests)

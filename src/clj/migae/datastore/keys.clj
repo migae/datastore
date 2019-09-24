@@ -1,4 +1,9 @@
-(ns migae.datastore.keys
+(in-ns 'migae.datastore)
+
+(require '[clojure.tools.logging :as log :refer [debug info]]
+         )
+
+#_(ns migae.datastore.keys
   (:import [com.google.appengine.api.datastore
             DatastoreFailureException
             DatastoreService
@@ -15,6 +20,7 @@
             ArrayList
             HashSet
             Vector]
+           [migae.datastore PersistentEntityMap]
            )
   (:require [clojure.tools.logging :as log :only [debug info]]
             [clojure.tools.reader.edn :as edn]
@@ -25,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  key stuff
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(declare get-val-ds get-val-ds-coll proper-keychain? keyword-to-key add-child-keylink)
+(declare get-val-ds get-val-ds-coll proper-keychain? keyword->Key add-child-keylink)
 
 #_(defn keychain=?
   [k1 k2]
@@ -104,16 +110,16 @@
   (and (keyword? k)
        (not (nil? (namespace k)))))
 
-(defn keyword-to-key
+(defn keyword->Key
   [^clojure.lang.Keyword k]
    "map single keyword to key."
-   ;; (log/trace "keyword-to-key:" k (type k))
+   ;; (log/trace "keyword->Key:" k (type k))
    (if (not (keyword? k))
      (throw (IllegalArgumentException.
              (str "not a clojure.lang.Keyword: " k))))
    (let [kind (clojure.core/namespace k)
          ident (edn/read-string (clojure.core/name k))]
-     ;; (log/trace (format "keychain-to-key 1: kind=%s, ident=%s" kind ident))
+     (log/trace (format "keyword->Key 1: kind=%s, ident=%s" kind ident))
      (cond
        (nil? kind)
        (throw (IllegalArgumentException. (str "missing namespace: " k)))
@@ -143,10 +149,10 @@
        (throw (IllegalArgumentException.
                (str k))))))
 
-(defn identifier
+(defn Key->identifier
   "identifier co-ctor"
   [v]
-  (log/trace "identifier co-ctor" v)
+  (log/trace "identifier co-ctor: " v  " type: " (type v))
   ;; FIXME validate
   (if (= (type v) Key)
     (let [nbr (.getId v)]
@@ -156,23 +162,30 @@
         (if-let [nm (.getName v)]
           (do (log/trace "id nm: " nm)
               nm))))
+    ;; type is vector?
     (let [dogtag (last v)]
-      (if-let [ns (namespace dogtag)]
-        (keyword (name dogtag))
-        dogtag))))
+      (name dogtag))))
+      ;; (if-let [ns (namespace dogtag)]
+      ;;   (name dogtag)
+      ;;   dogtag))))
 
 (defn add-child-keylink
   [^KeyFactory$Builder builder chain]
-  ;; (log/trace "add-child-keylink builder:" builder)
-  ;; (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
+  (log/trace "add-child-keylink builder:" builder)
+  (log/trace "add-child-keylink chain:" chain (type chain) (type (first chain)))
+  (flush)
   (doseq [kw chain]
     (if (nil? kw)
-      nil
+      nil ;; FIXME: throw
       (if (keylink? kw)
-        (let [k (keyword-to-key kw)]
-          (.addChild builder
-                     (.getKind k)
-                     (identifier k)))
+        (let [k (keyword->Key kw)
+              kind (.getKind k)
+              ident (Key->identifier k)
+              _ (log/trace "add-child-keylink  link key:" k)
+              _ (log/trace "link kind:" kind " type: " (type kind))
+              _ (log/trace "link identifier:" ident " type: " (type ident))
+              ]
+          (.addChild builder kind ident))
         (throw (IllegalArgumentException.
                 (str "not a clojure.lang.Keyword: " kw)))))))
 
@@ -210,10 +223,10 @@
   ;; (log/trace "keychain co-ctor 1: entity" e)
   (keychain (.getKey e)))
 
-(defmethod keychain Key
+#_(defmethod keychain Key
   [^Key k]
   {:pre [(not (nil? k))]}
-  ;; (log/trace "keychain co-ctor 2: key" k)
+  (log/trace "keychain co-ctor 2: Key" k)
   (let [kind (.getKind k)
         nm (.getName k)
         id (str (.getId k))
@@ -235,10 +248,22 @@
     ))
     ;; (throw (IllegalArgumentException. (str "Invalid keychain arg " v)))))
 
-;; (defmethod keychain migae.datastore.PersistentEntityMap
-;;   [^PersistentEntityMap e]
-;;   (log/trace "keychain IPersistentEntityMap: " e)
-;;   (keychain (.getKey (.content e))))
+(defmethod keychain clojure.lang.IPersistentList
+  [^clojure.lang.PersistentList l]
+  (log/debug "IPersistentList.keychain: " l)
+  (let [k (:migae/keychain (meta l))]
+    (if (keychain? k) k nil)))
+
+(defmethod keychain clojure.lang.IPersistentMap
+  [m]
+  (log/debug "IPersisentMap keychain: " m)
+  (let [k (:migae/keychain (meta m))]
+    (if (keychain? k) k nil)))
+
+(defmethod keychain migae.datastore.PersistentEntityMap
+  [^PersistentEntityMap e]
+  (log/trace "keychain IPersistentEntityMap: " e)
+  (keychain (.getKey (.content e))))
 
 ;; (defmethod keychain migae.datastore.PersistentEntityHashMap
 ;;   [^PersistentEntityHashMap e]
@@ -247,6 +272,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- get-val-ds-coll
+  ;; FIXME: make this a multimethod?
   "Type conversion: clojure to java.  The datastore supports a limited
   number of Java classes (see
   https://cloud.google.com/appengine/docs/java/datastore/entities#Java_Properties_and_value_types);
@@ -313,15 +339,20 @@
     ;; (log/trace "get-val-ds result:" v " -> " val "\n")
     val))
 
-(defn entity-key
+(defn vector->Key
+  "given a keychain vector, return a ...datastore.Key object"
   ([keychain]
    ;; {:pre [(proper-keychain? keychain)]}
-  ;; (log/trace "keychain-to-key: " keychain (type keychain) " : " (vector? keychain))
+   (log/debug "vector->Key: " keychain (type keychain) " : " (vector? keychain))
    (if (proper-keychain? keychain)
-     (let [k (keyword-to-key (first keychain))
-           root (KeyFactory$Builder. k)]
+     (let [k (keyword->Key (first keychain))
+           root (KeyFactory$Builder. k)
+           _ (log/debug "root key: " k)
+           _ (flush)
+           ]
        (.getKey (doto root (add-child-keylink (rest keychain)))))
-     (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid}))
+     (throw (ex-info "InvalidKeychainException" {:type :keychain-exception, :cause :invalid
+                                                 :arg keychain}))
      )))
 
      ;; (throw (IllegalArgumentException.
