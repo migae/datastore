@@ -63,6 +63,7 @@
 
                    [potemkin "0.4.5"]
                    [org.clojure/tools.logging "0.4.1"]
+                   [org.apache.logging.log4j/log4j-api "2.11.1"]
                    [org.apache.logging.log4j/log4j-core "2.11.1"]
                    [org.apache.logging.log4j/log4j-slf4j-impl "2.11.1"]
                    ;; [org.apache.logging.log4j/log4j-api "2.5"]
