@@ -104,6 +104,13 @@
        :description "Example code, boot, miraj, GAE"
        :license     {"EPL" "http://www.eclipse.org/legal/epl-v10.html"}})
 
+(deftask local
+  "install to local repo"
+  []
+  (comp (boot/pom)
+        (boot/jar)
+        (boot/install)))
+
 (deftask dev
   "make a dev build - including reloader"
   [k keep bool "keep intermediate .clj and .edn files"
