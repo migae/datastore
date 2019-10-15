@@ -86,6 +86,7 @@
                          :war "target/bulkops"}]})
 
 (task-options!
+ notify {:audible true :theme "woodblock"}
  gae/run modules
  ;; test {:startup (fn []
  ;;                  (println "XXXXXXXXXXXXXXXX")
