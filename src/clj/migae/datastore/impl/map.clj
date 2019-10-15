@@ -59,7 +59,8 @@
   ;; (log/debug "    keys" keys)
   ;; (log/debug "    schema" schema)
   (log/debug "    data" data)
-  (log/debug "schemata: " (sch/dump-schemata))
+  ;; (log/debug "schemata: " (sch/dump-schemata))
+  ;; FIXME: schema stuff
   (let [ps (sch/schema type)
         v (try (s/validator ps)
                (catch Exception x (log/debug "bad schema: " (.getMessage x))))
