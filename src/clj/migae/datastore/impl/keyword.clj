@@ -99,7 +99,7 @@
              ;; (PersistentEntityMap. e nil)
              e)
            )
-         :else (throw (ex-info "InvalidKeychainException"
+         :else (throw (ex-info (str "InvalidKeychainException: " keychain)
                                {:type :keychain-exception, :cause :invalid}))))
 
      (= mode :multi)
