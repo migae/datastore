@@ -120,6 +120,11 @@
             :resource-paths #{"src/clj" "test/clj"})
   identity)
 
+(deftask locally
+  "install locally"
+  []
+  (comp (boot/pom) (boot/jar) (boot/install)))
+
 (deftask watchme
   "watch for gae project"
   []
