@@ -58,7 +58,6 @@
                    [org.clojure/tools.reader "1.3.2" :scope "runtime"]
                    ;; [commons-io/commons-io "2.4" :scope "runtime"]
                    ;; [commons-fileupload/commons-fileupload "1.3.1" :scope "runtime"]
-                   [prismatic/schema "1.0.1"]
 
                    [potemkin "0.4.5"]
                    [org.clojure/tools.logging "0.4.1"]

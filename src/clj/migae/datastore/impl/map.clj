@@ -2,8 +2,6 @@
   (:refer-clojure :exclude [read read-string])
   (:require [clojure.tools.logging :as log :only [debug trace info]]
             [clojure.tools.reader.edn :as edn :refer [read read-string]]
-            [schema.core :as s] ;; :include-macros true]
-            [migae.datastore.schemata :as sch]
             [migae.datastore :as ds]
             ;; [migae.datastore.entity-map :as em]
             [migae.datastore.impl.vector :as v]
@@ -39,6 +37,7 @@
                (str "Missing metadata key ':migae/keychain'"))))))
   ([m m2] (log/trace "entity-map local ctor")))
 
+;; FIXME
 (defn entity-map!
   "entity-map bulk push ctor"
   [{kind :kind,
@@ -61,7 +60,8 @@
   (log/debug "    data" data)
   ;; (log/debug "schemata: " (sch/dump-schemata))
   ;; FIXME: schema stuff
-  (let [ps (sch/schema type)
+  (throw (Exception. "FIXME: reimplement w/o schema"))
+  #_(let [;; ps (sch/schema type)
         v (try (s/validator ps)
                (catch Exception x (log/debug "bad schema: " (.getMessage x))))
         kws (into [] (for [fld ps] (keyword (:name fld))))
