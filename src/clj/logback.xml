@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <!-- <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> -->
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="debug">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
+
+<!-- <configuration>   <!-\- status="WARN"> -\-> -->
+
+<!--   <appender> -->
+<!--     <Console name="Console" target="SYSTEM_OUT"> -->
+<!--       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{2} - %msg%n" /> -->
+<!--       <!-\- <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1} - %msg%n" /> -\-> -->
+<!--     </Console> -->
+
+<!--     <RollingFile name="RollingFile" filename="logs/migae.log" -->
+<!-- 		 filepattern="${logPath}/%d{yyyy-MM-dd-hh-mm}-fargo.log"> -->
+<!--       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{2}:%L - %msg%n" /> -->
+<!--       <Policies> -->
+<!-- 	<SizeBasedTriggeringPolicy size="100 MB" /> -->
+<!--       </Policies> -->
+<!--       <DefaultRolloverStrategy max="20" /> -->
+<!--     </RollingFile> -->
+
+<!--   </Appenders> -->
+<!--   <Loggers> -->
+<!--     <Root level="ALL"> -->
+<!--       <AppenderRef ref="Console" /> -->
+<!--       <AppenderRef ref="RollingFile" /> -->
+<!--     </Root> -->
+<!--     <Logger name="migae.datastore.adapter.gae" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--     <Logger name="migae.datastore.keys" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--     <Logger name="migae.datastore.structure.keyword" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--     <Logger name="migae.datastore.structure.map" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--     <Logger name="migae.datastore.structure.vector" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--     <Logger name="migae.datastore" level="ALL" additivity="false"> -->
+<!--       <AppenderRef ref="Console"/> -->
+<!--     </Logger> -->
+<!--   </Loggers> -->
+<!-- </Configuration> -->

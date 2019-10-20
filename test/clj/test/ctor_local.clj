@@ -10,10 +10,22 @@
             LocalDatastoreServiceTestConfig
             LocalUserServiceTestConfig]
            [com.google.apphosting.api ApiProxy])
-  ;; (:use [clj-logging-config.log4j])
   (:require [clojure.test :refer :all]
-            [migae.datastore :as ds]
-            [clojure.tools.logging :as log :only [trace debug info]]))
+            [clojure.tools.logging :as log :refer :all]
+            [io.aviso.ansi :as ansi]
+            [io.aviso.logging :refer [install-pretty-logging]]
+            [io.aviso.repl :as repl]
+            [migae.datastore :as ds])
+            )
+(repl/install-pretty-exceptions)
+(install-pretty-logging)
+
+(defn xdebug [msg] (log/info (ansi/cyan msg)))
+(defn xinfo [msg] (log/info (ansi/green msg)))
+(defn xwarn [msg] (log/info (ansi/magenta msg)))
+(defn xerror [msg] (log/info (ansi/red msg)))
+(defn xfatal [msg] (log/info (ansi/red msg)))
+
 ;            [ring-zombie.core :as zombie]))
 
 (defmacro should-fail [body]
@@ -46,7 +58,7 @@
   (testing "keychain must not be empty"
     (let [e (try (ds/entity-map [] {})
                  (catch java.lang.IllegalArgumentException x x))]
-      (log/info "e: " (.getMessage e))
+      (xinfo (str "e: " (.getMessage e)))
       (is (= "Null keychain '[]' not allowed for local ctor"
              (.getMessage e)))
       )))
@@ -55,7 +67,7 @@
   (testing "Keychain must be vector of keywords"
     (let [e (try (ds/entity-map [1 2] {})
                  (catch java.lang.Exception x (Throwable->map x)))]
-      (log/info "e: " (:cause e))
+      (xinfo (str "e: " (:cause e)))
       (is (= "Invalid keychain '[1 2]'"
              (:cause e)))))) ;; (:cause e))))))
 
@@ -75,7 +87,7 @@
     (let [em1 (ds/entity-map [:A/B] {})
           em2 (try (ds/entity-map [:A/B] )
                    (catch clojure.lang.ArityException x x))]
-      (log/info "em2: " (meta em2) em2))))
+      (xinfo (str "em2: " (meta em2) em2)))))
 
 (deftest ^:ctor ctor-fail-3
   (testing "local ctor requires proper keychain"
@@ -85,10 +97,10 @@
           ;; AssertionError x x))
           em3 (try (ds/entity-map [:A/B :C] {})
                    (catch java.lang.IllegalArgumentException x x))]
-      (log/info "em2: " (.getMessage em2))
+      (xinfo (str "em2: " (.getMessage em2)))
       (is (= "Improper keychain '[:A]' not allowed for local ctor"
            (.getMessage em2)))
-      (log/info "em3: " (.getMessage em3))
+      (xinfo (str "em3: " (.getMessage em3)))
       (is (= "Improper keychain '[:A/B :C]' not allowed for local ctor"
            (.getMessage em3)))
       )))
@@ -107,7 +119,7 @@
           em2 (ds/entity-map [:Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em3 (ds/entity-map [:Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})
           em4 (ds/entity-map [:Family/Felidae :Subfamily/Felinae :Genus/Felis :Species/Felis_catus] {:name "Chibi"})]
-      (log/info "em1" (ds/dump em1))
+      (xinfo (str "em1" (ds/dump em1)))
       ;; (log/info "em1 kind:" (ds/kind em1))
       ;; (log/info "em1 ident:" (ds/identifier em1) " (type: " (type (ds/identifier em1)) ")")
       ;; (log/info "em1" (.entity em3))
@@ -182,13 +194,18 @@
           em2 (ds/entity-map [(keyword "Genus" "10")] {:a 1})
           em3 (ds/entity-map [:Genus/#0x10] {:a 1})
           em4 (ds/entity-map [:Genus/#0x0A] {:a 1})]
-      (log/info "START EM1")
-      (log/info "id em1" (ds/identifier em1))
-      (log/info "START EM2")
-      (log/info "id em2" (ds/identifier em2))
-      (log/info "id em3" (ds/identifier em3))
-      (log/info "id em4" (ds/identifier em4))
-      ;; (log/info "em3 kind:" (ds/kind em3))
+      (xdebug "log debug")
+      (xinfo "log info")
+      (xwarn "log warn")
+      (xerror "log error")
+      (xfatal "log fatal")
+      (xinfo "START EM1")
+      (xinfo (str "id em1" (ds/identifier em1)))
+      (xinfo "START EM2")
+      (xinfo (str "id em2" (ds/identifier em2)))
+      (xinfo (str "id em3" (ds/identifier em3)))
+      (xinfo (str "id em4" (ds/identifier em4)))
+      ;; (xinfo "em3 kind:" (ds/kind em3))
       ;; (log/info "em3 ident:" (ds/identifier em3) " (type: " (type (ds/identifier em3)) ")")
       (is (= (ds/identifier em1)
              (ds/identifier em2)

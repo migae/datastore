@@ -1,5 +1,3 @@
-(clojure.core/println "Start loading migae.datastore")
-
 (ns migae.datastore
   (:refer-clojure :exclude [print println print-str println-str])
   (:import [java.lang IllegalArgumentException RuntimeException]
@@ -39,14 +37,19 @@
   (:require [clojure.walk :as walk]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.tools.reader.edn :as edn]
+            ;; NB:  trace level not available on gae
+            [clojure.tools.logging :as log :only [debug info]]
+            [io.aviso.ansi :refer :all]
+            [io.aviso.logging :refer [install-pretty-logging]]
+
             [migae.datastore.Interfaces]
             ;; [migae.datastore.types.entity-map]
             ;; [migae.datastore.types.entity-map-seq]
             ;; [migae.datastore.structure.vector]
 
             ;; [migae.datastore.service :as ds]
-            ;; NB:  trace level not available on gae
-            [clojure.tools.logging :as log :only [debug info]]
+
+
 ;;            [migae.datastore.types.entity-map-seq :as ems]
             ;; [migae.datastore.types.entity-map :refer :all]
             ;; [migae.datastore.types.entity-map-seq :refer :all]
@@ -55,7 +58,7 @@
             ;; [migae.datastore.impl.vector :as pvec]
           )) ;; warn, error, fatal
 
-(clojure.core/println "loading migae.datastore")
+(log/info (green "loading migae.datastore"))
 
 ;; (declare ->PersistentStoreMap)
 ;; (declare ->PersistentEntityMapSeq)
@@ -84,4 +87,4 @@
 (load "/migae/datastore/keys")
 (load "/migae/datastore/impl")
 
-(clojure.core/println "Done loading migae.datastore")
+(log/info (green "loaded migae.datastore"))

@@ -11,7 +11,11 @@
  ;; :repositories {"clojars" "https://clojars.org/repo"
  ;;                "central" "http://repo1.maven.org/maven2/"
  ;;                "maven-central" "http://mvnrepository.com"}
- :dependencies   '[[org.clojure/clojure "1.10.0" :scope "runtime"]
+ :dependencies   '[[org.clojure/clojure "1.10.1" :scope "runtime"]
+                   [org.clojure/tools.reader "1.3.2" :scope "runtime"]
+                   [org.clojure/tools.logging "0.5.0"]
+                   [ch.qos.logback/logback-classic "1.2.3"]
+                   [io.aviso/pretty "0.1.37"]
 
                    [javax.servlet/javax.servlet-api "3.1.0" :scope "provided"]
 
@@ -55,23 +59,12 @@
                    ;; data
                    ;; [cheshire/cheshire "5.5.0" :scope "runtime"]
                    ;; [fogus/ring-edn "0.3.0" :scope "runtime"]
-                   [org.clojure/tools.reader "1.3.2" :scope "runtime"]
                    ;; [commons-io/commons-io "2.4" :scope "runtime"]
                    ;; [commons-fileupload/commons-fileupload "1.3.1" :scope "runtime"]
 
                    [potemkin "0.4.5"]
-                   [org.clojure/tools.logging "0.4.1"]
-                   [org.apache.logging.log4j/log4j-api "2.11.1"]
-                   [org.apache.logging.log4j/log4j-core "2.11.1"]
-                   [org.apache.logging.log4j/log4j-slf4j-impl "2.11.1"]
-                   ;; [org.apache.logging.log4j/log4j-api "2.5"]
-                   ;; [log4j "1.2.17" :exclusions [javax.mail/mail
-                   ;;                              javax.jms/jms
-                   ;;                              com.sun.jdmk/jmxtools
-                   ;;                              com.sun.jmx/jmxri]]
-
                    ;; [org.clojure/tools.namespace "0.2.11"]
-                   [ns-tracker/ns-tracker "0.3.1" :scope "test"]
+                   [ns-tracker/ns-tracker "0.4.0" :scope "test"]
                    [adzerk/boot-test "1.2.0" :scope "test"]
                    [migae/boot-gae "0.2.1-SNAPSHOT" :scope "test"]])
 
